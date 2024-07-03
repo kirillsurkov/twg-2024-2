@@ -1,189 +1,177 @@
-//! Firework
-//!
-//! This example demonstrate the use of the [`LinearDragModifier`] to slow down
-//! particles over time. Combined with an HDR camera with Bloom, the example
-//! renders a firework explosion.
-//!
-//! The firework effect is composed of several key elements:
-//! - An HDR camera with [`BloomSettings`] to ensure the particles "glow".
-//! - Use of a [`ColorOverLifetimeModifier`] with a [`Gradient`] made of colors
-//!   outside the \[0:1\] range, to ensure bloom has an effect.
-//! - [`SetVelocitySphereModifier`] with a reasonably large initial speed for
-//!   particles, and [`LinearDragModifier`] to quickly slow them down. This is
-//!   the core of the "explosion" effect.
-//! - An [`AccelModifier`] to pull particles down once they slow down, for
-//!   increased realism. This is a subtle effect, but of importance.
-//!
-//! The particles also have a trail, created with the [`CloneModifier`]. The
-//! trail particles are stitched together to form an arc using the
-//! [`RibbonModifier`].
+use std::f32::consts::FRAC_PI_2;
 
 use bevy::{
     core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
-    log::LogPlugin,
     prelude::*,
 };
+use bevy_flycam::{FlyCam, NoCameraPlayerPlugin};
 use bevy_hanabi::prelude::*;
-#[cfg(feature = "examples_world_inspector")]
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_mod_raycast::immediate::{Raycast, RaycastSettings};
+
+#[derive(Component)]
+struct Laser;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut app = App::default();
-    app.add_plugins(
-        DefaultPlugins
-            .set(LogPlugin {
-                level: bevy::log::Level::WARN,
-                filter: "bevy_hanabi=warn,firework=trace".to_string(),
-                update_subscriber: None,
-            })
-            .set(WindowPlugin {
-                primary_window: Some(Window {
-                    title: "🎆 Hanabi — firework".to_string(),
-                    ..default()
-                }),
-                ..default()
-            }),
-    )
-    .add_systems(Update, bevy::window::close_on_esc)
-    .add_plugins(HanabiPlugin);
-
-    #[cfg(feature = "examples_world_inspector")]
-    app.add_plugins(WorldInspectorPlugin::default());
-
-    app.add_systems(Startup, setup).run();
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_plugins(HanabiPlugin)
+        .add_plugins(NoCameraPlayerPlugin)
+        .add_systems(Update, bevy::window::close_on_esc)
+        .add_systems(Startup, setup)
+        .add_systems(Update, laser)
+        .run();
 
     Ok(())
 }
 
-fn setup(mut commands: Commands, mut effects: ResMut<Assets<EffectAsset>>) {
+fn setup(
+    mut commands: Commands,
+    mut effects: ResMut<Assets<EffectAsset>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     commands.spawn((
         Camera3dBundle {
-            transform: Transform::from_translation(Vec3::new(0., 0., 50.)),
+            tonemapping: Tonemapping::TonyMcMapface,
             camera: Camera {
                 hdr: true,
-                clear_color: Color::BLACK.into(),
-                ..default()
+                ..Default::default()
             },
-            tonemapping: Tonemapping::None,
+            transform: Transform::from_translation(Vec3::new(0.0, 2.0, 5.0)),
             ..default()
         },
-        BloomSettings {
-            intensity: 0.2,
-            ..default()
-        },
+        FlyCam,
+        BloomSettings::default(),
     ));
 
-    let mut color_gradient1 = Gradient::new();
-    color_gradient1.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
-    color_gradient1.add_key(0.1, Vec4::new(4.0, 4.0, 0.0, 1.0));
-    color_gradient1.add_key(0.6, Vec4::new(4.0, 0.0, 0.0, 1.0));
-    color_gradient1.add_key(1.0, Vec4::new(4.0, 0.0, 0.0, 0.0));
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(Sphere { radius: 1.0 }),
+        material: materials.add(StandardMaterial {
+            base_color: Color::BLACK,
+            unlit: true,
+            ..Default::default()
+        }),
+        ..Default::default()
+    });
 
-    let mut size_gradient1 = Gradient::new();
-    size_gradient1.add_key(0.0, Vec2::splat(0.05));
-    size_gradient1.add_key(0.3, Vec2::splat(0.05));
-    size_gradient1.add_key(1.0, Vec2::splat(0.0));
+    commands.spawn((
+        PbrBundle {
+            mesh: meshes.add(Cylinder {
+                half_height: 0.5,
+                radius: 0.01,
+            }),
+            material: materials.add(StandardMaterial {
+                base_color: Color::rgb(4.0, 0.0, 0.0),
+                unlit: true,
+                ..Default::default()
+            }),
+            transform: Transform::from_translation(Vec3::new(0.0, 2.0, 0.0)),
+            ..Default::default()
+        },
+        Laser,
+    ));
+
+    let mut color_gradient = Gradient::new();
+    color_gradient.add_key(0.0, Vec4::new(10.0, 10.0, 0.0, 1.0));
+    color_gradient.add_key(0.5, Vec4::new(10.0, 0.0, 0.0, 1.0));
+    color_gradient.add_key(1.0, Vec4::ZERO);
+
+    let mut size_gradient = Gradient::new();
+    size_gradient.add_key(0.0, Vec2::new(0.1, 0.02));
+    size_gradient.add_key(1.0, Vec2::new(0.1, 0.0));
 
     let writer = ExprWriter::new();
 
-    // Give a bit of variation by randomizing the age per particle. This will
-    // control the starting color and starting size of particles.
-    let age = writer.lit(0.).uniform(writer.lit(0.2)).expr();
-    let init_age = SetAttributeModifier::new(Attribute::AGE, age);
-
-    // Give a bit of variation by randomizing the lifetime per particle
-    let lifetime = writer.lit(0.8).uniform(writer.lit(1.2)).expr();
-    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, lifetime);
-
-    // Lifetime for trails
-    let init_lifetime_trails =
-        SetAttributeModifier::new(Attribute::LIFETIME, writer.lit(0.2).expr());
-
-    // Add constant downward acceleration to simulate gravity
-    let accel = writer.lit(Vec3::Y * -16.).expr();
-    let update_accel = AccelModifier::new(accel);
-
-    // Add drag to make particles slow down a bit after the initial explosion
-    let drag = writer.lit(4.).expr();
-    let update_drag = LinearDragModifier::new(drag);
+    let init_age = SetAttributeModifier::new(Attribute::AGE, writer.lit(0.0).expr());
+    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, writer.lit(0.1).expr());
 
     let init_pos = SetPositionSphereModifier {
-        center: writer.lit(Vec3::ZERO).expr(),
-        radius: writer.lit(0.1).expr(),
+        center: writer.lit(Vec3::new(0.0, -0.01, 0.0)).expr(),
+        radius: writer.lit(0.0).expr(),
         dimension: ShapeDimension::Volume,
     };
 
-    // Give a bit of variation by randomizing the initial speed
-    let init_vel = SetVelocitySphereModifier {
-        center: writer.lit(Vec3::ZERO).expr(),
-        speed: (writer.rand(ScalarType::Float) * writer.lit(20.) + writer.lit(60.)).expr(),
+    let normal = writer.lit(Vec3::new(0.0, 1.0, 0.0));
+
+    let tangent = writer
+        .lit(Vec3::ONE)
+        .uniform(writer.lit(Vec3::NEG_ONE))
+        .cross(normal.clone())
+        .normalized();
+    let velocity = (normal + tangent * writer.lit(0.5).uniform(writer.lit(1.5)))
+        * writer.lit(1.0).uniform(writer.lit(2.0));
+
+    let init_vel = SetAttributeModifier::new(Attribute::VELOCITY, velocity.expr());
+
+    let effect = effects.add(
+        EffectAsset::new(vec![1024], Spawner::rate(128.0.into()), writer.finish())
+            .init(init_pos)
+            // Make spawned particles move away from the emitter origin
+            .init(init_vel)
+            .init(init_age)
+            .init(init_lifetime)
+            //.update(update_accel1)
+            //.render_groups(RibbonModifier, trail)
+            .render(ColorOverLifetimeModifier {
+                gradient: color_gradient,
+            })
+            .render(OrientModifier {
+                mode: OrientMode::FaceCameraPosition,
+                rotation: None,
+            })
+            .render(SizeOverLifetimeModifier {
+                gradient: size_gradient,
+                screen_space_size: false,
+            })
+            .render(OrientModifier::new(OrientMode::AlongVelocity)),
+    );
+
+    commands.spawn((ParticleEffectBundle {
+        effect: ParticleEffect::new(effect),
+        transform: Transform::IDENTITY,
+        ..Default::default()
+    },));
+}
+
+fn laser(
+    mut raycast: Raycast,
+    mut gizmos: Gizmos,
+    time: Res<Time>,
+    mut laser: Query<(Entity, &mut Transform), With<Laser>>,
+    mut effect: Query<&mut Transform, (With<ParticleEffect>, Without<Laser>)>,
+    mut spawner: Query<&mut EffectSpawner, Without<Laser>>,
+) {
+    let (laser, mut laser_transform) = laser.single_mut();
+    let Ok(mut spawner) = spawner.get_single_mut() else {
+        return;
+    };
+    let Ok(mut effect_transform) = effect.get_single_mut() else {
+        return;
     };
 
-    // Clear the trail velocity so trail particles just stay in place as they fade
-    // away
-    let init_vel_trail =
-        SetAttributeModifier::new(Attribute::VELOCITY, writer.lit(Vec3::ZERO).expr());
+    let factor = (time.elapsed_seconds() % 5.0) / 5.0;
+    let pos1 = Vec3::new(-6.0, 10.0, 0.0);
+    let mut pos2 = Vec3::new(-2.0 + factor * 4.0, 0.0, 0.0);
+    let dir = (pos2 - pos1).normalize();
+    if let Some((_, hit)) = raycast
+        .cast_ray(
+            Ray3d::new(pos1, dir),
+            &RaycastSettings::default().with_filter(&|e| e != laser),
+        )
+        .first()
+    {
+        pos2 = hit.position();
+        *effect_transform = Transform::from_translation(pos2).looking_to(hit.normal(), Vec3::Y);
+        spawner.set_active(true);
+    } else {
+        pos2 = pos1 + dir * 100.0;
+        spawner.set_active(false);
+    }
 
-    let lead = ParticleGroupSet::single(0);
-    let trail = ParticleGroupSet::single(1);
+    let len = pos1.distance(pos2);
 
-    let effect = EffectAsset::new(
-        // 2k lead particles, with 32 trail particles each
-        vec![2048, 2048 * 32],
-        Spawner::burst(2048.0.into(), 2.0.into()),
-        writer.finish(),
-    )
-    .with_name("firework")
-    .init(init_pos)
-    .init(init_vel)
-    .init(init_age)
-    .init(init_lifetime)
-    .update_groups(CloneModifier::new(1.0 / 64.0, 1), lead)
-    .update_groups(update_drag, lead)
-    .update_groups(update_accel, lead)
-    // Currently the init pass doesn't run on cloned particles, so we have to use an update modifier
-    // to init the lifetime of trails. This will overwrite the value each frame, so can only be used
-    // for constant values.
-    .update_groups(init_lifetime_trails, trail)
-    .update_groups(init_vel_trail, trail)
-    .render_groups(
-        ColorOverLifetimeModifier {
-            gradient: color_gradient1.clone(),
-        },
-        lead,
-    )
-    .render_groups(
-        SizeOverLifetimeModifier {
-            gradient: size_gradient1.clone(),
-            screen_space_size: false,
-        },
-        lead,
-    )
-    .render_groups(
-        ColorOverLifetimeModifier {
-            gradient: color_gradient1,
-        },
-        trail,
-    )
-    .render_groups(
-        SizeOverLifetimeModifier {
-            gradient: size_gradient1,
-            screen_space_size: false,
-        },
-        trail,
-    )
-    // Tie together trail particles to make arcs. This way we don't need a lot of them, yet there's
-    // a continuity between them.
-    .render_groups(RibbonModifier, trail);
-
-    let effect1 = effects.add(effect);
-
-    commands.spawn((
-        Name::new("firework"),
-        ParticleEffectBundle {
-            effect: ParticleEffect::new(effect1),
-            transform: Transform::IDENTITY,
-            ..Default::default()
-        },
-    ));
+    *laser_transform = Transform::from_translation((pos1 + pos2) / 2.0)
+        .with_scale(Vec3::new(1.0, len, 1.0))
+        .looking_at(pos2, Vec3::Y);
+    laser_transform.rotate_z(FRAC_PI_2);
 }
