@@ -1,4 +1,4 @@
-use std::f32::consts::FRAC_PI_2;
+use std::{f32::consts::FRAC_PI_2, time::Duration};
 
 use bevy::{
     core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
@@ -11,6 +11,9 @@ use bevy_mod_raycast::immediate::{Raycast, RaycastSettings};
 #[derive(Component)]
 struct Laser;
 
+#[derive(Resource)]
+struct Animations(Vec<Handle<AnimationClip>>, usize);
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -18,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_plugins(NoCameraPlayerPlugin)
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Startup, setup)
-        .add_systems(Update, laser)
+        .add_systems(Update, (laser, anim))
         .run();
 
     Ok(())
@@ -29,7 +32,22 @@ fn setup(
     mut effects: ResMut<Assets<EffectAsset>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
+    commands.spawn(SceneBundle {
+        scene: asset_server.load("rasp.glb#Scene0"),
+        ..default()
+    });
+
+    commands.insert_resource(Animations(
+        vec![
+            asset_server.load("rasp.glb#Animation0"),
+            asset_server.load("rasp.glb#Animation1"),
+            asset_server.load("rasp.glb#Animation2"),
+        ],
+        0,
+    ));
+
     commands.spawn((
         Camera3dBundle {
             tonemapping: Tonemapping::TonyMcMapface,
@@ -174,4 +192,32 @@ fn laser(
         .with_scale(Vec3::new(1.0, len, 1.0))
         .looking_at(pos2, Vec3::Y);
     laser_transform.rotate_z(FRAC_PI_2);
+}
+
+fn anim(
+    mut animations: ResMut<Animations>,
+    mut players: Query<&mut AnimationPlayer>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    let anim = if keyboard_input.just_pressed(KeyCode::Digit1) {
+        Some(0)
+    } else if keyboard_input.just_pressed(KeyCode::Digit2) {
+        Some(1)
+    } else if keyboard_input.just_pressed(KeyCode::Digit3) {
+        Some(2)
+    } else {
+        None
+    };
+
+    for mut player in &mut players {
+        if let Some(anim) = anim {
+            animations.1 = anim;
+            player
+                .play_with_transition(
+                    animations.0[animations.1].clone_weak(),
+                    Duration::from_millis(250),
+                )
+                .repeat();
+        }
+    }
 }
