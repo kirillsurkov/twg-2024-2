@@ -1,15 +1,26 @@
-use std::{f32::consts::FRAC_PI_2, time::Duration};
-
-use bevy::{
-    core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
-    prelude::*,
+use std::{
+    f32::consts::{FRAC_PI_2, PI},
+    time::Duration,
 };
+
+use bevy::{core_pipeline::bloom::BloomSettings, pbr::NotShadowCaster, prelude::*};
 use bevy_flycam::{FlyCam, NoCameraPlayerPlugin};
 use bevy_hanabi::prelude::*;
 use bevy_mod_raycast::immediate::{Raycast, RaycastSettings};
+use hero::{
+    derevotyan::Derevotyan, dimas::Dimas, duck::Duck, nulch::Nulch, rasp::Rasp, HeroPlugin,
+};
+
+mod hero;
 
 #[derive(Component)]
 struct Laser;
+
+#[derive(Component)]
+struct Scroll {
+    current: u32,
+    max: u32,
+}
 
 #[derive(Resource)]
 struct Animations(Vec<Handle<AnimationClip>>, usize);
@@ -19,9 +30,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_plugins(DefaultPlugins)
         .add_plugins(HanabiPlugin)
         .add_plugins(NoCameraPlayerPlugin)
+        .add_plugins(
+            HeroPlugin::default()
+                .with_hero::<Nulch>()
+                .with_hero::<Rasp>()
+                .with_hero::<Derevotyan>()
+                .with_hero::<Dimas>()
+                .with_hero::<Duck>(),
+        )
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Startup, setup)
-        .add_systems(Update, (laser, anim))
+        .add_systems(Update, (laser, scroll))
         .run();
 
     Ok(())
@@ -34,10 +53,7 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn(SceneBundle {
-        scene: asset_server.load("rasp.glb#Scene0"),
-        ..default()
-    });
+    // commands.spawn(Nulch::default());
 
     commands.insert_resource(Animations(
         vec![
@@ -50,27 +66,100 @@ fn setup(
 
     commands.spawn((
         Camera3dBundle {
-            tonemapping: Tonemapping::TonyMcMapface,
             camera: Camera {
                 hdr: true,
                 ..Default::default()
             },
-            transform: Transform::from_translation(Vec3::new(0.0, 2.0, 5.0)),
+            transform: Transform::from_translation(Vec3::new(0.0, 2.0, 5.0))
+                .looking_at(Vec3::new(0.0, 1.5, 0.0), Vec3::Y),
             ..default()
         },
-        FlyCam,
         BloomSettings::default(),
+        // FogSettings {
+        //     color: Color::rgba(0.35, 0.35, 0.35, 1.0),
+        //     directional_light_color: Color::rgba(1.0, 0.95, 0.85, 0.5),
+        //     directional_light_exponent: 30.0,
+        //     falloff: FogFalloff::from_visibility_colors(
+        //         30.0, // distance in world units up to which objects retain visibility (>= 5% contrast)
+        //         Color::rgb(0.35, 0.35, 0.35), // atmospheric extinction color (after light is lost due to absorption by atmospheric particles)
+        //         Color::rgb(0.8, 0.8, 0.8), // atmospheric inscattering color (light gained due to scattering from the sun)
+        //     ),
+        // },
+        // FlyCam,
     ));
 
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Sphere { radius: 1.0 }),
-        material: materials.add(StandardMaterial {
-            base_color: Color::BLACK,
-            unlit: true,
-            ..Default::default()
-        }),
+    commands.spawn((
+        PbrBundle {
+            mesh: meshes.add(Cuboid::new(2.0, 1.0, 1.0)),
+            material: materials.add(StandardMaterial {
+                base_color: Color::hex("888888").unwrap().into(),
+                unlit: true,
+                cull_mode: None,
+                ..default()
+            }),
+            transform: Transform::from_scale(Vec3::splat(10.0)),
+            ..default()
+        },
+        NotShadowCaster,
+    ));
+
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            color: Color::rgb(0.98, 0.95, 0.82),
+            shadows_enabled: true,
+            illuminance: 1000.0,
+            ..default()
+        },
+        transform: Transform::from_xyz(0.0, 0.0, 0.0)
+            .looking_at(Vec3::new(0.15, -0.15, -0.25), Vec3::Y),
         ..Default::default()
     });
+
+    let n = 5;
+    let r = 10.0;
+
+    commands
+        .spawn((
+            TransformBundle {
+                local: Transform {
+                    translation: Vec3::new(0.0, 0.0, -r),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            VisibilityBundle::default(),
+            Scroll { current: 0, max: n },
+        ))
+        .with_children(|p| {
+            for i in 0..n {
+                let ang = 2.0 * PI * i as f32 / n as f32;
+                let x = ang.sin() * r;
+                let y = ang.cos() * r;
+                let transform = TransformBundle {
+                    local: Transform::from_translation(Vec3::new(x, 0.0, y))
+                        .with_rotation(Quat::from_rotation_y(ang)),
+                    ..Default::default()
+                };
+                match i {
+                    0 => p.spawn((Nulch, transform, VisibilityBundle::default())),
+                    1 => p.spawn((Rasp, transform, VisibilityBundle::default())),
+                    2 => p.spawn((Derevotyan, transform, VisibilityBundle::default())),
+                    3 => p.spawn((Dimas, transform, VisibilityBundle::default())),
+                    4 => p.spawn((Duck, transform, VisibilityBundle::default())),
+                    _ => unreachable!(),
+                };
+            }
+        });
+
+    // commands.spawn(PbrBundle {
+    //     mesh: meshes.add(Sphere { radius: 1.0 }),
+    //     material: materials.add(StandardMaterial {
+    //         base_color: Color::BLACK,
+    //         unlit: true,
+    //         ..Default::default()
+    //     }),
+    //     ..Default::default()
+    // });
 
     commands.spawn((
         PbrBundle {
@@ -220,4 +309,26 @@ fn anim(
                 .repeat();
         }
     }
+}
+
+fn scroll(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut query: Query<(&mut Scroll, &mut Transform)>,
+    time: Res<Time>,
+) {
+    let Ok((mut scroll, mut transform)) = query.get_single_mut() else {
+        return;
+    };
+
+    let ang = -2.0 * PI * scroll.current as f32 / scroll.max as f32;
+
+    if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
+        scroll.current = (scroll.current + scroll.max - 1) % scroll.max;
+    } else if keyboard_input.just_pressed(KeyCode::ArrowRight) {
+        scroll.current = (scroll.current + 1) % scroll.max;
+    }
+
+    transform.rotation = transform
+        .rotation
+        .slerp(Quat::from_rotation_y(ang), 10.0 * time.delta_seconds());
 }
