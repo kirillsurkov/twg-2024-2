@@ -6,12 +6,13 @@ use std::{
 use bevy::{core_pipeline::bloom::BloomSettings, pbr::NotShadowCaster, prelude::*};
 use bevy_flycam::{FlyCam, NoCameraPlayerPlugin};
 use bevy_hanabi::prelude::*;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_raycast::immediate::{Raycast, RaycastSettings};
-use hero::{
-    derevotyan::Derevotyan, dimas::Dimas, duck::Duck, nulch::Nulch, rasp::Rasp, HeroPlugin,
-};
+use hero::{dimas::Dimas, dtyan::DTyan, duck::Duck, nulch::Nulch, rasp::Rasp, HeroPlugin};
+use wheel::{Wheel, WheelPlugin};
 
 mod hero;
+mod wheel;
 
 #[derive(Component)]
 struct Laser;
@@ -22,25 +23,24 @@ struct Scroll {
     max: u32,
 }
 
-#[derive(Resource)]
-struct Animations(Vec<Handle<AnimationClip>>, usize);
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(HanabiPlugin)
-        .add_plugins(NoCameraPlayerPlugin)
+        // .add_plugins(NoCameraPlayerPlugin)
+        .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(
             HeroPlugin::default()
                 .with_hero::<Nulch>()
                 .with_hero::<Rasp>()
-                .with_hero::<Derevotyan>()
+                .with_hero::<DTyan>()
                 .with_hero::<Dimas>()
                 .with_hero::<Duck>(),
         )
+        .add_plugins(WheelPlugin)
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Startup, setup)
-        .add_systems(Update, (laser, scroll))
+        .add_systems(Update, laser)
         .run();
 
     Ok(())
@@ -53,17 +53,6 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
-    // commands.spawn(Nulch::default());
-
-    commands.insert_resource(Animations(
-        vec![
-            asset_server.load("rasp.glb#Animation0"),
-            asset_server.load("rasp.glb#Animation1"),
-            asset_server.load("rasp.glb#Animation2"),
-        ],
-        0,
-    ));
-
     commands.spawn((
         Camera3dBundle {
             camera: Camera {
@@ -75,16 +64,6 @@ fn setup(
             ..default()
         },
         BloomSettings::default(),
-        // FogSettings {
-        //     color: Color::rgba(0.35, 0.35, 0.35, 1.0),
-        //     directional_light_color: Color::rgba(1.0, 0.95, 0.85, 0.5),
-        //     directional_light_exponent: 30.0,
-        //     falloff: FogFalloff::from_visibility_colors(
-        //         30.0, // distance in world units up to which objects retain visibility (>= 5% contrast)
-        //         Color::rgb(0.35, 0.35, 0.35), // atmospheric extinction color (after light is lost due to absorption by atmospheric particles)
-        //         Color::rgb(0.8, 0.8, 0.8), // atmospheric inscattering color (light gained due to scattering from the sun)
-        //     ),
-        // },
         // FlyCam,
     ));
 
@@ -115,51 +94,13 @@ fn setup(
         ..Default::default()
     });
 
-    let n = 5;
-    let r = 10.0;
-
-    commands
-        .spawn((
-            TransformBundle {
-                local: Transform {
-                    translation: Vec3::new(0.0, 0.0, -r),
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
-            VisibilityBundle::default(),
-            Scroll { current: 0, max: n },
-        ))
-        .with_children(|p| {
-            for i in 0..n {
-                let ang = 2.0 * PI * i as f32 / n as f32;
-                let x = ang.sin() * r;
-                let y = ang.cos() * r;
-                let transform = TransformBundle {
-                    local: Transform::from_translation(Vec3::new(x, 0.0, y))
-                        .with_rotation(Quat::from_rotation_y(ang)),
-                    ..Default::default()
-                };
-                match i {
-                    0 => p.spawn((Nulch, transform, VisibilityBundle::default())),
-                    1 => p.spawn((Rasp, transform, VisibilityBundle::default())),
-                    2 => p.spawn((Derevotyan, transform, VisibilityBundle::default())),
-                    3 => p.spawn((Dimas, transform, VisibilityBundle::default())),
-                    4 => p.spawn((Duck, transform, VisibilityBundle::default())),
-                    _ => unreachable!(),
-                };
-            }
-        });
-
-    // commands.spawn(PbrBundle {
-    //     mesh: meshes.add(Sphere { radius: 1.0 }),
-    //     material: materials.add(StandardMaterial {
-    //         base_color: Color::BLACK,
-    //         unlit: true,
-    //         ..Default::default()
-    //     }),
-    //     ..Default::default()
-    // });
+    commands.spawn(Wheel::new(10.0)).with_children(|p| {
+        p.spawn(Nulch::default());
+        p.spawn(Rasp::default());
+        p.spawn(DTyan);
+        p.spawn(Dimas);
+        p.spawn(Duck);
+    });
 
     commands.spawn((
         PbrBundle {
@@ -281,54 +222,4 @@ fn laser(
         .with_scale(Vec3::new(1.0, len, 1.0))
         .looking_at(pos2, Vec3::Y);
     laser_transform.rotate_z(FRAC_PI_2);
-}
-
-fn anim(
-    mut animations: ResMut<Animations>,
-    mut players: Query<&mut AnimationPlayer>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-) {
-    let anim = if keyboard_input.just_pressed(KeyCode::Digit1) {
-        Some(0)
-    } else if keyboard_input.just_pressed(KeyCode::Digit2) {
-        Some(1)
-    } else if keyboard_input.just_pressed(KeyCode::Digit3) {
-        Some(2)
-    } else {
-        None
-    };
-
-    for mut player in &mut players {
-        if let Some(anim) = anim {
-            animations.1 = anim;
-            player
-                .play_with_transition(
-                    animations.0[animations.1].clone_weak(),
-                    Duration::from_millis(250),
-                )
-                .repeat();
-        }
-    }
-}
-
-fn scroll(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Scroll, &mut Transform)>,
-    time: Res<Time>,
-) {
-    let Ok((mut scroll, mut transform)) = query.get_single_mut() else {
-        return;
-    };
-
-    let ang = -2.0 * PI * scroll.current as f32 / scroll.max as f32;
-
-    if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
-        scroll.current = (scroll.current + scroll.max - 1) % scroll.max;
-    } else if keyboard_input.just_pressed(KeyCode::ArrowRight) {
-        scroll.current = (scroll.current + 1) % scroll.max;
-    }
-
-    transform.rotation = transform
-        .rotation
-        .slerp(Quat::from_rotation_y(ang), 10.0 * time.delta_seconds());
 }

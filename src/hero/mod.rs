@@ -35,7 +35,7 @@ impl Plugin for HeroPlugin {
     }
 }
 
-pub mod derevotyan;
+pub mod dtyan;
 pub mod dimas;
 pub mod duck;
 pub mod nulch;

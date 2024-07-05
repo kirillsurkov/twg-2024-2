@@ -3,9 +3,9 @@ use bevy::prelude::*;
 use super::{Hero, SelectWheel};
 
 #[derive(Component)]
-pub struct Derevotyan;
+pub struct DTyan;
 
-impl Hero for Derevotyan {
+impl Hero for DTyan {
     fn register(app: &mut App) {
         app.add_systems(Update, (on_add, on_select_wheel));
     }
@@ -14,7 +14,7 @@ impl Hero for Derevotyan {
 fn on_add(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    query: Query<Entity, Added<Derevotyan>>,
+    query: Query<Entity, Added<DTyan>>,
 ) {
     for entity in query.iter() {
         commands.entity(entity).with_children(|p| {
@@ -27,6 +27,6 @@ fn on_add(
     }
 }
 
-fn on_select_wheel(query: Query<&Derevotyan, With<SelectWheel>>) {
+fn on_select_wheel(query: Query<&DTyan, With<SelectWheel>>) {
     for hero in query.iter() {}
 }
