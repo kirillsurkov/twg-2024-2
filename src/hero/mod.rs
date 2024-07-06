@@ -1,10 +1,27 @@
-use bevy::prelude::*;
+use std::marker::PhantomData;
+
+use bevy::{gltf::Gltf, prelude::*};
 
 #[derive(Component)]
 pub struct Avatar;
 
 #[derive(Component)]
 pub struct Gameplay;
+
+#[derive(Resource)]
+pub struct Model<T> {
+    handle: Handle<Gltf>,
+    _pd: PhantomData<T>,
+}
+
+impl<T> Model<T> {
+    pub fn new(gltf: Handle<Gltf>) -> Self {
+        Self {
+            handle: gltf,
+            _pd: PhantomData::default(),
+        }
+    }
+}
 
 pub trait Hero {
     fn register(app: &mut App);
@@ -32,8 +49,8 @@ impl Plugin for HeroPlugin {
     }
 }
 
-pub mod dtyan;
 pub mod dimas;
+pub mod dtyan;
 pub mod duck;
 pub mod nulch;
 pub mod rasp;

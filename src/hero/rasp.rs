@@ -1,28 +1,13 @@
-use std::{marker::PhantomData, time::Duration};
+use std::time::Duration;
 
-use bevy::{animation::RepeatAnimation, gltf::Gltf, prelude::*};
+use bevy::{gltf::Gltf, prelude::*};
 
 use crate::{
     complex_anim_player::{self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff},
     wheel,
 };
 
-use super::Hero;
-
-#[derive(Resource)]
-pub struct Model<T> {
-    handle: Handle<Gltf>,
-    _pd: PhantomData<T>,
-}
-
-impl<T> Model<T> {
-    pub fn new(gltf: Handle<Gltf>) -> Self {
-        Self {
-            handle: gltf,
-            _pd: PhantomData::default(),
-        }
-    }
-}
+use super::{Hero, Model};
 
 #[derive(Component)]
 pub struct Rasp;
@@ -89,27 +74,19 @@ fn on_add(
                             .with_idle("idle_track")
                             .with_showoff(Showoff::new(vec![
                                 ComplexAnimPart {
-                                    name: "idle_track".to_string(),
-                                    repeat: RepeatAnimation::Count(2),
-                                    speed: 1.0,
-                                    wait: Duration::from_millis(0),
-                                },
-                                ComplexAnimPart {
                                     name: "start_shoot_track".to_string(),
-                                    repeat: RepeatAnimation::Count(1),
+                                    repeat: 1,
                                     speed: 1.0,
                                     wait: Duration::from_millis(1000),
                                 },
                                 ComplexAnimPart {
                                     name: "shoot_track".to_string(),
-                                    repeat: RepeatAnimation::Count(3),
+                                    repeat: 3,
                                     speed: 3.0,
                                     wait: Duration::from_millis(500),
                                 },
                             ])),
-                        Animations {
-                            by_name: gltf.named_animations.clone(),
-                        },
+                        Animations::new(gltf.named_animations.clone()),
                     ));
                 }
             }
@@ -117,8 +94,22 @@ fn on_add(
     }
 }
 
-fn on_wheel(mut query: Query<(&mut ComplexAnimPlayer, &wheel::State), With<Rasp>>) {
-    for (mut anim_player, state) in query.iter_mut() {
+fn on_wheel(
+    mut query: Query<(&mut ComplexAnimPlayer, &wheel::State, &Animations), With<Rasp>>,
+    mut named: Query<(&Name, &mut Visibility)>,
+) {
+    for (mut anim_player, state, anims) in query.iter_mut() {
+        let current_anim = anims.current();
+
+        for (name, mut visibility) in named.iter_mut() {
+            if name.as_str() == "pistol" {
+                *visibility = match current_anim.as_str() {
+                    "start_shoot_track" | "shoot_track" => Visibility::Visible,
+                    _ => Visibility::Hidden,
+                };
+            }
+        }
+
         if state.active {
             anim_player.play(complex_anim_player::State::Showoff);
         } else {

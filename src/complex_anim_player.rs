@@ -13,7 +13,7 @@ impl Plugin for ComplexAnimPlayerPlugin {
 #[derive(Clone)]
 pub struct ComplexAnimPart {
     pub name: String,
-    pub repeat: RepeatAnimation,
+    pub repeat: u32,
     pub speed: f32,
     pub wait: Duration,
 }
@@ -42,7 +42,21 @@ pub enum State {
 
 #[derive(Component)]
 pub struct Animations {
-    pub by_name: HashMap<String, Handle<AnimationClip>>,
+    by_name: HashMap<String, Handle<AnimationClip>>,
+    current: String,
+}
+
+impl Animations {
+    pub fn new(by_name: HashMap<String, Handle<AnimationClip>>) -> Self {
+        Self {
+            by_name,
+            current: String::new(),
+        }
+    }
+
+    pub fn current(&self) -> String {
+        self.current.clone()
+    }
 }
 
 #[derive(Component)]
@@ -52,6 +66,7 @@ pub struct ComplexAnimPlayer {
     idle: Option<String>,
     showoffs: Vec<Showoff>,
     current_showoff: Option<Showoff>,
+    timer: f32,
 }
 
 impl ComplexAnimPlayer {
@@ -62,6 +77,7 @@ impl ComplexAnimPlayer {
             idle: None,
             showoffs: vec![],
             current_showoff: None,
+            timer: 0.0,
         }
     }
 
@@ -81,17 +97,19 @@ impl ComplexAnimPlayer {
 }
 
 fn play(
-    mut query: Query<(&mut ComplexAnimPlayer, &Animations)>,
+    mut query: Query<(&mut ComplexAnimPlayer, &mut Animations)>,
     mut anim_players: Query<&mut AnimationPlayer>,
     time: Res<Time>,
 ) {
     const TRANSITION: Duration = Duration::from_millis(250);
+    const INTERVAL: Duration = Duration::from_millis(5000);
 
-    for (mut player, animations) in query.iter_mut() {
+    for (mut player, mut animations) in query.iter_mut() {
         let mut anim_player = anim_players.get_mut(player.anim_player).unwrap();
         match player.state {
             State::Idle => match &player.idle {
                 Some(idle) => {
+                    animations.current = idle.clone();
                     anim_player
                         .play_with_transition(animations.by_name[idle].clone_weak(), TRANSITION)
                         .repeat();
@@ -102,17 +120,36 @@ fn play(
                 let current_showoff = match player.current_showoff.as_mut() {
                     Some(showoff) => showoff,
                     None => {
-                        player.current_showoff = Some(player.showoffs[0].clone());
-                        player.current_showoff.as_mut().unwrap()
+                        if player.timer >= INTERVAL.as_secs_f32() {
+                            player.timer = 0.0;
+                            player.current_showoff = Some(player.showoffs[0].clone());
+                            player.current_showoff.as_mut().unwrap()
+                        } else {
+                            match &player.idle {
+                                Some(idle) => {
+                                    animations.current = idle.clone();
+                                    anim_player
+                                        .play_with_transition(
+                                            animations.by_name[idle].clone_weak(),
+                                            TRANSITION,
+                                        )
+                                        .repeat();
+                                }
+                                None => {}
+                            }
+                            player.timer += time.delta_seconds();
+                            continue;
+                        }
                     }
                 };
 
                 let part = &current_showoff.parts[current_showoff.current_part];
+                animations.current = part.name.clone();
                 let anim = animations.by_name.get(&part.name).unwrap();
                 anim_player
                     .play_with_transition(anim.clone_weak(), TRANSITION)
                     .set_speed(part.speed)
-                    .set_repeat(part.repeat);
+                    .set_repeat(RepeatAnimation::Count(part.repeat));
 
                 if anim_player.is_finished() {
                     if current_showoff.timer >= part.wait.as_secs_f32() {
