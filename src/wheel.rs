@@ -11,7 +11,10 @@ impl Plugin for WheelPlugin {
 }
 
 #[derive(Component)]
-pub struct Active;
+pub struct State {
+    pub active: bool,
+    pub changed: bool,
+}
 
 #[derive(Component)]
 pub struct Wheel {
@@ -42,9 +45,14 @@ fn added(mut commands: Commands, mut query: Query<(Entity, &mut Wheel, &Children
                     .with_rotation(Quat::from_rotation_y(ang)),
                 ..Default::default()
             };
-            commands
-                .entity(*child)
-                .insert((transform, VisibilityBundle::default()));
+            commands.entity(*child).insert((
+                transform,
+                State {
+                    active: i == 0,
+                    changed: true,
+                },
+                VisibilityBundle::default(),
+            ));
         }
         commands.entity(entity).insert((
             TransformBundle {
@@ -60,36 +68,42 @@ fn added(mut commands: Commands, mut query: Query<(Entity, &mut Wheel, &Children
 }
 
 fn scroll(
-    mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&Children, &mut Wheel, &mut Transform)>,
+    mut states: Query<&mut State>,
     time: Res<Time>,
 ) {
-    let Ok((children, mut scroll, mut transform)) = query.get_single_mut() else {
-        return;
-    };
-
-    let left = keyboard_input.just_pressed(KeyCode::ArrowLeft);
-    let right = keyboard_input.just_pressed(KeyCode::ArrowRight);
-
-    if left || right {
-        commands
-            .entity(*children.get(scroll.current as usize).unwrap())
-            .remove::<Active>();
-        if left {
-            scroll.current = (scroll.current + scroll.max - 1) % scroll.max;
+    for (children, mut scroll, mut transform) in query.iter_mut() {
+        for child in children {
+            states.get_mut(*child).unwrap().changed = false;
         }
-        if right {
-            scroll.current = (scroll.current + 1) % scroll.max;
+
+        let left = keyboard_input.just_pressed(KeyCode::ArrowLeft);
+        let right = keyboard_input.just_pressed(KeyCode::ArrowRight);
+
+        if left || right {
+            let mut state = states
+                .get_mut(*children.get(scroll.current).unwrap())
+                .unwrap();
+            state.changed = true;
+            state.active = false;
+            if left {
+                scroll.current = (scroll.current + scroll.max - 1) % scroll.max;
+            }
+            if right {
+                scroll.current = (scroll.current + 1) % scroll.max;
+            }
+            let mut state = states
+                .get_mut(*children.get(scroll.current).unwrap())
+                .unwrap();
+            state.changed = true;
+            state.active = true;
         }
-        commands
-            .entity(*children.get(scroll.current as usize).unwrap())
-            .insert(Active);
+
+        let ang = -2.0 * PI * scroll.current as f32 / scroll.max as f32;
+
+        transform.rotation = transform
+            .rotation
+            .slerp(Quat::from_rotation_y(ang), 10.0 * time.delta_seconds());
     }
-
-    let ang = -2.0 * PI * scroll.current as f32 / scroll.max as f32;
-
-    transform.rotation = transform
-        .rotation
-        .slerp(Quat::from_rotation_y(ang), 10.0 * time.delta_seconds());
 }

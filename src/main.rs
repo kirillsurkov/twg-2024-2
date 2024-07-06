@@ -1,33 +1,26 @@
-use std::{
-    f32::consts::{FRAC_PI_2, PI},
-    time::Duration,
-};
+use std::f32::consts::FRAC_PI_2;
 
 use bevy::{core_pipeline::bloom::BloomSettings, pbr::NotShadowCaster, prelude::*};
 use bevy_flycam::{FlyCam, NoCameraPlayerPlugin};
 use bevy_hanabi::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_raycast::immediate::{Raycast, RaycastSettings};
+use complex_anim_player::ComplexAnimPlayerPlugin;
 use hero::{dimas::Dimas, dtyan::DTyan, duck::Duck, nulch::Nulch, rasp::Rasp, HeroPlugin};
 use wheel::{Wheel, WheelPlugin};
 
+mod complex_anim_player;
 mod hero;
 mod wheel;
 
 #[derive(Component)]
 struct Laser;
 
-#[derive(Component)]
-struct Scroll {
-    current: u32,
-    max: u32,
-}
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(HanabiPlugin)
-        // .add_plugins(NoCameraPlayerPlugin)
+        .add_plugins(NoCameraPlayerPlugin)
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(
             HeroPlugin::default()
@@ -38,6 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .with_hero::<Duck>(),
         )
         .add_plugins(WheelPlugin)
+        .add_plugins(ComplexAnimPlayerPlugin)
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Startup, setup)
         .add_systems(Update, laser)
@@ -51,7 +45,6 @@ fn setup(
     mut effects: ResMut<Assets<EffectAsset>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
 ) {
     commands.spawn((
         Camera3dBundle {
@@ -64,7 +57,7 @@ fn setup(
             ..default()
         },
         BloomSettings::default(),
-        // FlyCam,
+        FlyCam,
     ));
 
     commands.spawn((
@@ -95,8 +88,8 @@ fn setup(
     });
 
     commands.spawn(Wheel::new(10.0)).with_children(|p| {
-        p.spawn(Nulch::default());
-        p.spawn(Rasp::default());
+        p.spawn(Nulch);
+        p.spawn(Rasp);
         p.spawn(DTyan);
         p.spawn(Dimas);
         p.spawn(Duck);
@@ -183,7 +176,6 @@ fn setup(
 
 fn laser(
     mut raycast: Raycast,
-    mut gizmos: Gizmos,
     time: Res<Time>,
     mut laser: Query<(Entity, &mut Transform), With<Laser>>,
     mut effect: Query<&mut Transform, (With<ParticleEffect>, Without<Laser>)>,

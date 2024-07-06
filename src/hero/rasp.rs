@@ -1,10 +1,13 @@
 use std::{marker::PhantomData, time::Duration};
 
-use bevy::{gltf::Gltf, prelude::*, utils::hashbrown::HashMap};
+use bevy::{animation::RepeatAnimation, gltf::Gltf, prelude::*};
 
-use crate::wheel::Active;
+use crate::{
+    complex_anim_player::{self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff},
+    wheel,
+};
 
-use super::{Hero, SelectWheel};
+use super::Hero;
 
 #[derive(Resource)]
 pub struct Model<T> {
@@ -21,11 +24,8 @@ impl<T> Model<T> {
     }
 }
 
-#[derive(Component, Default)]
-pub struct Rasp {
-    showoff: u32,
-    showoff_timer: f32,
-}
+#[derive(Component)]
+pub struct Rasp;
 
 #[derive(Component)]
 pub struct Ready;
@@ -33,15 +33,9 @@ pub struct Ready;
 #[derive(Component)]
 pub struct ModelReady;
 
-#[derive(Component)]
-struct Animations {
-    by_name: HashMap<String, Handle<AnimationClip>>,
-    anim_player: Entity,
-}
-
 impl Hero for Rasp {
     fn register(app: &mut App) {
-        app.add_systems(Update, (on_add, idle, showoff));
+        app.add_systems(Update, (on_add, on_wheel));
     }
 }
 
@@ -52,7 +46,7 @@ fn on_add(
     assets_gltf: Res<Assets<Gltf>>,
     query: Query<Entity, (With<Rasp>, Without<Ready>)>,
     query_model: Query<Entity, (With<Rasp>, Without<ModelReady>)>,
-    query_animation: Query<Entity, (With<Rasp>, With<ModelReady>, Without<Animations>)>,
+    query_animation: Query<Entity, (With<Rasp>, With<ModelReady>)>,
     children: Query<&Parent>,
     anim_players: Query<Entity, With<AnimationPlayer>>,
 ) {
@@ -87,86 +81,48 @@ fn on_add(
     for entity in query_animation.iter() {
         let mut entity = commands.entity(entity);
         entity.insert(Ready);
-        for e in anim_players.iter() {
-            for parent in children.iter_ancestors(e) {
+        for anim_player in anim_players.iter() {
+            for parent in children.iter_ancestors(anim_player) {
                 if parent == entity.id() {
-                    println!("ADDING");
-                    entity.insert(Animations {
-                        by_name: gltf.named_animations.clone(),
-                        anim_player: e,
-                    });
+                    entity.insert((
+                        ComplexAnimPlayer::new(anim_player)
+                            .with_idle("idle_track")
+                            .with_showoff(Showoff::new(vec![
+                                ComplexAnimPart {
+                                    name: "idle_track".to_string(),
+                                    repeat: RepeatAnimation::Count(2),
+                                    speed: 1.0,
+                                    wait: Duration::from_millis(0),
+                                },
+                                ComplexAnimPart {
+                                    name: "start_shoot_track".to_string(),
+                                    repeat: RepeatAnimation::Count(1),
+                                    speed: 1.0,
+                                    wait: Duration::from_millis(1000),
+                                },
+                                ComplexAnimPart {
+                                    name: "shoot_track".to_string(),
+                                    repeat: RepeatAnimation::Count(3),
+                                    speed: 3.0,
+                                    wait: Duration::from_millis(500),
+                                },
+                            ])),
+                        Animations {
+                            by_name: gltf.named_animations.clone(),
+                        },
+                    ));
                 }
             }
         }
     }
 }
 
-fn idle(
-    query: Query<&Animations, (With<Rasp>, Without<Active>)>,
-    mut anim_players: Query<&mut AnimationPlayer>,
-) {
-    for anim in query.iter() {
-        let mut player = anim_players.get_mut(anim.anim_player).unwrap();
-        player
-            .play(anim.by_name["idle_track"].clone_weak())
-            .repeat();
-    }
-}
-
-fn showoff(
-    mut query: Query<(&mut Rasp, &Animations), With<Active>>,
-    mut anim_players: Query<&mut AnimationPlayer>,
-    time: Res<Time>,
-) {
-    for (mut rasp, anim) in query.iter_mut() {
-        let mut player = anim_players.get_mut(anim.anim_player).unwrap();
-
-        match rasp.showoff {
-            0 => {
-                player
-                    .play_with_transition(
-                        anim.by_name["idle_track"].clone_weak(),
-                        Duration::from_millis(250),
-                    )
-                    .set_repeat(bevy::animation::RepeatAnimation::Count(2))
-                    .set_speed(1.0);
-                if player.is_finished() {
-                    rasp.showoff = 1;
-                    rasp.showoff_timer = 0.0;
-                }
-            }
-            1 => {
-                player
-                    .play_with_transition(
-                        anim.by_name["start_shoot_track"].clone_weak(),
-                        Duration::from_millis(250),
-                    )
-                    .set_repeat(bevy::animation::RepeatAnimation::Never);
-                if player.is_finished() {
-                    rasp.showoff_timer += time.delta_seconds();
-                    if rasp.showoff_timer >= 1.0 {
-                        rasp.showoff = 2;
-                        rasp.showoff_timer = 0.0;
-                    }
-                }
-            }
-            2 => {
-                player
-                    .play_with_transition(
-                        anim.by_name["shoot_track"].clone_weak(),
-                        Duration::from_millis(250),
-                    )
-                    .set_repeat(bevy::animation::RepeatAnimation::Count(3))
-                    .set_speed(2.0);
-                if player.is_finished() {
-                    rasp.showoff_timer += time.delta_seconds();
-                    if rasp.showoff_timer >= 0.5 {
-                        player.replay();
-                        rasp.showoff = 0;
-                    }
-                }
-            }
-            _ => {}
+fn on_wheel(mut query: Query<(&mut ComplexAnimPlayer, &wheel::State), With<Rasp>>) {
+    for (mut anim_player, state) in query.iter_mut() {
+        if state.active {
+            anim_player.play(complex_anim_player::State::Showoff);
+        } else {
+            anim_player.play(complex_anim_player::State::Idle);
         }
     }
 }

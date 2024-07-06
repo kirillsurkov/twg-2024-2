@@ -1,13 +1,15 @@
 use bevy::prelude::*;
 
-use super::{Hero, SelectWheel};
+use crate::wheel;
+
+use super::Hero;
 
 #[derive(Component)]
 pub struct Dimas;
 
 impl Hero for Dimas {
     fn register(app: &mut App) {
-        app.add_systems(Update, (on_add, on_select_wheel));
+        app.add_systems(Update, (on_add, on_wheel));
     }
 }
 
@@ -27,6 +29,6 @@ fn on_add(
     }
 }
 
-fn on_select_wheel(query: Query<&Dimas, With<SelectWheel>>) {
+fn on_wheel(query: Query<&Dimas, With<wheel::State>>) {
     for hero in query.iter() {}
 }
