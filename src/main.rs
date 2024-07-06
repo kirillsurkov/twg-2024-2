@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_plugins(DefaultPlugins)
         .add_plugins(HanabiPlugin)
         .add_plugins(NoCameraPlayerPlugin)
-        .add_plugins(WorldInspectorPlugin::new())
+        //.add_plugins(WorldInspectorPlugin::new())
         .add_plugins(
             HeroPlugin::default()
                 .with_hero::<Nulch>()
@@ -52,24 +52,24 @@ fn setup(
                 hdr: true,
                 ..Default::default()
             },
-            transform: Transform::from_translation(Vec3::new(0.0, 2.0, 5.0))
+            transform: Transform::from_translation(Vec3::new(-0.5, 3.0, 6.0))
                 .looking_at(Vec3::new(0.0, 1.5, 0.0), Vec3::Y),
             ..default()
         },
         BloomSettings::default(),
-        FlyCam,
+        //FlyCam,
     ));
 
     commands.spawn((
         PbrBundle {
-            mesh: meshes.add(Cuboid::new(2.0, 1.0, 1.0)),
+            mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
             material: materials.add(StandardMaterial {
                 base_color: Color::hex("888888").unwrap().into(),
                 unlit: true,
                 cull_mode: None,
                 ..default()
             }),
-            transform: Transform::from_scale(Vec3::splat(10.0)),
+            transform: Transform::from_scale(Vec3::splat(20.0)).with_translation(Vec3::new(0.0, 0.0, 5.0)),
             ..default()
         },
         NotShadowCaster,
