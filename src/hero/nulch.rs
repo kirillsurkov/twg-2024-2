@@ -2,12 +2,12 @@ use std::time::Duration;
 
 use bevy::{gltf::Gltf, prelude::*};
 
-use crate::{
+use crate::component::{
     complex_anim_player::{self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff},
-    wheel,
+    land, wheel,
 };
 
-use super::{Hero, Model};
+use super::{LocalSchedule, Model};
 
 #[derive(Component)]
 pub struct Nulch;
@@ -18,9 +18,9 @@ pub struct Ready;
 #[derive(Component)]
 pub struct ModelReady;
 
-impl Hero for Nulch {
-    fn register(app: &mut App) {
-        app.add_systems(Update, (on_add, on_wheel));
+impl Plugin for Nulch {
+    fn build(&self, app: &mut App) {
+        app.add_systems(LocalSchedule, (on_add, on_wheel));
     }
 }
 
@@ -89,9 +89,11 @@ fn on_add(
 fn on_wheel(mut query: Query<(&mut ComplexAnimPlayer, &wheel::State), With<Nulch>>) {
     for (mut anim_player, state) in query.iter_mut() {
         if state.active {
-            anim_player.play(complex_anim_player::State::Showoff);
+            anim_player.play(state.changed, complex_anim_player::State::Showoff);
         } else {
-            anim_player.play(complex_anim_player::State::Idle);
+            anim_player.play(state.changed, complex_anim_player::State::Idle);
         }
     }
 }
+
+fn on_land(mut query: Query<(&mut ComplexAnimPlayer, &land::State), With<Nulch>>) {}

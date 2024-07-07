@@ -1,37 +1,45 @@
 use std::f32::consts::FRAC_PI_2;
 
-use bevy::{core_pipeline::bloom::BloomSettings, pbr::NotShadowCaster, prelude::*};
-use bevy_flycam::{FlyCam, NoCameraPlayerPlugin};
+use bevy::{app::MainScheduleOrder, ecs::schedule::ScheduleLabel, prelude::*};
 use bevy_hanabi::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_mod_raycast::immediate::{Raycast, RaycastSettings};
-use complex_anim_player::ComplexAnimPlayerPlugin;
-use hero::{dimas::Dimas, dtyan::DTyan, duck::Duck, nulch::Nulch, rasp::Rasp, HeroPlugin};
-use wheel::{Wheel, WheelPlugin};
+use component::ComponentsPlugin;
+use hero::HeroesPlugin;
+use scene::GameScenePlugin;
 
-mod complex_anim_player;
+mod component;
 mod hero;
-mod wheel;
+mod scene;
 
 #[derive(Component)]
 struct Laser;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    App::new()
-        .add_plugins(DefaultPlugins)
+    let mut app = App::new();
+
+    app.add_schedule(Schedule::new(hero::LocalSchedule))
+        .world
+        .resource_mut::<MainScheduleOrder>()
+        .insert_after(Update, hero::LocalSchedule);
+
+    app.add_schedule(Schedule::new(component::LocalSchedule))
+        .world
+        .resource_mut::<MainScheduleOrder>()
+        .insert_after(hero::LocalSchedule, component::LocalSchedule);
+
+    app.add_schedule(Schedule::new(scene::LocalSchedule))
+        .world
+        .resource_mut::<MainScheduleOrder>()
+        .insert_after(component::LocalSchedule, scene::LocalSchedule);
+
+    app.add_plugins(DefaultPlugins)
         .add_plugins(HanabiPlugin)
-        .add_plugins(NoCameraPlayerPlugin)
-        //.add_plugins(WorldInspectorPlugin::new())
-        .add_plugins(
-            HeroPlugin::default()
-                .with_hero::<Nulch>()
-                .with_hero::<Rasp>()
-                .with_hero::<DTyan>()
-                .with_hero::<Dimas>()
-                .with_hero::<Duck>(),
-        )
-        .add_plugins(WheelPlugin)
-        .add_plugins(ComplexAnimPlayerPlugin)
+        //.add_plugins(NoCameraPlayerPlugin)
+        .add_plugins(WorldInspectorPlugin::new())
+        .add_plugins(HeroesPlugin)
+        .add_plugins(ComponentsPlugin)
+        .add_plugins(GameScenePlugin)
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Startup, setup)
         .add_systems(Update, laser)
@@ -46,55 +54,6 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    commands.spawn((
-        Camera3dBundle {
-            camera: Camera {
-                hdr: true,
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(-0.5, 3.0, 6.0))
-                .looking_at(Vec3::new(0.0, 1.5, 0.0), Vec3::Y),
-            ..default()
-        },
-        BloomSettings::default(),
-        //FlyCam,
-    ));
-
-    commands.spawn((
-        PbrBundle {
-            mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-            material: materials.add(StandardMaterial {
-                base_color: Color::hex("888888").unwrap().into(),
-                unlit: true,
-                cull_mode: None,
-                ..default()
-            }),
-            transform: Transform::from_scale(Vec3::splat(20.0)).with_translation(Vec3::new(0.0, 0.0, 5.0)),
-            ..default()
-        },
-        NotShadowCaster,
-    ));
-
-    commands.spawn(DirectionalLightBundle {
-        directional_light: DirectionalLight {
-            color: Color::rgb(0.98, 0.95, 0.82),
-            shadows_enabled: true,
-            illuminance: 1000.0,
-            ..default()
-        },
-        transform: Transform::from_xyz(0.0, 0.0, 0.0)
-            .looking_at(Vec3::new(0.15, -0.15, -0.25), Vec3::Y),
-        ..Default::default()
-    });
-
-    commands.spawn(Wheel::new(10.0)).with_children(|p| {
-        p.spawn(Nulch);
-        p.spawn(Rasp);
-        p.spawn(DTyan);
-        p.spawn(Dimas);
-        p.spawn(Duck);
-    });
-
     commands.spawn((
         PbrBundle {
             mesh: meshes.add(Cylinder {

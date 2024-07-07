@@ -2,11 +2,13 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
+use super::LocalSchedule;
+
 pub struct WheelPlugin;
 
 impl Plugin for WheelPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (added, scroll));
+        app.add_systems(LocalSchedule, (added, scroll));
     }
 }
 
@@ -21,6 +23,7 @@ pub struct Wheel {
     radius: f32,
     current: usize,
     max: usize,
+    selected: bool,
 }
 
 impl Wheel {
@@ -29,7 +32,16 @@ impl Wheel {
             radius,
             current: 0,
             max: 0,
+            selected: false,
         }
+    }
+
+    pub fn current(&self) -> usize {
+        self.current
+    }
+
+    pub fn selected(&self) -> bool {
+        self.selected
     }
 }
 
@@ -73,34 +85,40 @@ fn scroll(
     mut states: Query<&mut State>,
     time: Res<Time>,
 ) {
-    for (children, mut scroll, mut transform) in query.iter_mut() {
+    for (children, mut wheel, mut transform) in query.iter_mut() {
         for child in children {
             states.get_mut(*child).unwrap().changed = false;
         }
+
+        if wheel.selected {
+            continue;
+        }
+
+        wheel.selected = keyboard_input.just_pressed(KeyCode::Enter);
 
         let left = keyboard_input.just_pressed(KeyCode::ArrowLeft);
         let right = keyboard_input.just_pressed(KeyCode::ArrowRight);
 
         if left || right {
             let mut state = states
-                .get_mut(*children.get(scroll.current).unwrap())
+                .get_mut(*children.get(wheel.current).unwrap())
                 .unwrap();
             state.changed = true;
             state.active = false;
             if left {
-                scroll.current = (scroll.current + scroll.max - 1) % scroll.max;
+                wheel.current = (wheel.current + wheel.max - 1) % wheel.max;
             }
             if right {
-                scroll.current = (scroll.current + 1) % scroll.max;
+                wheel.current = (wheel.current + 1) % wheel.max;
             }
             let mut state = states
-                .get_mut(*children.get(scroll.current).unwrap())
+                .get_mut(*children.get(wheel.current).unwrap())
                 .unwrap();
             state.changed = true;
             state.active = true;
         }
 
-        let ang = -2.0 * PI * scroll.current as f32 / scroll.max as f32;
+        let ang = -2.0 * PI * wheel.current as f32 / wheel.max as f32;
 
         transform.rotation = transform
             .rotation

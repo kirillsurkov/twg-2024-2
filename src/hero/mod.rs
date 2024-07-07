@@ -1,12 +1,11 @@
 use std::marker::PhantomData;
 
-use bevy::{gltf::Gltf, prelude::*};
-
-#[derive(Component)]
-pub struct Avatar;
-
-#[derive(Component)]
-pub struct Gameplay;
+use bevy::{ecs::schedule::ScheduleLabel, gltf::Gltf, prelude::*};
+use dimas::Dimas;
+use dtyan::DTyan;
+use duck::Duck;
+use nulch::Nulch;
+use rasp::Rasp;
 
 #[derive(Resource)]
 pub struct Model<T> {
@@ -23,29 +22,31 @@ impl<T> Model<T> {
     }
 }
 
-pub trait Hero {
-    fn register(app: &mut App);
-}
+#[derive(ScheduleLabel, Debug, Hash, PartialEq, Eq, Clone)]
+pub struct LocalSchedule;
 
-#[derive(Default)]
-pub struct HeroPlugin {
-    heroes: Vec<Box<dyn Fn(&mut App) + Send + Sync>>,
-}
+#[derive(Component)]
+pub struct HeroesRoot;
 
-impl HeroPlugin {
-    pub fn with_hero<T: Hero>(mut self) -> Self {
-        self.heroes.push(Box::new(|app| {
-            T::register(app);
-        }));
-        self
+pub struct HeroesPlugin;
+
+impl Plugin for HeroesPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_plugins((Nulch, Rasp, DTyan, Dimas, Duck));
+        app.add_systems(LocalSchedule, init_heroes);
     }
 }
 
-impl Plugin for HeroPlugin {
-    fn build(&self, app: &mut App) {
-        for hero in &self.heroes {
-            hero(app);
-        }
+fn init_heroes(mut commands: Commands, query: Query<Entity, Added<HeroesRoot>>) {
+    for root in query.iter() {
+        println!("HEROES INIT");
+        commands.entity(root).with_children(|p| {
+            p.spawn((Nulch, Name::new("nulch")));
+            p.spawn((Rasp, Name::new("rasp")));
+            p.spawn((DTyan, Name::new("dtyan")));
+            p.spawn((Dimas, Name::new("dimas")));
+            p.spawn((Duck, Name::new("duck")));
+        });
     }
 }
 

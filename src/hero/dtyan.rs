@@ -2,12 +2,12 @@ use std::time::Duration;
 
 use bevy::{gltf::Gltf, prelude::*};
 
-use crate::{
+use crate::component::{
     complex_anim_player::{self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff},
     wheel,
 };
 
-use super::{Hero, Model};
+use super::{LocalSchedule, Model};
 
 #[derive(Component)]
 pub struct DTyan;
@@ -18,9 +18,9 @@ pub struct Ready;
 #[derive(Component)]
 pub struct ModelReady;
 
-impl Hero for DTyan {
-    fn register(app: &mut App) {
-        app.add_systems(Update, (on_add, on_wheel));
+impl Plugin for DTyan {
+    fn build(&self, app: &mut App) {
+        app.add_systems(LocalSchedule, (on_add, on_wheel));
     }
 }
 
@@ -127,9 +127,9 @@ fn on_wheel(
         }
 
         if state.active {
-            anim_player.play(complex_anim_player::State::Showoff);
+            anim_player.play(state.changed, complex_anim_player::State::Showoff);
         } else {
-            anim_player.play(complex_anim_player::State::Idle);
+            anim_player.play(state.changed, complex_anim_player::State::Idle);
         }
     }
 }

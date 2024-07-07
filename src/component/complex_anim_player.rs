@@ -2,11 +2,13 @@ use std::time::Duration;
 
 use bevy::{animation::RepeatAnimation, prelude::*, utils::hashbrown::HashMap};
 
+use super::LocalSchedule;
+
 pub struct ComplexAnimPlayerPlugin;
 
 impl Plugin for ComplexAnimPlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, play);
+        app.add_systems(LocalSchedule, play);
     }
 }
 
@@ -62,6 +64,7 @@ impl Animations {
 #[derive(Component)]
 pub struct ComplexAnimPlayer {
     anim_player: Entity,
+    state_changed: bool,
     state: State,
     idle: Option<String>,
     showoffs: Vec<Showoff>,
@@ -73,6 +76,7 @@ impl ComplexAnimPlayer {
     pub fn new(anim_player: Entity) -> Self {
         Self {
             anim_player,
+            state_changed: true,
             state: State::Idle,
             idle: None,
             showoffs: vec![],
@@ -91,7 +95,8 @@ impl ComplexAnimPlayer {
         self
     }
 
-    pub fn play(&mut self, state: State) {
+    pub fn play(&mut self, state_changed: bool, state: State) {
+        self.state_changed = state_changed;
         self.state = state;
     }
 }
@@ -117,6 +122,9 @@ fn play(
                 None => {}
             },
             State::Showoff => {
+                if player.state_changed {
+                    player.current_showoff = None;
+                }
                 let current_showoff = match player.current_showoff.as_mut() {
                     Some(showoff) => showoff,
                     None => {
