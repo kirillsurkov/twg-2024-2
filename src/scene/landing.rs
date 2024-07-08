@@ -57,7 +57,6 @@ fn init(mut commands: Commands, selected: Res<HeroSelected>, query: Query<Entity
 
             p.spawn((Land::default(), HeroesRoot));
         });
-        return;
     }
 }
 
