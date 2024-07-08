@@ -4,10 +4,11 @@ use bevy::{gltf::Gltf, prelude::*};
 
 use crate::component::{
     complex_anim_player::{self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff},
+    model::Model,
     wheel,
 };
 
-use super::{LocalSchedule, Model};
+use super::LocalSchedule;
 
 #[derive(Component)]
 pub struct Rasp;

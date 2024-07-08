@@ -9,6 +9,7 @@ pub mod arena;
 pub mod complex_anim_player;
 pub mod home;
 pub mod land;
+pub mod model;
 pub mod wheel;
 
 #[derive(ScheduleLabel, Debug, Hash, PartialEq, Eq, Clone)]

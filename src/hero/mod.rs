@@ -1,26 +1,9 @@
-use std::marker::PhantomData;
-
-use bevy::{ecs::schedule::ScheduleLabel, gltf::Gltf, prelude::*};
+use bevy::{ecs::schedule::ScheduleLabel, prelude::*};
 use dimas::Dimas;
 use dtyan::DTyan;
 use duck::Duck;
 use nulch::Nulch;
 use rasp::Rasp;
-
-#[derive(Resource)]
-pub struct Model<T> {
-    handle: Handle<Gltf>,
-    _pd: PhantomData<T>,
-}
-
-impl<T> Model<T> {
-    pub fn new(gltf: Handle<Gltf>) -> Self {
-        Self {
-            handle: gltf,
-            _pd: PhantomData::default(),
-        }
-    }
-}
 
 #[derive(Component, Clone)]
 pub struct Hero {
