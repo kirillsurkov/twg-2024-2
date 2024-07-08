@@ -2,6 +2,7 @@ use bevy::{ecs::schedule::ScheduleLabel, prelude::*};
 use dimas::Dimas;
 use dtyan::DTyan;
 use duck::Duck;
+use kisanya::Kisanya;
 use nulch::Nulch;
 use rasp::Rasp;
 
@@ -28,7 +29,7 @@ pub struct HeroesPlugin;
 
 impl Plugin for HeroesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((Nulch, Rasp, DTyan, Dimas, Duck));
+        app.add_plugins((Nulch, Rasp, DTyan, Dimas, Duck, Kisanya));
         app.add_systems(LocalSchedule, init_heroes);
     }
 }
@@ -107,6 +108,20 @@ fn init_heroes(mut commands: Commands, query: Query<Entity, Added<HeroesRoot>>) 
                     evasion: 0.14,
                 },
             ));
+            p.spawn((
+                Kisanya,
+                Hero {
+                    id: "kisanya".to_string(),
+                    name: "Кисаня".to_string(),
+                    desc: "Обязательно пройдёт твою игру на стриме".to_string(),
+                    hp: 1100.0,
+                    mana_regen: 9.0,
+                    attack: 22.0,
+                    attack_speed: 1.11,
+                    crit: 0.15,
+                    evasion: 0.12,
+                },
+            ));
         });
     }
 }
@@ -114,5 +129,6 @@ fn init_heroes(mut commands: Commands, query: Query<Entity, Added<HeroesRoot>>) 
 pub mod dimas;
 pub mod dtyan;
 pub mod duck;
+pub mod kisanya;
 pub mod nulch;
 pub mod rasp;
