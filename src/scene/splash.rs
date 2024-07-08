@@ -1,13 +1,21 @@
 use bevy::prelude::*;
 
-use super::{GameState, Root};
+use super::{GameState, LocalSchedule, Root};
 
 #[derive(Resource)]
-pub struct State {
+struct State {
     timer: f32,
 }
 
-pub fn update(
+pub struct Splash;
+
+impl Plugin for Splash {
+    fn build(&self, app: &mut App) {
+        app.add_systems(LocalSchedule, update.run_if(in_state(GameState::Splash)));
+    }
+}
+
+fn update(
     mut commands: Commands,
     mut next_state: ResMut<NextState<GameState>>,
     state: Option<ResMut<State>>,

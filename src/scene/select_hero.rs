@@ -1,4 +1,4 @@
-use bevy::{core_pipeline::bloom::BloomSettings, pbr::NotShadowCaster, prelude::*};
+use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
 use bevy_round_ui::prelude::{RoundRectUiMaterial, SuperellipseUiMaterial};
 
 use crate::{
@@ -7,39 +7,40 @@ use crate::{
     scene::landing::HeroSelected,
 };
 
-use super::{GameState, Root, UiRoot};
+use super::{GameState, LocalSchedule, Root, UiRoot};
 
 #[derive(Resource, Default)]
-pub struct State {
+struct State {
     timer: f32,
     selected_hero: Option<Hero>,
 }
 
-#[derive(Component)]
-pub struct DescNode;
+pub struct SelectHero;
+
+impl Plugin for SelectHero {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            LocalSchedule,
+            (init, update.run_if(resource_exists::<State>)).run_if(in_state(GameState::SelectHero)),
+        );
+    }
+}
 
 #[derive(Component)]
-pub struct NameNode;
+struct DescNode;
 
 #[derive(Component)]
-pub struct StatsNode;
+struct NameNode;
 
-pub fn update(
+#[derive(Component)]
+struct StatsNode;
+
+fn init(
     mut commands: Commands,
-    mut next_state: ResMut<NextState<GameState>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     mut ui_materials_1: ResMut<Assets<RoundRectUiMaterial>>,
     mut ui_materials_2: ResMut<Assets<SuperellipseUiMaterial>>,
     asset_server: Res<AssetServer>,
-    state: Option<ResMut<State>>,
-    time: Res<Time>,
     query: Query<Entity, Added<Root>>,
-    mut desc_node: Query<&mut Text, (With<DescNode>, Without<NameNode>, Without<StatsNode>)>,
-    mut name_node: Query<&mut Text, (Without<DescNode>, With<NameNode>, Without<StatsNode>)>,
-    mut stats_node: Query<&mut Text, (Without<DescNode>, Without<NameNode>, With<StatsNode>)>,
-    wheel: Query<(&Wheel, &Children)>,
-    heroes: Query<&Hero>,
 ) {
     for root in query.iter() {
         println!("SELECT HERO INIT");
@@ -181,12 +182,20 @@ pub fn update(
                     ));
                 });
             });
-
-        return;
     }
+}
 
-    let mut state = state.unwrap();
-
+fn update(
+    mut commands: Commands,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut state: ResMut<State>,
+    time: Res<Time>,
+    mut desc_node: Query<&mut Text, (With<DescNode>, Without<NameNode>, Without<StatsNode>)>,
+    mut name_node: Query<&mut Text, (Without<DescNode>, With<NameNode>, Without<StatsNode>)>,
+    mut stats_node: Query<&mut Text, (Without<DescNode>, Without<NameNode>, With<StatsNode>)>,
+    wheel: Query<(&Wheel, &Children)>,
+    heroes: Query<&Hero>,
+) {
     let (wheel, children) = wheel.single();
 
     state.selected_hero = Some(

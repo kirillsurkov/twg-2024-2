@@ -1,4 +1,9 @@
 use bevy::{ecs::schedule::ScheduleLabel, prelude::*};
+use fight_arena::FightArena;
+use fight_home::FightHome;
+use landing::Landing;
+use select_hero::SelectHero;
+use splash::Splash;
 
 #[derive(ScheduleLabel, Debug, Hash, PartialEq, Eq, Clone)]
 pub struct LocalSchedule;
@@ -18,20 +23,8 @@ pub struct GameScenePlugin;
 impl Plugin for GameScenePlugin {
     fn build(&self, app: &mut App) {
         app.insert_state(GameState::default());
-        app.add_systems(LocalSchedule, cleanup.run_if(state_changed::<GameState>));
-        app.add_systems(
-            LocalSchedule,
-            (
-                splash::update.run_if(in_state(GameState::Splash)),
-                select_hero::update.run_if(in_state(GameState::SelectHero)),
-                landing::update.run_if(in_state(GameState::Landing)),
-                fight_home::update.run_if(in_state(GameState::FightHome)),
-                fight_arena::update.run_if(in_state(GameState::FightArena)),
-            )
-                .before(cleanup)
-                .run_if(any_with_component::<Root>)
-                .run_if(not(state_changed::<GameState>)),
-        );
+        app.add_plugins((Splash, SelectHero, Landing, FightHome, FightArena));
+        app.add_systems(Update, cleanup.run_if(state_changed::<GameState>));
     }
 }
 

@@ -2,21 +2,25 @@ use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
 
 use crate::{component::home::Home, hero::HeroesRoot};
 
-use super::{landing::HeroSelected, GameState, Root};
+use super::{landing::HeroSelected, GameState, LocalSchedule, Root};
 
 #[derive(Resource)]
-pub struct State {
+struct State {
     timer: f32,
 }
 
-pub fn update(
-    mut commands: Commands,
-    mut next_state: ResMut<NextState<GameState>>,
-    selected: Res<HeroSelected>,
-    state: Option<ResMut<State>>,
-    time: Res<Time>,
-    query: Query<Entity, Added<Root>>,
-) {
+pub struct FightHome;
+
+impl Plugin for FightHome {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            LocalSchedule,
+            (init, update.run_if(resource_exists::<State>)).run_if(in_state(GameState::FightHome)),
+        );
+    }
+}
+
+fn init(mut commands: Commands, selected: Res<HeroSelected>, query: Query<Entity, Added<Root>>) {
     for root in query.iter() {
         println!("FIGHT HOME INIT FOR {}", selected.id);
         commands.insert_resource(State { timer: 0.0 });
@@ -48,11 +52,10 @@ pub fn update(
 
             p.spawn((Home {}, HeroesRoot));
         });
-        return;
     }
+}
 
-    let mut state = state.unwrap();
-
+fn update(mut state: ResMut<State>, time: Res<Time>) {
     state.timer += time.delta_seconds();
     if state.timer >= 3.0 {
         // next_state.set(GameState::FightArena);

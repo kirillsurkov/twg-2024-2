@@ -2,27 +2,30 @@ use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
 
 use crate::{component::land::Land, hero::HeroesRoot};
 
-use super::{GameState, Root};
+use super::{GameState, LocalSchedule, Root};
+
+#[derive(Resource)]
+struct State {
+    timer: f32,
+}
+
+pub struct Landing;
+
+impl Plugin for Landing {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            LocalSchedule,
+            (init, update.run_if(resource_exists::<State>)).run_if(in_state(GameState::Landing)),
+        );
+    }
+}
 
 #[derive(Resource)]
 pub struct HeroSelected {
     pub id: String,
 }
 
-#[derive(Resource)]
-pub struct State {
-    timer: f32,
-}
-
-pub fn update(
-    mut commands: Commands,
-    mut next_state: ResMut<NextState<GameState>>,
-    selected: Res<HeroSelected>,
-    state: Option<ResMut<State>>,
-    time: Res<Time>,
-    query: Query<Entity, Added<Root>>,
-    land: Query<&Land>,
-) {
+fn init(mut commands: Commands, selected: Res<HeroSelected>, query: Query<Entity, Added<Root>>) {
     for root in query.iter() {
         println!("LANDING INIT FOR {}", selected.id);
         commands.insert_resource(State { timer: 0.0 });
@@ -56,9 +59,14 @@ pub fn update(
         });
         return;
     }
+}
 
-    let mut state = state.unwrap();
-
+fn update(
+    mut next_state: ResMut<NextState<GameState>>,
+    mut state: ResMut<State>,
+    time: Res<Time>,
+    land: Query<&Land>,
+) {
     let land = land.single();
 
     if land.ready() {
