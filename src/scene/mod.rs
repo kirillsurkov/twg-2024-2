@@ -41,9 +41,6 @@ pub struct Root;
 #[derive(Component)]
 pub struct UiRoot;
 
-#[derive(Component)]
-pub struct InitScene;
-
 fn cleanup(
     mut commands: Commands,
     query: Query<Entity, With<Root>>,
@@ -58,7 +55,6 @@ fn cleanup(
     }
     commands.spawn((
         Root,
-        InitScene,
         TransformBundle::default(),
         VisibilityBundle::default(),
     ));

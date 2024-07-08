@@ -2,7 +2,7 @@ use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
 
 use crate::{component::land::Land, hero::HeroesRoot};
 
-use super::{GameState, InitScene, Root};
+use super::{GameState, Root};
 
 #[derive(Resource)]
 pub struct HeroSelected {
@@ -20,7 +20,7 @@ pub fn update(
     selected: Res<HeroSelected>,
     state: Option<ResMut<State>>,
     time: Res<Time>,
-    query: Query<Entity, (With<Root>, Added<InitScene>)>,
+    query: Query<Entity, Added<Root>>,
 ) {
     for root in query.iter() {
         println!("LANDING INIT FOR {}", selected.id);

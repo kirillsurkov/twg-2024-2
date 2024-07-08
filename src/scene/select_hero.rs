@@ -58,22 +58,6 @@ pub fn update(
                 BloomSettings::default(),
             ));
 
-            p.spawn((
-                PbrBundle {
-                    mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-                    material: materials.add(StandardMaterial {
-                        base_color: Color::hex("888888").unwrap().into(),
-                        unlit: true,
-                        cull_mode: None,
-                        ..default()
-                    }),
-                    transform: Transform::from_scale(Vec3::splat(20.0))
-                        .with_translation(Vec3::new(0.0, 0.0, 5.0)),
-                    ..default()
-                },
-                NotShadowCaster,
-            ));
-
             p.spawn(DirectionalLightBundle {
                 directional_light: DirectionalLight {
                     color: Color::rgb(0.98, 0.95, 0.82),

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::{GameState, InitScene, Root};
+use super::{GameState, Root};
 
 #[derive(Resource)]
 pub struct State {
@@ -12,7 +12,7 @@ pub fn update(
     mut next_state: ResMut<NextState<GameState>>,
     state: Option<ResMut<State>>,
     time: Res<Time>,
-    query: Query<Entity, (With<Root>, Added<InitScene>)>,
+    query: Query<Entity, Added<Root>>,
 ) {
     for root in query.iter() {
         println!("SPLASH INIT");
