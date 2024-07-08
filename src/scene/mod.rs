@@ -18,9 +18,9 @@ pub enum GameState {
     FightArena,
 }
 
-pub struct GameScenePlugin;
+pub struct ScenesPlugin;
 
-impl Plugin for GameScenePlugin {
+impl Plugin for ScenesPlugin {
     fn build(&self, app: &mut App) {
         app.insert_state(GameState::default());
         app.add_plugins((Splash, SelectHero, Landing, FightHome, FightArena));

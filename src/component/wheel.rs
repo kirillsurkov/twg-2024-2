@@ -2,8 +2,6 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
-use crate::hero::Hero;
-
 use super::LocalSchedule;
 
 pub struct WheelPlugin;

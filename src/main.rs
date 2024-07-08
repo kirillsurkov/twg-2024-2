@@ -4,7 +4,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_round_ui::prelude::BevyRoundUiDefaultPlugins;
 use component::ComponentsPlugin;
 use hero::HeroesPlugin;
-use scene::GameScenePlugin;
+use scene::ScenesPlugin;
 
 mod component;
 mod hero;
@@ -26,7 +26,7 @@ fn main() {
         .insert_after(hero::LocalSchedule, component::LocalSchedule);
 
     app.add_schedule(Schedule::new(scene::LocalSchedule))
-        .add_plugins(GameScenePlugin)
+        .add_plugins(ScenesPlugin)
         .world
         .resource_mut::<MainScheduleOrder>()
         .insert_after(component::LocalSchedule, scene::LocalSchedule);
