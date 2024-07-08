@@ -5,8 +5,8 @@ pub struct LocalSchedule;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default, States)]
 pub enum GameState {
-    #[default]
     Splash,
+    #[default]
     SelectHero,
     Landing,
     FightHome,
@@ -39,12 +39,22 @@ impl Plugin for GameScenePlugin {
 pub struct Root;
 
 #[derive(Component)]
+pub struct UiRoot;
+
+#[derive(Component)]
 pub struct InitScene;
 
-fn cleanup(mut commands: Commands, query: Query<Entity, With<Root>>) {
+fn cleanup(
+    mut commands: Commands,
+    query: Query<Entity, With<Root>>,
+    query_ui: Query<Entity, With<UiRoot>>,
+) {
     println!("CLEANUP");
     if let Ok(root) = query.get_single() {
         commands.entity(root).despawn_recursive();
+    }
+    if let Ok(ui_root) = query_ui.get_single() {
+        commands.entity(ui_root).despawn_recursive();
     }
     commands.spawn((
         Root,

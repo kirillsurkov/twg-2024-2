@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::scene::landing::HeroSelected;
+use crate::{hero::Hero, scene::landing::HeroSelected};
 
 use super::LocalSchedule;
 
@@ -27,13 +27,13 @@ fn added(
     mut commands: Commands,
     mut query: Query<(Entity, &mut Land, &Children), Added<Land>>,
     selected: Option<Res<HeroSelected>>,
-    named: Query<&Name>,
+    heroes: Query<&Hero>,
 ) {
     for (entity, mut land, children) in query.iter_mut() {
         let selected = selected.as_ref().unwrap();
 
         let mut children = children.iter().map(|e| *e).collect::<Vec<_>>();
-        children.sort_unstable_by_key(|c| named.get(*c).unwrap().as_str() != selected.name);
+        children.sort_unstable_by_key(|c| heroes.get(*c).unwrap().id != selected.id);
 
         for (i, child) in children.into_iter().enumerate() {
             let (x, y) = match i {

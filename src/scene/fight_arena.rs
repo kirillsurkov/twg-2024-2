@@ -18,7 +18,7 @@ pub fn update(
     query: Query<Entity, (With<Root>, Added<InitScene>)>,
 ) {
     for root in query.iter() {
-        println!("FIGHT ARENA INIT FOR {}", selected.name);
+        println!("FIGHT ARENA INIT FOR {}", selected.id);
         commands.insert_resource(State { timer: 0.0 });
         commands.entity(root).with_children(|p| {
             p.spawn((

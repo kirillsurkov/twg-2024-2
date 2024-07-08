@@ -6,7 +6,7 @@ use super::{GameState, InitScene, Root};
 
 #[derive(Resource)]
 pub struct HeroSelected {
-    pub name: String,
+    pub id: String,
 }
 
 #[derive(Resource)]
@@ -23,7 +23,7 @@ pub fn update(
     query: Query<Entity, (With<Root>, Added<InitScene>)>,
 ) {
     for root in query.iter() {
-        println!("LANDING INIT FOR {}", selected.name);
+        println!("LANDING INIT FOR {}", selected.id);
         commands.insert_resource(State { timer: 0.0 });
         commands.entity(root).with_children(|p| {
             p.spawn((

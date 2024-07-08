@@ -978,6 +978,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_round_ui"
+version = "2.0.0"
+source = "git+https://github.com/robertdodd/bevy_round_ui?tag=v2.0.0#9ef66d0be385c34762dc4f70f350d713bd3f12bb"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_scene"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4034,6 +4042,7 @@ dependencies = [
  "bevy_hanabi",
  "bevy_mod_raycast",
  "bevy_rapier3d",
+ "bevy_round_ui",
 ]
 
 [[package]]
