@@ -27,12 +27,24 @@ pub fn update(
                         hdr: true,
                         ..Default::default()
                     },
-                    transform: Transform::from_translation(Vec3::new(-2.0, 10.0, 10.0))
-                        .looking_at(Vec3::new(0.0, 0.0, -5.0), Vec3::Y),
+                    transform: Transform::from_translation(Vec3::new(0.0, 5.0, 5.0))
+                        .looking_at(Vec3::new(0.0, 2.0, 0.0), Vec3::Y),
                     ..default()
                 },
                 BloomSettings::default(),
             ));
+
+            p.spawn(DirectionalLightBundle {
+                directional_light: DirectionalLight {
+                    color: Color::rgb(0.98, 0.95, 0.82),
+                    shadows_enabled: true,
+                    illuminance: 1000.0,
+                    ..default()
+                },
+                transform: Transform::from_xyz(0.0, 0.0, 0.0)
+                    .looking_at(Vec3::new(0.15, -0.15, -0.25), Vec3::Y),
+                ..Default::default()
+            });
 
             p.spawn((Home {}, HeroesRoot));
         });
@@ -43,6 +55,6 @@ pub fn update(
 
     state.timer += time.delta_seconds();
     if state.timer >= 3.0 {
-        next_state.set(GameState::FightArena);
+        // next_state.set(GameState::FightArena);
     }
 }

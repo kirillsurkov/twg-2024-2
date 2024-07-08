@@ -8,7 +8,7 @@ pub struct LandPlugin;
 
 impl Plugin for LandPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(LocalSchedule, added);
+        app.add_systems(LocalSchedule, (added, show));
     }
 }
 
@@ -18,10 +18,18 @@ pub struct State {
     pub changed: bool,
 }
 
-#[derive(Component)]
-pub struct Land {}
+#[derive(Component, Default)]
+pub struct Land {
+    index: usize,
+    timer: f32,
+    ready: bool,
+}
 
-impl Land {}
+impl Land {
+    pub fn ready(&self) -> bool {
+        self.ready
+    }
+}
 
 fn added(
     mut commands: Commands,
@@ -55,7 +63,10 @@ fn added(
                     active: i == 0,
                     changed: true,
                 },
-                VisibilityBundle::default(),
+                VisibilityBundle {
+                    visibility: Visibility::Hidden,
+                    ..Default::default()
+                },
             ));
         }
 
@@ -69,5 +80,30 @@ fn added(
             },
             VisibilityBundle::default(),
         ));
+    }
+}
+
+fn show(
+    mut query: Query<(&mut Land, &Children)>,
+    mut visibilities: Query<&mut Visibility>,
+    selected: Option<Res<HeroSelected>>,
+    heroes: Query<&Hero>,
+    time: Res<Time>,
+) {
+    for (mut land, children) in query.iter_mut() {
+        let selected = selected.as_ref().unwrap();
+        if land.timer >= 0.5 {
+            if land.index < children.len() {
+                let mut children = children.iter().map(|e| *e).collect::<Vec<_>>();
+                children.sort_by_key(|c| heroes.get(*c).unwrap().id == selected.id);
+                *visibilities.get_mut(children[land.index]).unwrap() = Visibility::Visible;
+                land.timer = 0.0;
+                land.index += 1;
+            } else {
+                land.ready = true;
+            }
+        } else {
+            land.timer += time.delta_seconds();
+        }
     }
 }

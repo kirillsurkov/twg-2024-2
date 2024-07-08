@@ -21,6 +21,7 @@ pub fn update(
     state: Option<ResMut<State>>,
     time: Res<Time>,
     query: Query<Entity, Added<Root>>,
+    land: Query<&Land>,
 ) {
     for root in query.iter() {
         println!("LANDING INIT FOR {}", selected.id);
@@ -39,15 +40,31 @@ pub fn update(
                 BloomSettings::default(),
             ));
 
-            p.spawn((Land {}, HeroesRoot));
+            p.spawn(DirectionalLightBundle {
+                directional_light: DirectionalLight {
+                    color: Color::rgb(0.98, 0.95, 0.82),
+                    shadows_enabled: true,
+                    illuminance: 1000.0,
+                    ..default()
+                },
+                transform: Transform::from_xyz(0.0, 0.0, 0.0)
+                    .looking_at(Vec3::new(0.15, -0.15, -0.25), Vec3::Y),
+                ..Default::default()
+            });
+
+            p.spawn((Land::default(), HeroesRoot));
         });
         return;
     }
 
     let mut state = state.unwrap();
 
-    state.timer += time.delta_seconds();
-    if state.timer >= 3.0 {
-        next_state.set(GameState::FightHome);
+    let land = land.single();
+
+    if land.ready() {
+        state.timer += time.delta_seconds();
+        if state.timer >= 3.0 {
+            next_state.set(GameState::FightHome);
+        }
     }
 }

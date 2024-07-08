@@ -2,6 +2,8 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
+use crate::hero::Hero;
+
 use super::LocalSchedule;
 
 pub struct WheelPlugin;
@@ -45,7 +47,12 @@ impl Wheel {
     }
 }
 
-fn added(mut commands: Commands, mut query: Query<(Entity, &mut Wheel, &Children), Added<Wheel>>) {
+fn added(
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Wheel, &Children), Added<Wheel>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     for (entity, mut wheel, children) in query.iter_mut() {
         wheel.max = children.len();
         for (i, child) in children.iter().enumerate() {
@@ -57,37 +64,98 @@ fn added(mut commands: Commands, mut query: Query<(Entity, &mut Wheel, &Children
                     .with_rotation(Quat::from_rotation_y(ang)),
                 ..Default::default()
             };
-            commands.entity(*child).insert((
-                transform,
-                State {
-                    active: i == 0,
-                    changed: true,
-                },
-                VisibilityBundle::default(),
-            ));
+            commands
+                .entity(*child)
+                .insert((
+                    transform,
+                    State {
+                        active: i == 0,
+                        changed: true,
+                    },
+                    VisibilityBundle::default(),
+                ))
+                .with_children(|p| {
+                    p.spawn(PbrBundle {
+                        mesh: meshes.add(Cylinder {
+                            radius: 2.5,
+                            half_height: 0.05,
+                        }),
+                        material: materials.add(StandardMaterial {
+                            base_color: Color::GRAY,
+                            ..Default::default()
+                        }),
+                        transform: Transform::from_translation(Vec3::new(0.0, -0.05, 0.0)),
+                        ..Default::default()
+                    });
+                    p.spawn(PbrBundle {
+                        mesh: meshes.add(Cylinder {
+                            radius: 0.5,
+                            half_height: 0.45,
+                        }),
+                        material: materials.add(StandardMaterial {
+                            base_color: Color::GRAY,
+                            ..Default::default()
+                        }),
+                        transform: Transform::from_translation(Vec3::new(0.0, -0.55, 0.0)),
+                        ..Default::default()
+                    });
+                    p.spawn(PbrBundle {
+                        mesh: meshes.add(Torus {
+                            major_radius: 2.49,
+                            minor_radius: 0.01,
+                        }),
+                        material: materials.add(StandardMaterial {
+                            base_color: Color::rgb(0.0, 0.0, 4.0),
+                            unlit: true,
+                            ..Default::default()
+                        }),
+                        // transform: Transform::from_translation(Vec3::new(0.0, -0.05, 0.0)),
+                        ..Default::default()
+                    });
+                });
         }
-        commands.entity(entity).insert((
-            TransformBundle {
-                local: Transform {
-                    translation: Vec3::new(0.0, 0.0, -wheel.radius),
+
+        commands
+            .entity(entity)
+            .insert((
+                TransformBundle {
+                    local: Transform {
+                        translation: Vec3::new(0.0, 0.0, -wheel.radius),
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
-                ..Default::default()
-            },
-            VisibilityBundle::default(),
-        ));
+                VisibilityBundle::default(),
+            ))
+            .with_children(|p| {
+                p.spawn(PbrBundle {
+                    mesh: meshes.add(Torus {
+                        major_radius: wheel.radius,
+                        minor_radius: 0.01,
+                    }),
+                    material: materials.add(StandardMaterial {
+                        base_color: Color::rgb(0.0, 0.0, 4.0),
+                        unlit: true,
+                        ..Default::default()
+                    }),
+                    transform: Transform::from_translation(Vec3::new(0.0, -1.0, 0.0)),
+                    ..Default::default()
+                });
+            });
     }
 }
 
 fn scroll(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&Children, &mut Wheel, &mut Transform)>,
+    mut query: Query<(&mut Wheel, &mut Transform, &Children)>,
     mut states: Query<&mut State>,
     time: Res<Time>,
 ) {
-    for (children, mut wheel, mut transform) in query.iter_mut() {
+    for (mut wheel, mut transform, children) in query.iter_mut() {
         for child in children {
-            states.get_mut(*child).unwrap().changed = false;
+            if let Ok(mut child) = states.get_mut(*child) {
+                child.changed = false;
+            }
         }
 
         if wheel.selected {

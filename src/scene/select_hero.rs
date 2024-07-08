@@ -99,8 +99,8 @@ pub fn update(
                         ..Default::default()
                     }),
                     style: Style {
-                        margin: UiRect::all(Val::Px(50.0)),
-                        padding: UiRect::all(Val::Px(10.0)),
+                        margin: UiRect::all(Val::Percent(5.0)),
+                        padding: UiRect::all(Val::Px(25.0)),
                         width: Val::Percent(20.0),
                         align_self: AlignSelf::Center,
                         ..Default::default()
@@ -129,9 +129,9 @@ pub fn update(
                         ..Default::default()
                     }),
                     style: Style {
-                        margin: UiRect::vertical(Val::Px(50.0)),
-                        padding: UiRect::all(Val::Px(10.0)),
-                        width: Val::Percent(60.0),
+                        margin: UiRect::axes(Val::Percent(10.0), Val::Px(50.0)),
+                        padding: UiRect::all(Val::Px(25.0)),
+                        width: Val::Percent(30.0),
                         justify_content: JustifyContent::Center,
                         ..Default::default()
                     },
@@ -159,8 +159,8 @@ pub fn update(
                         ..Default::default()
                     }),
                     style: Style {
-                        margin: UiRect::all(Val::Px(50.0)),
-                        padding: UiRect::all(Val::Px(10.0)),
+                        margin: UiRect::all(Val::Percent(5.0)),
+                        padding: UiRect::all(Val::Px(25.0)),
                         width: Val::Percent(20.0),
                         align_self: AlignSelf::Center,
                         ..Default::default()
