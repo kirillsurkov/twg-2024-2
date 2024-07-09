@@ -1,6 +1,7 @@
 use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
+use bevy_round_ui::prelude::{RoundRectUiMaterial, SuperellipseUiMaterial};
 
-use crate::{component::home::Home, hero::HeroesRoot};
+use crate::{component::home::Home, hero::HeroesRoot, scene::UiRoot};
 
 use super::{landing::HeroSelected, GameState, LocalSchedule, Root};
 
@@ -20,7 +21,13 @@ impl Plugin for FightHome {
     }
 }
 
-fn init(mut commands: Commands, selected: Res<HeroSelected>, query: Query<Entity, Added<Root>>) {
+fn init(
+    mut commands: Commands,
+    mut ui_materials: ResMut<Assets<SuperellipseUiMaterial>>,
+    selected: Res<HeroSelected>,
+    query: Query<Entity, Added<Root>>,
+    asset_server: Res<AssetServer>,
+) {
     for root in query.iter() {
         println!("FIGHT HOME INIT FOR {}", selected.id);
         commands.insert_resource(State { timer: 0.0 });
@@ -31,8 +38,8 @@ fn init(mut commands: Commands, selected: Res<HeroSelected>, query: Query<Entity
                         hdr: true,
                         ..Default::default()
                     },
-                    transform: Transform::from_translation(Vec3::new(0.0, 5.0, 5.0))
-                        .looking_at(Vec3::new(0.0, 2.0, 0.0), Vec3::Y),
+                    transform: Transform::from_translation(Vec3::new(0.0, 5.0, 9.0))
+                        .looking_at(Vec3::new(0.0, 2.0, 4.0), Vec3::Y),
                     ..default()
                 },
                 BloomSettings::default(),
@@ -51,7 +58,195 @@ fn init(mut commands: Commands, selected: Res<HeroSelected>, query: Query<Entity
             });
 
             p.spawn((Home {}, HeroesRoot));
+
+            p.spawn(AudioBundle {
+                source: asset_server.load("embedded://wild_darkness.ogg"),
+                ..Default::default()
+            });
         });
+
+        let font: Handle<Font> = asset_server.load("embedded://comic.ttf");
+
+        let text_card = TextStyle {
+            font: font.clone(),
+            font_size: 25.0,
+            ..Default::default()
+        };
+
+        let cards_holder = || NodeBundle {
+            style: Style {
+                margin: UiRect::new(
+                    Val::Percent(20.0),
+                    Val::Px(0.0),
+                    Val::Px(0.0),
+                    Val::Percent(5.0),
+                ),
+                width: Val::Percent(50.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        let card_holder = || NodeBundle {
+            style: Style {
+                // margin: UiRect::all(Val::Percent(5.0)),
+                padding: UiRect::horizontal(Val::Percent(5.0)),
+                width: Val::Percent(100.0),
+                height: Val::Vh(40.0),
+                justify_content: JustifyContent::Center,
+                align_self: AlignSelf::FlexEnd,
+                flex_direction: FlexDirection::Column,
+                ..Default::default()
+            },
+            // background_color: Color::RED.into(),
+            ..Default::default()
+        };
+
+        let card_header =
+            |ui_materials: &mut ResMut<Assets<SuperellipseUiMaterial>>| MaterialNodeBundle {
+                material: ui_materials.add(SuperellipseUiMaterial {
+                    background_color: Color::BLACK,
+                    border_radius: Vec4::splat(25.0),
+                    border_color: Color::WHITE,
+                    border_thickness: 2.0,
+                }),
+                style: Style {
+                    margin: UiRect::bottom(Val::Percent(5.0)),
+                    padding: UiRect::all(Val::Px(25.0)),
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(80.0),
+                    justify_content: JustifyContent::Center,
+                    ..Default::default()
+                },
+                ..Default::default()
+            };
+
+        let card_footer =
+            |ui_materials: &mut ResMut<Assets<SuperellipseUiMaterial>>| MaterialNodeBundle {
+                material: ui_materials.add(SuperellipseUiMaterial {
+                    background_color: Color::BLACK,
+                    border_radius: Vec4::splat(25.0),
+                    border_color: Color::WHITE,
+                    border_thickness: 2.0,
+                }),
+                style: Style {
+                    padding: UiRect::all(Val::Px(5.0)),
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(20.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..Default::default()
+                },
+                ..Default::default()
+            };
+
+        let info_holder = || NodeBundle {
+            style: Style {
+                margin: UiRect::new(
+                    Val::Percent(0.0),
+                    Val::Px(0.0),
+                    Val::Px(0.0),
+                    Val::Percent(1.0),
+                ),
+                padding: UiRect::horizontal(Val::Percent(5.0)),
+                width: Val::Percent(30.0),
+                height: Val::Percent(90.0),
+                flex_direction: FlexDirection::Column,
+                ..Default::default()
+            },
+            // background_color: Color::CYAN.into(),
+            ..Default::default()
+        };
+
+        let info_header =
+            |ui_materials: &mut ResMut<Assets<SuperellipseUiMaterial>>| MaterialNodeBundle {
+                material: ui_materials.add(SuperellipseUiMaterial {
+                    background_color: Color::BLACK,
+                    border_radius: Vec4::splat(25.0),
+                    border_color: Color::WHITE,
+                    border_thickness: 2.0,
+                }),
+                style: Style {
+                    margin: UiRect::bottom(Val::Percent(10.0)),
+                    padding: UiRect::all(Val::Px(25.0)),
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(85.0),
+                    justify_content: JustifyContent::Center,
+                    ..Default::default()
+                },
+                ..Default::default()
+            };
+
+        let info_footer =
+            |ui_materials: &mut ResMut<Assets<SuperellipseUiMaterial>>| MaterialNodeBundle {
+                material: ui_materials.add(SuperellipseUiMaterial {
+                    background_color: Color::BLACK,
+                    border_radius: Vec4::splat(25.0),
+                    border_color: Color::WHITE,
+                    border_thickness: 2.0,
+                }),
+                style: Style {
+                    // margin: UiRect::bottom(Val::Percent(5.0)),
+                    padding: UiRect::all(Val::Px(25.0)),
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(15.0),
+                    justify_content: JustifyContent::FlexStart,
+                    ..Default::default()
+                },
+                ..Default::default()
+            };
+
+        commands
+            .spawn((
+                UiRoot,
+                NodeBundle {
+                    style: Style {
+                        width: Val::Vw(100.0),
+                        height: Val::Vh(100.0),
+                        display: Display::Flex,
+                        align_items: AlignItems::FlexEnd,
+                        ..Default::default()
+                    },
+                    // background_color: Color::BLUE.into(),
+                    ..Default::default()
+                },
+            ))
+            .with_children(|p| {
+                p.spawn(cards_holder()).with_children(|p| {
+                    p.spawn(card_holder()).with_children(|p| {
+                        p.spawn(card_header(&mut ui_materials)).with_children(|p| {
+                            p.spawn((TextBundle::from_section("Карточка 1", text_card.clone()),));
+                        });
+                        p.spawn(card_footer(&mut ui_materials)).with_children(|p| {
+                            p.spawn((TextBundle::from_section("100$", text_card.clone()),));
+                        });
+                    });
+                    p.spawn(card_holder()).with_children(|p| {
+                        p.spawn(card_header(&mut ui_materials)).with_children(|p| {
+                            p.spawn((TextBundle::from_section("Карточка 2", text_card.clone()),));
+                        });
+                        p.spawn(card_footer(&mut ui_materials)).with_children(|p| {
+                            p.spawn((TextBundle::from_section("100$", text_card.clone()),));
+                        });
+                    });
+                    p.spawn(card_holder()).with_children(|p| {
+                        p.spawn(card_header(&mut ui_materials)).with_children(|p| {
+                            p.spawn((TextBundle::from_section("Карточка 3", text_card.clone()),));
+                        });
+                        p.spawn(card_footer(&mut ui_materials)).with_children(|p| {
+                            p.spawn((TextBundle::from_section("100$", text_card.clone()),));
+                        });
+                    });
+                });
+                p.spawn(info_holder()).with_children(|p| {
+                    p.spawn(info_header(&mut ui_materials)).with_children(|p| {
+                        p.spawn((TextBundle::from_section("Info header", text_card.clone()),));
+                    });
+                    p.spawn(info_footer(&mut ui_materials)).with_children(|p| {
+                        p.spawn((TextBundle::from_section("Баланс: 300$", text_card.clone()),));
+                    });
+                });
+            });
     }
 }
 
