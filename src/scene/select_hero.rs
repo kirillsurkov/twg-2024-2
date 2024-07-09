@@ -71,10 +71,10 @@ fn init(
 
             p.spawn((Wheel::new(10.0), HeroesRoot));
 
-            p.spawn(AudioBundle {
-                source: asset_server.load("embedded://rockafeller_skank.ogg"),
-                ..Default::default()
-            });
+            // p.spawn(AudioBundle {
+            //     source: asset_server.load("embedded://rockafeller_skank.ogg"),
+            //     ..Default::default()
+            // });
         });
 
         let font: Handle<Font> = asset_server.load("embedded://comic.ttf");

@@ -59,10 +59,10 @@ fn init(
 
             p.spawn((Home {}, HeroesRoot));
 
-            p.spawn(AudioBundle {
-                source: asset_server.load("embedded://wild_darkness.ogg"),
-                ..Default::default()
-            });
+            // p.spawn(AudioBundle {
+            //     source: asset_server.load("embedded://wild_darkness.ogg"),
+            //     ..Default::default()
+            // });
         });
 
         let font: Handle<Font> = asset_server.load("embedded://comic.ttf");

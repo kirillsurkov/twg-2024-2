@@ -13,7 +13,7 @@ impl Plugin for WheelPlugin {
 }
 
 #[derive(Component)]
-pub struct State {
+pub struct HeroState {
     pub active: bool,
     pub changed: bool,
 }
@@ -72,7 +72,7 @@ fn added(
                 .entity(*child)
                 .insert((
                     transform,
-                    State {
+                    HeroState {
                         active: i == 0,
                         changed: true,
                     },
@@ -152,7 +152,7 @@ fn added(
 fn scroll(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Wheel, &mut Transform, &Children)>,
-    mut states: Query<&mut State>,
+    mut states: Query<&mut HeroState>,
     time: Res<Time>,
 ) {
     for (mut wheel, mut transform, children) in query.iter_mut() {

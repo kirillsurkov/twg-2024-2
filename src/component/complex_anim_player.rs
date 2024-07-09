@@ -39,8 +39,11 @@ impl Showoff {
 
 pub enum State {
     Idle,
-    Showoff,
+    Showoff(Duration),
 }
+
+pub const SHOWOFF_LAZY: State = State::Showoff(Duration::from_millis(5000));
+pub const SHOWOFF_IMMEDIATE: State = State::Showoff(Duration::from_millis(0));
 
 #[derive(Component)]
 pub struct Animations {
@@ -107,7 +110,6 @@ fn play(
     time: Res<Time>,
 ) {
     const TRANSITION: Duration = Duration::from_millis(250);
-    const INTERVAL: Duration = Duration::from_millis(5000);
 
     for (mut player, mut animations) in query.iter_mut() {
         let mut anim_player = anim_players.get_mut(player.anim_player).unwrap();
@@ -121,15 +123,16 @@ fn play(
                 }
                 None => {}
             },
-            State::Showoff => {
+            State::Showoff(interval) => {
                 if player.state_changed {
                     player.current_showoff = None;
                 }
                 let current_showoff = match player.current_showoff.as_mut() {
                     Some(showoff) => showoff,
                     None => {
-                        if player.timer >= INTERVAL.as_secs_f32() {
+                        if player.timer >= interval.as_secs_f32() {
                             player.timer = 0.0;
+                            anim_player.replay();
                             player.current_showoff = Some(player.showoffs[0].clone());
                             player.current_showoff.as_mut().unwrap()
                         } else {

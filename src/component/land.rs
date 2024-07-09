@@ -19,13 +19,23 @@ impl Plugin for LandPlugin {
 }
 
 #[derive(Component)]
-pub struct State;
+pub struct HeroState;
 
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct Land {
     index: usize,
     timer: f32,
     ready: bool,
+}
+
+impl Land {
+    pub fn new() -> Self {
+        Self {
+            index: 0,
+            timer: 0.0,
+            ready: false,
+        }
+    }
 }
 
 impl Land {
@@ -72,7 +82,7 @@ fn added(
                 .entity(child)
                 .insert((
                     transform,
-                    State,
+                    HeroState,
                     VisibilityBundle {
                         visibility: Visibility::Hidden,
                         ..Default::default()
