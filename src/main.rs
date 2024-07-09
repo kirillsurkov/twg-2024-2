@@ -1,4 +1,5 @@
 use bevy::{app::MainScheduleOrder, prelude::*};
+use bevy_embedded_assets::{EmbeddedAssetPlugin, PluginMode};
 use bevy_hanabi::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_round_ui::prelude::BevyRoundUiDefaultPlugins;
@@ -6,6 +7,7 @@ use component::ComponentsPlugin;
 use hero::HeroesPlugin;
 use scene::ScenesPlugin;
 
+mod battle;
 mod component;
 mod hero;
 mod scene;
@@ -34,6 +36,7 @@ fn main() {
     app.add_plugins(DefaultPlugins)
         .add_plugins(HanabiPlugin)
         .add_plugins(BevyRoundUiDefaultPlugins)
+        .add_plugins(EmbeddedAssetPlugin::default())
         //.add_plugins(NoCameraPlayerPlugin)
         // .add_plugins(WorldInspectorPlugin::new())
         .add_systems(Update, bevy::window::close_on_esc)

@@ -47,7 +47,7 @@ fn on_add(
             None => return,
         },
         None => {
-            commands.insert_resource(Model::<Kisanya>::new(asset_server.load("kisanya.glb")));
+            commands.insert_resource(Model::<Kisanya>::new(asset_server.load("embedded://kisanya.glb")));
             return;
         }
     };

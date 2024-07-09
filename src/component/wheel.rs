@@ -24,6 +24,7 @@ pub struct Wheel {
     current: usize,
     max: usize,
     selected: bool,
+    changed: bool,
 }
 
 impl Wheel {
@@ -33,6 +34,7 @@ impl Wheel {
             current: 0,
             max: 0,
             selected: false,
+            changed: true,
         }
     }
 
@@ -42,6 +44,10 @@ impl Wheel {
 
     pub fn selected(&self) -> bool {
         self.selected
+    }
+
+    pub fn changed(&self) -> bool {
+        self.changed
     }
 }
 
@@ -150,6 +156,8 @@ fn scroll(
     time: Res<Time>,
 ) {
     for (mut wheel, mut transform, children) in query.iter_mut() {
+        wheel.changed = false;
+
         for child in children {
             if let Ok(mut child) = states.get_mut(*child) {
                 child.changed = false;
@@ -166,6 +174,7 @@ fn scroll(
         let right = keyboard_input.just_pressed(KeyCode::ArrowRight);
 
         if left || right {
+            wheel.changed = true;
             let mut state = states
                 .get_mut(*children.get(wheel.current).unwrap())
                 .unwrap();

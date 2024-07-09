@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{hero::Hero, scene::landing::HeroSelected};
+use crate::{hero::HeroComponent, scene::landing::HeroSelected};
 
 use super::LocalSchedule;
 
@@ -25,9 +25,11 @@ impl Home {}
 
 fn added(
     mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(Entity, &mut Home, &Children), Added<Home>>,
     selected: Option<Res<HeroSelected>>,
-    heroes: Query<&Hero>,
+    heroes: Query<&HeroComponent>,
 ) {
     for (entity, mut home, children) in query.iter_mut() {
         let selected = selected.as_ref().unwrap();
@@ -57,15 +59,27 @@ fn added(
             VisibilityBundle::default(),
         ));
 
-        commands.entity(entity).insert((
-            TransformBundle {
-                local: Transform {
-                    translation: Vec3::new(0.0, 0.0, 0.0),
+        commands
+            .entity(entity)
+            .insert((
+                TransformBundle {
+                    local: Transform {
+                        translation: Vec3::new(0.0, 0.0, 0.0),
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
-                ..Default::default()
-            },
-            VisibilityBundle::default(),
-        ));
+                VisibilityBundle::default(),
+            ))
+            .with_children(|p| {
+                p.spawn(PbrBundle {
+                    mesh: meshes.add(Plane3d {
+                        normal: Direction3d::Y,
+                    }),
+                    material: materials.add(StandardMaterial::default()),
+                    transform: Transform::from_scale(Vec3::splat(10000.0)),
+                    ..Default::default()
+                });
+            });
     }
 }

@@ -10,8 +10,8 @@ pub struct LocalSchedule;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default, States)]
 pub enum GameState {
-    Splash,
     #[default]
+    Splash,
     SelectHero,
     Landing,
     FightHome,

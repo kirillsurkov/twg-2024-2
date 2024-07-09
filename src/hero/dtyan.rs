@@ -44,7 +44,7 @@ fn on_add(
             None => return,
         },
         None => {
-            commands.insert_resource(Model::<DTyan>::new(asset_server.load("derevotyan.glb")));
+            commands.insert_resource(Model::<DTyan>::new(asset_server.load("embedded://derevotyan.glb")));
             return;
         }
     };

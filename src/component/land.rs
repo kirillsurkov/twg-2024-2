@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{hero::Hero, scene::landing::HeroSelected};
+use crate::{hero::HeroComponent, scene::landing::HeroSelected};
 
 use super::LocalSchedule;
 
@@ -45,7 +45,7 @@ fn added(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     selected: Option<Res<HeroSelected>>,
-    heroes: Query<&Hero>,
+    heroes: Query<&HeroComponent>,
 ) {
     for (entity, children) in query.iter_mut() {
         let selected = selected.as_ref().unwrap();
@@ -126,11 +126,13 @@ fn added(
 }
 
 fn show(
+    mut commands: Commands,
     mut query: Query<(&mut Land, &Children)>,
     mut visibilities: Query<&mut Visibility>,
     mut beams: Query<(Entity, &mut Beam, &mut Transform, &Parent)>,
+    asset_server: Res<AssetServer>,
     selected: Res<HeroSelected>,
-    heroes: Query<&Hero>,
+    heroes: Query<&HeroComponent>,
     time: Res<Time>,
 ) {
     for (mut land, children) in query.iter_mut() {
@@ -142,11 +144,15 @@ fn show(
 
         land.ready = land.index == children.len();
 
-        if land.timer >= 0.5 {
+        if land.timer >= 0.25 {
             if land.index < children.len() {
                 *visibilities.get_mut(children[land.index].0).unwrap() = Visibility::Visible;
                 land.timer = 0.0;
                 land.index += 1;
+                commands.spawn(AudioBundle {
+                    source: asset_server.load("embedded://teleport.ogg"),
+                    ..Default::default()
+                });
             } else {
                 land.ready = true;
             }

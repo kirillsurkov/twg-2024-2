@@ -1,9 +1,9 @@
 use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
-use bevy_round_ui::prelude::{RoundRectUiMaterial, SuperellipseUiMaterial};
+use bevy_round_ui::prelude::SuperellipseUiMaterial;
 
 use crate::{
     component::wheel::Wheel,
-    hero::{Hero, HeroesRoot},
+    hero::{HeroComponent, HeroesRoot},
     scene::landing::HeroSelected,
 };
 
@@ -12,7 +12,6 @@ use super::{GameState, LocalSchedule, Root, UiRoot};
 #[derive(Resource, Default)]
 struct State {
     timer: f32,
-    selected_hero: Option<Hero>,
 }
 
 pub struct SelectHero;
@@ -37,8 +36,7 @@ struct StatsNode;
 
 fn init(
     mut commands: Commands,
-    mut ui_materials_1: ResMut<Assets<RoundRectUiMaterial>>,
-    mut ui_materials_2: ResMut<Assets<SuperellipseUiMaterial>>,
+    mut ui_materials: ResMut<Assets<SuperellipseUiMaterial>>,
     asset_server: Res<AssetServer>,
     query: Query<Entity, Added<Root>>,
 ) {
@@ -72,9 +70,14 @@ fn init(
             });
 
             p.spawn((Wheel::new(10.0), HeroesRoot));
+
+            p.spawn(AudioBundle {
+                source: asset_server.load("embedded://rockafeller_skank.ogg"),
+                ..Default::default()
+            });
         });
 
-        let font: Handle<Font> = asset_server.load("comic.ttf");
+        let font: Handle<Font> = asset_server.load("embedded://comic.ttf");
 
         commands
             .spawn((
@@ -92,7 +95,7 @@ fn init(
             ))
             .with_children(|p| {
                 p.spawn(MaterialNodeBundle {
-                    material: ui_materials_2.add(SuperellipseUiMaterial {
+                    material: ui_materials.add(SuperellipseUiMaterial {
                         background_color: Color::BLACK,
                         border_radius: Vec4::splat(25.0),
                         border_color: Color::WHITE,
@@ -122,11 +125,11 @@ fn init(
                     ));
                 });
                 p.spawn(MaterialNodeBundle {
-                    material: ui_materials_1.add(RoundRectUiMaterial {
+                    material: ui_materials.add(SuperellipseUiMaterial {
                         background_color: Color::BLACK,
                         border_radius: Vec4::splat(25.0),
                         border_color: Color::WHITE,
-                        offset: Vec4::splat(1.0),
+                        border_thickness: 2.0,
                         ..Default::default()
                     }),
                     style: Style {
@@ -152,7 +155,7 @@ fn init(
                     ));
                 });
                 p.spawn(MaterialNodeBundle {
-                    material: ui_materials_2.add(SuperellipseUiMaterial {
+                    material: ui_materials.add(SuperellipseUiMaterial {
                         background_color: Color::BLACK,
                         border_radius: Vec4::splat(25.0),
                         border_color: Color::WHITE,
@@ -194,29 +197,23 @@ fn update(
     mut name_node: Query<&mut Text, (Without<DescNode>, With<NameNode>, Without<StatsNode>)>,
     mut stats_node: Query<&mut Text, (Without<DescNode>, Without<NameNode>, With<StatsNode>)>,
     wheel: Query<(&Wheel, &Children)>,
-    heroes: Query<&Hero>,
+    heroes: Query<&HeroComponent>,
 ) {
     let (wheel, children) = wheel.single();
 
-    state.selected_hero = Some(
-        heroes
-            .get(*children.get(wheel.current()).unwrap())
-            .unwrap()
-            .clone(),
-    );
+    let selected_hero = heroes.get(*children.get(wheel.current()).unwrap()).unwrap();
 
-    let selected_hero = state.selected_hero.as_ref().unwrap();
+    if wheel.changed() {
+        for mut text in desc_node.iter_mut() {
+            text.sections[0].value = selected_hero.desc.to_string();
+        }
 
-    for mut text in desc_node.iter_mut() {
-        text.sections[0].value = selected_hero.desc.clone();
-    }
+        for mut text in name_node.iter_mut() {
+            text.sections[0].value = selected_hero.name.to_string();
+        }
 
-    for mut text in name_node.iter_mut() {
-        text.sections[0].value = selected_hero.name.clone();
-    }
-
-    for mut text in stats_node.iter_mut() {
-        text.sections[0].value = format!("HP: {hp}\nMana regen: {mana}\nAttack: {attack}\nAttack speed: {aps}\nCrit: {crit:.0}%\nEvasion: {evasion:.0}%",
+        for mut text in stats_node.iter_mut() {
+            text.sections[0].value = format!("HP: {hp}\nMana regen: {mana}\nAttack: {attack}\nAttack speed: {aps}\nCrit: {crit:.0}%\nEvasion: {evasion:.0}%",
             hp=selected_hero.hp,
             mana=selected_hero.mana_regen,
             attack=selected_hero.attack,
@@ -224,11 +221,12 @@ fn update(
             crit=selected_hero.crit*100.0,
             evasion=selected_hero.evasion*100.0
         );
+        }
     }
 
     if wheel.selected() {
         commands.insert_resource(HeroSelected {
-            id: selected_hero.id.clone(),
+            id: selected_hero.id.to_string(),
         });
         next_state.set(GameState::Landing);
     }

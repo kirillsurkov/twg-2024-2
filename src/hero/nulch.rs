@@ -47,7 +47,7 @@ fn on_add(
             None => return,
         },
         None => {
-            commands.insert_resource(Model::<Nulch>::new(asset_server.load("nulch.glb")));
+            commands.insert_resource(Model::<Nulch>::new(asset_server.load("embedded://nulch.glb")));
             return;
         }
     };

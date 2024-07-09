@@ -44,7 +44,7 @@ fn on_add(
             None => return,
         },
         None => {
-            commands.insert_resource(Model::<Dimas>::new(asset_server.load("dimas.glb")));
+            commands.insert_resource(Model::<Dimas>::new(asset_server.load("embedded://dimas.glb")));
             return;
         }
     };

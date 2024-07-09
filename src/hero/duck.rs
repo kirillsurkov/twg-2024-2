@@ -46,7 +46,7 @@ fn on_add(
             None => return,
         },
         None => {
-            commands.insert_resource(Model::<Duck>::new(asset_server.load("duck.glb")));
+            commands.insert_resource(Model::<Duck>::new(asset_server.load("embedded://duck.glb")));
             return;
         }
     };
