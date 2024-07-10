@@ -121,13 +121,13 @@ fn filter_animations(
             match name.as_str() {
                 "glasses_head" => {
                     *visibility = match current_anim.as_str() {
-                        "idle_track" | "hand_to_glasses_track" => Visibility::Visible,
+                        "idle_track" | "hand_to_glasses_track" => Visibility::Inherited,
                         _ => Visibility::Hidden,
                     }
                 }
                 "glasses_hand" => {
                     *visibility = match current_anim.as_str() {
-                        "glasses_on_track" | "glasses_off_track" => Visibility::Visible,
+                        "glasses_on_track" | "glasses_off_track" => Visibility::Inherited,
                         _ => Visibility::Hidden,
                     }
                 }

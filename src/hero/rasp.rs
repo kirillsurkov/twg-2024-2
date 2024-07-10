@@ -112,7 +112,7 @@ fn filter_animations(
         for (name, mut visibility) in named.iter_mut() {
             if name.as_str() == "pistol" {
                 *visibility = match current_anim.as_str() {
-                    "start_shoot_track" | "shoot_track" => Visibility::Visible,
+                    "start_shoot_track" | "shoot_track" => Visibility::Inherited,
                     _ => Visibility::Hidden,
                 };
             }
