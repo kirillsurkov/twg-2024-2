@@ -1,6 +1,7 @@
 use crate::battle::{
-    effect::{Data, Effect, HasEffect},
-    modifier::Modifier,
+    effect::{Effect, HasEffect},
+    fight::Fighter,
+    modifier::{Modifier, ModifierDesc, Target, ValueKind},
 };
 
 use super::Ability;
@@ -17,11 +18,15 @@ impl HasEffect for Ability<Attack> {
 }
 
 impl Effect for Attack {
-    fn update(&mut self, data: Data) -> Vec<Modifier> {
-        self.timer += data.delta;
-        if self.timer >= data.myself.attack_speed {
+    fn update(&mut self, delta: f32, myself: &Fighter, enemy: &Fighter) -> Vec<ModifierDesc> {
+        self.timer += delta;
+        if self.timer >= myself.attack_speed {
             self.timer = 0.0;
-            vec![Modifier::Damage(data.myself.attack)]
+            vec![ModifierDesc {
+                modifier: Modifier::Damage(myself.attack),
+                target: Target::Enemy,
+                value_kind: ValueKind::Units,
+            }]
         } else {
             vec![]
         }

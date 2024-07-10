@@ -6,7 +6,7 @@ use kisanya::Kisanya;
 use nulch::Nulch;
 use rasp::Rasp;
 
-use crate::battle::{dimas, dtyan, duck, kisanya, nulch, rasp, Hero};
+use crate::battle::hero::{dimas, dtyan, duck, kisanya, nulch, rasp, Hero};
 
 #[derive(Component, Deref)]
 pub struct HeroComponent(pub Hero);

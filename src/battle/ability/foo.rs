@@ -1,6 +1,7 @@
 use crate::battle::{
-    effect::{Data, Effect, HasEffect},
-    modifier::Modifier,
+    effect::{Effect, HasEffect},
+    fight::Fighter,
+    modifier::ModifierDesc,
 };
 
 use super::Ability;
@@ -17,7 +18,7 @@ impl HasEffect for Ability<Foo> {
 }
 
 impl Effect for Foo {
-    fn update(&mut self, data: Data) -> Vec<Modifier> {
+    fn update(&mut self, delta: f32, myself: &Fighter, enemy: &Fighter) -> Vec<ModifierDesc> {
         vec![]
     }
 }

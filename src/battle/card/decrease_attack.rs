@@ -1,6 +1,7 @@
 use crate::battle::{
-    effect::{Data, Effect, HasEffect},
-    modifier::Modifier,
+    effect::{Effect, HasEffect},
+    fight::Fighter,
+    modifier::{Modifier, ModifierDesc, Target, ValueKind},
 };
 
 use super::Card;
@@ -27,7 +28,11 @@ impl HasEffect for Card<DecreaseAttack> {
 }
 
 impl Effect for DecreaseAttack {
-    fn update(&mut self, _data: Data) -> Vec<Modifier> {
-        vec![Modifier::ChangeAttack(-self.decrease)]
+    fn update(&mut self, delta: f32, myself: &Fighter, enemy: &Fighter) -> Vec<ModifierDesc> {
+        vec![ModifierDesc {
+            modifier: Modifier::ChangeAttack(-self.decrease),
+            target: Target::Enemy,
+            value_kind: ValueKind::Units,
+        }]
     }
 }

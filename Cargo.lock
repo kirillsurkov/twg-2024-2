@@ -4062,6 +4062,7 @@ dependencies = [
  "bevy_mod_raycast",
  "bevy_rapier3d",
  "bevy_round_ui",
+ "rand",
 ]
 
 [[package]]
