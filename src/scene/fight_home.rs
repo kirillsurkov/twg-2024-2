@@ -8,6 +8,7 @@ use crate::{
     component::home::Home,
     hero::HeroesRoot,
     scene::UiRoot,
+    ui::fight_home_layout::FightHomeLayout,
 };
 
 use super::{landing::HeroSelected, GameState, LocalSchedule, Root};
@@ -204,57 +205,7 @@ fn init(
             ..Default::default()
         };
 
-    commands
-        .spawn((
-            UiRoot,
-            NodeBundle {
-                style: Style {
-                    width: Val::Vw(100.0),
-                    height: Val::Vh(100.0),
-                    display: Display::Flex,
-                    align_items: AlignItems::FlexEnd,
-                    ..Default::default()
-                },
-                // background_color: Color::BLUE.into(),
-                ..Default::default()
-            },
-        ))
-        .with_children(|p| {
-            p.spawn(cards_holder()).with_children(|p| {
-                p.spawn(card_holder()).with_children(|p| {
-                    p.spawn(card_header(&mut ui_materials)).with_children(|p| {
-                        p.spawn((TextBundle::from_section("Карточка 1", text_card.clone()),));
-                    });
-                    p.spawn(card_footer(&mut ui_materials)).with_children(|p| {
-                        p.spawn((TextBundle::from_section("100$", text_card.clone()),));
-                    });
-                });
-                p.spawn(card_holder()).with_children(|p| {
-                    p.spawn(card_header(&mut ui_materials)).with_children(|p| {
-                        p.spawn((TextBundle::from_section("Карточка 2", text_card.clone()),));
-                    });
-                    p.spawn(card_footer(&mut ui_materials)).with_children(|p| {
-                        p.spawn((TextBundle::from_section("100$", text_card.clone()),));
-                    });
-                });
-                p.spawn(card_holder()).with_children(|p| {
-                    p.spawn(card_header(&mut ui_materials)).with_children(|p| {
-                        p.spawn((TextBundle::from_section("Карточка 3", text_card.clone()),));
-                    });
-                    p.spawn(card_footer(&mut ui_materials)).with_children(|p| {
-                        p.spawn((TextBundle::from_section("100$", text_card.clone()),));
-                    });
-                });
-            });
-            p.spawn(info_holder()).with_children(|p| {
-                p.spawn(info_header(&mut ui_materials)).with_children(|p| {
-                    p.spawn((TextBundle::from_section("Info header", text_card.clone()),));
-                });
-                p.spawn(info_footer(&mut ui_materials)).with_children(|p| {
-                    p.spawn((TextBundle::from_section("Баланс: 300$", text_card.clone()),));
-                });
-            });
-        });
+    commands.spawn((UiRoot, FightHomeLayout));
 
     Ok(())
 }
@@ -269,6 +220,6 @@ fn update(
     state.timer += time.delta_seconds();
     if state.timer >= 3.0 {
         commands.insert_resource(RoundCaptureResource(battle.round()));
-        next_state.set(GameState::FightArena);
+        // next_state.set(GameState::FightArena);
     }
 }
