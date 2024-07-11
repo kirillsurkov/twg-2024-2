@@ -24,9 +24,9 @@ pub struct Fight {
 
 #[derive(Debug, Clone)]
 pub struct State {
-    modifiers: Vec<(Owner, ModifierDesc)>,
     fighter1: Fighter,
     fighter2: Fighter,
+    modifiers: Vec<(Owner, ModifierDesc)>,
 }
 
 #[derive(Debug, Default)]
@@ -54,12 +54,12 @@ impl FightCapture {
 
         let states = &self.states[from..to];
         states.last().map(|(_, state)| State {
+            fighter1: state.fighter1.clone(),
+            fighter2: state.fighter2.clone(),
             modifiers: states
                 .iter()
                 .flat_map(|(_, state)| state.modifiers.clone())
                 .collect(),
-            fighter1: state.fighter1.clone(),
-            fighter2: state.fighter2.clone(),
         })
     }
 }
@@ -135,9 +135,9 @@ impl Fight {
                 capture.states.push((
                     time,
                     State {
-                        modifiers,
                         fighter1: self.fighter1.clone(),
                         fighter2: self.fighter2.clone(),
+                        modifiers,
                     },
                 ));
             }

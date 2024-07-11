@@ -33,6 +33,7 @@ fn init(
 ) -> Result<(), Box<dyn Error>> {
     let root = root.get_single()?;
     println!("FIGHT ARENA INIT FOR {}", selected.id);
+
     commands.insert_resource(State { timer: 0.0 });
     commands.entity(root).with_children(|p| {
         p.spawn((
@@ -41,15 +42,28 @@ fn init(
                     hdr: true,
                     ..Default::default()
                 },
-                transform: Transform::from_translation(Vec3::new(-2.0, 10.0, 10.0))
-                    .looking_at(Vec3::new(0.0, 0.0, -5.0), Vec3::Y),
+                transform: Transform::from_translation(Vec3::new(0.0, 5.0, 9.0))
+                    .looking_at(Vec3::new(0.0, 2.0, 4.0), Vec3::Y),
                 ..default()
             },
             BloomSettings::default(),
         ));
 
+        p.spawn(DirectionalLightBundle {
+            directional_light: DirectionalLight {
+                color: Color::rgb(0.98, 0.95, 0.82),
+                shadows_enabled: true,
+                illuminance: 1000.0,
+                ..default()
+            },
+            transform: Transform::from_xyz(0.0, 0.0, 0.0)
+                .looking_at(Vec3::new(0.15, -0.15, -0.25), Vec3::Y),
+            ..Default::default()
+        });
+
         p.spawn((Arena {}, HeroesRoot));
     });
+
     Ok(())
 }
 
@@ -63,7 +77,6 @@ fn update(
     let capture = capture.by_player(&selected.id).unwrap();
     let fight = &capture.fight_capture;
     if let Some(fight_state) = fight.state(state.timer, state.timer + time.delta_seconds()) {
-        println!("{} vs {}", capture.player1, capture.player2);
         println!("{fight_state:#?}");
     }
     state.timer += time.delta_seconds();
