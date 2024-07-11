@@ -3,6 +3,7 @@ use super::{
     effect::HasEffect,
 };
 
+#[derive(Clone)]
 pub struct Hero {
     pub id: &'static str,
     pub name: &'static str,
@@ -13,7 +14,7 @@ pub struct Hero {
     pub attack_speed: f32,
     pub crit: f32,
     pub evasion: f32,
-    pub abils: Vec<Box<dyn HasEffect + Send + Sync>>,
+    pub abils: Vec<Box<dyn HasEffect>>,
 }
 
 pub fn nulch() -> Hero {

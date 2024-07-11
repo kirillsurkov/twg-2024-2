@@ -4,26 +4,30 @@ mod effect;
 mod fight;
 pub mod hero;
 mod modifier;
-mod player;
+pub mod player;
 
-use fight::{FightCapture, Fight};
+use fight::{Fight, FightCapture};
 use player::Player;
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
 
-struct Battle {
+pub struct Battle {
     players: Vec<Player>,
 }
 
 #[derive(Debug)]
-struct RoundCapture {
+pub struct RoundCapture {
     player1: &'static str,
     player2: &'static str,
     fight_capture: FightCapture,
 }
 
 impl Battle {
-    fn round(&mut self) -> Vec<RoundCapture> {
+    pub fn new(players: Vec<Player>) -> Self {
+        Self { players }
+    }
+
+    pub fn round(&mut self) -> Vec<RoundCapture> {
         let mut players = self.players.iter_mut().collect::<Vec<_>>();
         players.shuffle(&mut thread_rng());
         players

@@ -1,5 +1,7 @@
 use std::fmt::Debug;
 
+use dyn_clone::DynClone;
+
 use super::{fight::Fighter, modifier::ModifierDesc};
 
 pub trait Effect: Debug {
@@ -12,11 +14,13 @@ impl<T: Effect + 'static> From<T> for Box<dyn Effect> {
     }
 }
 
-pub trait HasEffect: Send + Sync {
+pub trait HasEffect: Send + Sync + DynClone {
     fn effect(&self) -> Box<dyn Effect>;
 }
 
-impl<T: HasEffect + 'static> From<T> for Box<dyn HasEffect + Send + Sync> {
+dyn_clone::clone_trait_object!(HasEffect);
+
+impl<T: HasEffect + 'static> From<T> for Box<dyn HasEffect> {
     fn from(value: T) -> Self {
         Box::new(value)
     }

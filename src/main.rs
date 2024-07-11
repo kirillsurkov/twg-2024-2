@@ -1,5 +1,5 @@
 use bevy::{app::MainScheduleOrder, prelude::*};
-use bevy_embedded_assets::{EmbeddedAssetPlugin, PluginMode};
+use bevy_embedded_assets::EmbeddedAssetPlugin;
 use bevy_hanabi::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_round_ui::prelude::BevyRoundUiDefaultPlugins;
@@ -8,6 +8,7 @@ use hero::HeroesPlugin;
 use scene::ScenesPlugin;
 
 mod battle;
+mod battle_bridge;
 mod component;
 mod hero;
 mod scene;
@@ -40,20 +41,5 @@ fn main() {
         //.add_plugins(NoCameraPlayerPlugin)
         // .add_plugins(WorldInspectorPlugin::new())
         .add_systems(Update, bevy::window::close_on_esc)
-        .add_systems(Startup, setup)
         .run();
-}
-
-fn setup(mut commands: Commands) {
-    // commands.spawn((
-    //     Camera2dBundle {
-    //         camera: Camera {
-    //             order: 2,
-    //             ..Default::default()
-    //         },
-    //         camera_2d: Camera2d {},
-    //         ..Default::default()
-    //     },
-    //     IsDefaultUiCamera,
-    // ));
 }

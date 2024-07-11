@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{hero::HeroComponent, scene::landing::HeroSelected};
+use crate::{hero::HeroId, scene::landing::HeroSelected};
 
 use super::LocalSchedule;
 
@@ -29,20 +29,20 @@ fn added(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(Entity, &mut Home, &Children), Added<Home>>,
     selected: Option<Res<HeroSelected>>,
-    heroes: Query<&HeroComponent>,
+    hero_ids: Query<&HeroId>,
 ) {
     for (entity, mut home, children) in query.iter_mut() {
         let selected = selected.as_ref().unwrap();
 
         for hero in children.iter() {
-            if heroes.get(*hero).unwrap().id != selected.id {
+            if hero_ids.get(*hero).unwrap().0 != selected.id {
                 commands.entity(*hero).despawn_recursive();
             }
         }
 
         let hero = *children
             .iter()
-            .find(|c| heroes.get(**c).unwrap().id == selected.id)
+            .find(|c| hero_ids.get(**c).unwrap().0 == selected.id)
             .unwrap();
 
         let transform = TransformBundle {

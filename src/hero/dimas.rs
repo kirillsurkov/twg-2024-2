@@ -112,8 +112,8 @@ fn on_wheel(mut query: Query<(&mut ComplexAnimPlayer, &wheel::HeroState), With<D
     }
 }
 
-fn on_land(mut query: Query<(&mut ComplexAnimPlayer, &land::HeroState), With<Dimas>>) {
-    for (mut anim_player, state) in query.iter_mut() {
+fn on_land(mut query: Query<&mut ComplexAnimPlayer, (With<land::HeroState>, With<Dimas>)>) {
+    for mut anim_player in query.iter_mut() {
         anim_player.play(false, SHOWOFF_IMMEDIATE);
     }
 }

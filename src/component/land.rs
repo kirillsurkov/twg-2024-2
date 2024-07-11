@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{hero::HeroComponent, scene::landing::HeroSelected};
+use crate::{hero::HeroId, scene::landing::HeroSelected};
 
 use super::LocalSchedule;
 
@@ -55,13 +55,13 @@ fn added(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     selected: Option<Res<HeroSelected>>,
-    heroes: Query<&HeroComponent>,
+    hero_ids: Query<&HeroId>,
 ) {
     for (entity, children) in query.iter_mut() {
         let selected = selected.as_ref().unwrap();
 
         let mut children = children.iter().map(|e| *e).collect::<Vec<_>>();
-        children.sort_unstable_by_key(|c| heroes.get(*c).unwrap().id != selected.id);
+        children.sort_unstable_by_key(|c| hero_ids.get(*c).unwrap().0 != selected.id);
 
         for (i, child) in children.into_iter().enumerate() {
             let (x, y) = match i {
@@ -142,15 +142,15 @@ fn show(
     mut beams: Query<(Entity, &mut Beam, &mut Transform, &Parent)>,
     asset_server: Res<AssetServer>,
     selected: Res<HeroSelected>,
-    heroes: Query<&HeroComponent>,
+    hero_ids: Query<&HeroId>,
     time: Res<Time>,
 ) {
     for (mut land, children) in query.iter_mut() {
         let mut children = children
             .iter()
-            .filter_map(|e| heroes.get(*e).ok().map(|h| (*e, h)))
+            .filter_map(|e| hero_ids.get(*e).ok().map(|h| (*e, h)))
             .collect::<Vec<_>>();
-        children.sort_by_key(|(_, h)| h.id == selected.id);
+        children.sort_by_key(|(_, h)| h.0 == selected.id);
 
         land.ready = land.index == children.len();
 

@@ -1,5 +1,5 @@
 use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
-use bevy_round_ui::prelude::{RoundRectUiMaterial, SuperellipseUiMaterial};
+use bevy_round_ui::prelude::SuperellipseUiMaterial;
 
 use crate::{component::home::Home, hero::HeroesRoot, scene::UiRoot};
 
@@ -250,9 +250,9 @@ fn init(
     }
 }
 
-fn update(mut state: ResMut<State>, time: Res<Time>) {
+fn update(mut next_state: ResMut<NextState<GameState>>, mut state: ResMut<State>, time: Res<Time>) {
     state.timer += time.delta_seconds();
     if state.timer >= 3.0 {
-        // next_state.set(GameState::FightArena);
+        next_state.set(GameState::FightArena);
     }
 }

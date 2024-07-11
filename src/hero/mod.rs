@@ -6,10 +6,10 @@ use kisanya::Kisanya;
 use nulch::Nulch;
 use rasp::Rasp;
 
-use crate::battle::hero::{dimas, dtyan, duck, kisanya, nulch, rasp, Hero};
-
-#[derive(Component, Deref)]
-pub struct HeroComponent(pub Hero);
+use crate::{
+    battle::hero::{dimas, dtyan, duck, kisanya, nulch, rasp},
+    battle_bridge::HeroesResource,
+};
 
 #[derive(ScheduleLabel, Debug, Hash, PartialEq, Eq, Clone)]
 pub struct LocalSchedule;
@@ -17,25 +17,37 @@ pub struct LocalSchedule;
 #[derive(Component)]
 pub struct HeroesRoot;
 
+#[derive(Component, Deref)]
+pub struct HeroId(pub String);
+
 pub struct HeroesPlugin;
 
 impl Plugin for HeroesPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((Nulch, Rasp, DTyan, Dimas, Duck, Kisanya));
         app.add_systems(LocalSchedule, init_heroes);
+        app.insert_resource(HeroesResource(vec![
+            (nulch(), Box::new(|cmd| cmd.spawn(Nulch))),
+            (rasp(), Box::new(|cmd| cmd.spawn(Rasp))),
+            (dtyan(), Box::new(|cmd| cmd.spawn(DTyan))),
+            (dimas(), Box::new(|cmd| cmd.spawn(Dimas))),
+            (duck(), Box::new(|cmd| cmd.spawn(Duck))),
+            (kisanya(), Box::new(|cmd| cmd.spawn(Kisanya))),
+        ]));
     }
 }
 
-fn init_heroes(mut commands: Commands, query: Query<Entity, Added<HeroesRoot>>) {
+fn init_heroes(
+    mut commands: Commands,
+    query: Query<Entity, Added<HeroesRoot>>,
+    heroes: Res<HeroesResource>,
+) {
     for root in query.iter() {
         println!("HEROES INIT");
         commands.entity(root).with_children(|p| {
-            p.spawn((Nulch, HeroComponent(nulch())));
-            p.spawn((Rasp, HeroComponent(rasp())));
-            p.spawn((DTyan, HeroComponent(dtyan())));
-            p.spawn((Dimas, HeroComponent(dimas())));
-            p.spawn((Duck, HeroComponent(duck())));
-            p.spawn((Kisanya, HeroComponent(kisanya())));
+            heroes.iter().for_each(|(hero, spawn)| {
+                spawn(p).insert(HeroId(hero.id.to_string()));
+            })
         });
     }
 }

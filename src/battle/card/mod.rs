@@ -8,6 +8,16 @@ pub struct Card<T: Effect> {
     _pd: PhantomData<T>,
 }
 
+impl<T: Effect> Clone for Card<T> {
+    fn clone(&self) -> Self {
+        Self {
+            level: self.level,
+            max_level: self.max_level,
+            _pd: self._pd,
+        }
+    }
+}
+
 impl<T: Effect> Card<T> {
     pub fn new(max_level: u8) -> Self {
         Self {
@@ -18,5 +28,5 @@ impl<T: Effect> Card<T> {
     }
 }
 
-pub mod increase_attack;
 pub mod decrease_attack;
+pub mod increase_attack;

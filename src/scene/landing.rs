@@ -1,6 +1,11 @@
 use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
 
-use crate::{component::land::Land, hero::HeroesRoot};
+use crate::{
+    battle::{player::Player, Battle},
+    battle_bridge::{BattleResource, HeroesResource},
+    component::land::Land,
+    hero::HeroesRoot,
+};
 
 use super::{GameState, LocalSchedule, Root};
 
@@ -61,8 +66,10 @@ fn init(mut commands: Commands, selected: Res<HeroSelected>, query: Query<Entity
 }
 
 fn update(
+    mut commands: Commands,
     mut next_state: ResMut<NextState<GameState>>,
     mut state: ResMut<State>,
+    heroes: Res<HeroesResource>,
     time: Res<Time>,
     land: Query<&Land>,
 ) {
@@ -71,6 +78,9 @@ fn update(
     if land.ready() {
         state.timer += time.delta_seconds();
         if state.timer >= 3.0 {
+            commands.insert_resource(BattleResource(Battle::new(
+                heroes.iter().map(|(h, _)| Player::new(h.clone())).collect(),
+            )));
             next_state.set(GameState::FightHome);
         }
     }

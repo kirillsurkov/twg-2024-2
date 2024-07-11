@@ -120,10 +120,7 @@ fn filter_animations(
     }
 }
 
-fn on_wheel(
-    mut query: Query<(&mut ComplexAnimPlayer, &wheel::HeroState), With<Rasp>>,
-    mut named: Query<(&Name, &mut Visibility)>,
-) {
+fn on_wheel(mut query: Query<(&mut ComplexAnimPlayer, &wheel::HeroState), With<Rasp>>) {
     for (mut anim_player, state) in query.iter_mut() {
         if state.active {
             anim_player.play(state.changed, SHOWOFF_LAZY);
@@ -133,7 +130,7 @@ fn on_wheel(
     }
 }
 
-fn on_land(mut query: Query<&mut ComplexAnimPlayer, (With<Rasp>, With<land::HeroState>)>) {
+fn on_land(mut query: Query<&mut ComplexAnimPlayer, (With<land::HeroState>, With<Rasp>)>) {
     for mut anim_player in query.iter_mut() {
         anim_player.play(false, SHOWOFF_IMMEDIATE);
     }

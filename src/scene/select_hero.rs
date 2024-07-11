@@ -2,8 +2,7 @@ use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
 use bevy_round_ui::prelude::SuperellipseUiMaterial;
 
 use crate::{
-    component::wheel::Wheel,
-    hero::{HeroComponent, HeroesRoot},
+    battle_bridge::HeroesResource, component::wheel::Wheel, hero::HeroesRoot,
     scene::landing::HeroSelected,
 };
 
@@ -192,16 +191,16 @@ fn update(
     mut commands: Commands,
     mut next_state: ResMut<NextState<GameState>>,
     mut state: ResMut<State>,
-    time: Res<Time>,
     mut desc_node: Query<&mut Text, (With<DescNode>, Without<NameNode>, Without<StatsNode>)>,
     mut name_node: Query<&mut Text, (Without<DescNode>, With<NameNode>, Without<StatsNode>)>,
     mut stats_node: Query<&mut Text, (Without<DescNode>, Without<NameNode>, With<StatsNode>)>,
-    wheel: Query<(&Wheel, &Children)>,
-    heroes: Query<&HeroComponent>,
+    time: Res<Time>,
+    heroes: Res<HeroesResource>,
+    wheel: Query<&Wheel>,
 ) {
-    let (wheel, children) = wheel.single();
+    let wheel = wheel.single();
 
-    let selected_hero = heroes.get(*children.get(wheel.current()).unwrap()).unwrap();
+    let (ref selected_hero, _) = heroes[wheel.current()];
 
     if wheel.changed() {
         for mut text in desc_node.iter_mut() {

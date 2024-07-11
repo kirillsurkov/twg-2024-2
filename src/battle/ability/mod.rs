@@ -6,6 +6,14 @@ pub struct Ability<T: Effect> {
     _pd: PhantomData<T>,
 }
 
+impl<T: Effect> Clone for Ability<T> {
+    fn clone(&self) -> Self {
+        Self {
+            _pd: self._pd
+        }
+    }
+}
+
 impl<T: Effect> Ability<T> {
     pub fn new() -> Self {
         Self {
