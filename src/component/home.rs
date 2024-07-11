@@ -8,7 +8,7 @@ pub struct HomePlugin;
 
 impl Plugin for HomePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(LocalSchedule, added);
+        app.add_systems(LocalSchedule, added.run_if(any_with_component::<Home>));
     }
 }
 
@@ -28,12 +28,10 @@ fn added(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(Entity, &mut Home, &Children), Added<Home>>,
-    selected: Option<Res<HeroSelected>>,
+    selected: Res<HeroSelected>,
     hero_ids: Query<&HeroId>,
 ) {
     for (entity, mut home, children) in query.iter_mut() {
-        let selected = selected.as_ref().unwrap();
-
         for hero in children.iter() {
             if hero_ids.get(*hero).unwrap().0 != selected.id {
                 commands.entity(*hero).despawn_recursive();

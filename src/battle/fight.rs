@@ -7,6 +7,8 @@ use super::{
     player::Player,
 };
 
+pub const DURATION: f32 = 10.0;
+
 #[derive(Debug, Clone)]
 pub struct Fighter {
     pub hp: f32,
@@ -86,13 +88,12 @@ impl Fight {
     }
 
     pub fn run(&mut self) -> FightCapture {
-        let duration = 2;
-        let fps = 100;
+        let fps = 100.0;
         let delta = 1.0 / fps as f32;
 
         let mut capture = FightCapture::default();
 
-        for time in 0..duration * fps {
+        for time in 0..(DURATION * fps) as u32 {
             let time = time as f32 / fps as f32;
 
             let mut modifiers = self

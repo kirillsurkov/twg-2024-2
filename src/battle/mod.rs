@@ -1,7 +1,7 @@
 mod ability;
 mod card;
 mod effect;
-mod fight;
+pub mod fight;
 pub mod hero;
 mod modifier;
 pub mod player;
@@ -17,9 +17,9 @@ pub struct Battle {
 
 #[derive(Debug)]
 pub struct RoundCapture {
-    player1: &'static str,
-    player2: &'static str,
-    fight_capture: FightCapture,
+    pub player1: &'static str,
+    pub player2: &'static str,
+    pub fight_capture: FightCapture,
 }
 
 impl Battle {

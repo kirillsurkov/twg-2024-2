@@ -13,7 +13,8 @@ impl Plugin for LandPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             LocalSchedule,
-            (added, show.run_if(resource_exists::<HeroSelected>)),
+            (added, show.run_if(resource_exists::<HeroSelected>))
+                .run_if(any_with_component::<Land>),
         );
     }
 }
@@ -54,12 +55,10 @@ fn added(
     mut query: Query<(Entity, &Children), Added<Land>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    selected: Option<Res<HeroSelected>>,
+    selected: Res<HeroSelected>,
     hero_ids: Query<&HeroId>,
 ) {
     for (entity, children) in query.iter_mut() {
-        let selected = selected.as_ref().unwrap();
-
         let mut children = children.iter().map(|e| *e).collect::<Vec<_>>();
         children.sort_unstable_by_key(|c| hero_ids.get(*c).unwrap().0 != selected.id);
 
