@@ -12,7 +12,7 @@ use rand::prelude::SliceRandom;
 use rand::thread_rng;
 
 pub struct Battle {
-    players: Vec<Player>,
+    pub players: Vec<Player>,
 }
 
 #[derive(Debug)]

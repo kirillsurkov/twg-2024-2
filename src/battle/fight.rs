@@ -7,11 +7,13 @@ use super::{
     player::Player,
 };
 
-pub const DURATION: f32 = 10.0;
+pub const DURATION: f32 = 60.0;
 
 #[derive(Debug, Clone)]
 pub struct Fighter {
     pub hp: f32,
+    pub max_hp: f32,
+    pub mana: f32,
     pub attack: f32,
     pub attack_speed: f32,
 }
@@ -24,9 +26,9 @@ pub struct Fight {
 
 #[derive(Debug, Clone)]
 pub struct State {
-    fighter1: Fighter,
-    fighter2: Fighter,
-    modifiers: Vec<(Owner, ModifierDesc)>,
+    pub fighter1: Fighter,
+    pub fighter2: Fighter,
+    pub modifiers: Vec<(Owner, ModifierDesc)>,
 }
 
 #[derive(Debug, Default)]
@@ -69,11 +71,15 @@ impl Fight {
         Self {
             fighter1: Fighter {
                 hp: p1.hero.hp,
+                max_hp: p1.hero.hp,
+                mana: 0.0,
                 attack: p1.hero.attack,
                 attack_speed: 1.0 / p1.hero.attack_speed,
             },
             fighter2: Fighter {
                 hp: p2.hero.hp,
+                max_hp: p2.hero.hp,
+                mana: 0.0,
                 attack: p2.hero.attack,
                 attack_speed: 1.0 / p2.hero.attack_speed,
             },
@@ -91,7 +97,16 @@ impl Fight {
         let fps = 100.0;
         let delta = 1.0 / fps as f32;
 
-        let mut capture = FightCapture::default();
+        let mut capture = FightCapture {
+            states: vec![(
+                0.0,
+                State {
+                    fighter1: self.fighter1.clone(),
+                    fighter2: self.fighter2.clone(),
+                    modifiers: vec![],
+                },
+            )],
+        };
 
         for time in 0..(DURATION * fps) as u32 {
             let time = time as f32 / fps as f32;
@@ -140,6 +155,16 @@ impl Fight {
                         modifiers,
                     },
                 ));
+            }
+
+            if self.fighter1.hp <= 0.0 {
+                self.fighter1.hp = 0.0;
+                break;
+            }
+
+            if self.fighter2.hp <= 0.0 {
+                self.fighter2.hp = 0.0;
+                break;
             }
         }
 

@@ -13,7 +13,7 @@ impl Plugin for HomePlugin {
 }
 
 #[derive(Component)]
-pub struct State {
+pub struct HeroState {
     pub active: bool,
     pub changed: bool,
 }
@@ -50,7 +50,7 @@ fn added(
 
         commands.entity(hero).insert((
             transform,
-            State {
+            HeroState {
                 active: true,
                 changed: true,
             },

@@ -33,6 +33,7 @@ fn added(
     selected: Res<HeroSelected>,
     capture: Res<RoundCaptureResource>,
     hero_ids: Query<&HeroId>,
+    with_parent: Query<&Parent>,
 ) {
     for (entity, mut arena, children) in query.iter_mut() {
         let capture = capture.by_player(&selected.id).unwrap();
@@ -51,8 +52,8 @@ fn added(
                 commands.entity(*hero).despawn_recursive();
             } else {
                 let x = match fighter {
-                    1 => -5.0,
-                    2 => 5.0,
+                    1 => -4.0,
+                    2 => 4.0,
                     _ => unreachable!(),
                 };
 
@@ -68,14 +69,23 @@ fn added(
                     ..Default::default()
                 };
 
-                commands.entity(*hero).insert((
-                    transform,
-                    HeroState {
-                        active: true,
-                        changed: true,
-                    },
-                    VisibilityBundle::default(),
-                ));
+                let mut parent = commands.entity(with_parent.get(*hero).unwrap().get());
+                let mut hero_node = Entity::PLACEHOLDER;
+                parent.with_children(|p| {
+                    hero_node = p.spawn((transform, VisibilityBundle::default())).id();
+                });
+
+                commands
+                    .entity(*hero)
+                    .insert((
+                        HeroState {
+                            active: true,
+                            changed: true,
+                        },
+                        TransformBundle::default(),
+                        VisibilityBundle::default(),
+                    ))
+                    .set_parent(hero_node);
             }
         }
 

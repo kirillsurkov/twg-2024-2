@@ -1,8 +1,9 @@
-use std::time::Duration;
+use std::{f32::consts::FRAC_PI_2, time::Duration};
 
 use bevy::{gltf::Gltf, prelude::*};
 
 use crate::component::{
+    arena,
     complex_anim_player::{
         self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff, SHOWOFF_IMMEDIATE,
         SHOWOFF_LAZY,
@@ -27,7 +28,7 @@ impl Plugin for Dimas {
     fn build(&self, app: &mut App) {
         app.add_systems(
             LocalSchedule,
-            (on_add, filter_animations, on_wheel, on_land),
+            (on_add, filter_animations, on_wheel, on_land, on_arena),
         );
     }
 }
@@ -115,5 +116,11 @@ fn on_wheel(mut query: Query<(&mut ComplexAnimPlayer, &wheel::HeroState), With<D
 fn on_land(mut query: Query<&mut ComplexAnimPlayer, (With<land::HeroState>, With<Dimas>)>) {
     for mut anim_player in query.iter_mut() {
         anim_player.play(false, SHOWOFF_IMMEDIATE);
+    }
+}
+
+fn on_arena(mut query: Query<&mut Transform, (Added<arena::HeroState>, With<Dimas>)>) {
+    for mut transform in query.iter_mut() {
+        transform.rotation = Quat::from_rotation_y(-FRAC_PI_2);
     }
 }

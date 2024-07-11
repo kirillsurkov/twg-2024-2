@@ -1,7 +1,7 @@
 use bevy::{ecs::schedule::ScheduleLabel, prelude::*};
 use fight_arena::FightArena;
 use fight_home::FightHome;
-use landing::Landing;
+use landing::{HeroSelected, Landing};
 use select_hero::SelectHero;
 use splash::Splash;
 
@@ -25,6 +25,11 @@ impl Plugin for ScenesPlugin {
         app.insert_state(GameState::default());
         app.add_plugins((Splash, SelectHero, Landing, FightHome, FightArena));
         app.add_systems(Update, cleanup.run_if(state_changed::<GameState>));
+
+        app.insert_state(GameState::Landing);
+        app.insert_resource(HeroSelected {
+            id: "dimas".to_string(),
+        });
     }
 }
 
