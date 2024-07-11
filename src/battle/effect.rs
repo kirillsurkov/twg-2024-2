@@ -25,9 +25,3 @@ impl<T: HasEffect + 'static> From<T> for Box<dyn HasEffect> {
         Box::new(value)
     }
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Owner {
-    Fighter1,
-    Fighter2,
-}

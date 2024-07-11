@@ -2,10 +2,7 @@ use std::cmp::Ordering;
 
 use crate::battle::modifier::{Modifier, ModifierDesc, Target};
 
-use super::{
-    effect::{Effect, Owner},
-    player::Player,
-};
+use super::{effect::Effect, player::Player};
 
 pub const DURATION: f32 = 60.0;
 
@@ -16,6 +13,12 @@ pub struct Fighter {
     pub mana: f32,
     pub attack: f32,
     pub attack_speed: f32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Owner {
+    Fighter1,
+    Fighter2,
 }
 
 pub struct Fight {
