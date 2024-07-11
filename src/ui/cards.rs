@@ -31,44 +31,84 @@ pub struct CardsRoot;
 
 fn init_root(mut commands: Commands, query: Query<Entity, Added<CardsRoot>>) {
     for entity in query.iter() {
-        commands.entity(entity).insert(NodeBundle {
-            style: Style {
-                display: Display::Flex,
-                flex_direction: FlexDirection::Row,
-                margin: UiRect::top(Val::Auto),
-                width: Val::Percent(100.0),
-                height: Val::Percent(40.0),
+        commands
+            .entity(entity)
+            .insert(NodeBundle {
+                style: Style {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    margin: UiRect::top(Val::Auto),
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(40.0),
+                    ..Default::default()
+                },
+                background_color: DCOLOR,
                 ..Default::default()
-            },
-            background_color: DCOLOR,
-            ..Default::default()
-        });
+            })
+            .with_children(|p| {
+                p.spawn((NodeBundle::default(), CardsHolder));
+                p.spawn((NodeBundle::default(), CardsControls));
+            });
     }
 }
 
 #[derive(Component)]
-pub struct CardsHolder;
+struct CardsHolder;
 
 fn init_cards_holder(mut commands: Commands, query: Query<Entity, Added<CardsHolder>>) {
     for entity in query.iter() {
-        commands.entity(entity).insert(NodeBundle {
-            style: Style {
-                display: Display::Flex,
-                flex_direction: FlexDirection::Row,
-                justify_content: JustifyContent::FlexEnd,
-                align_items: AlignItems::Center,
-                width: Val::Percent(65.0),
-                height: Val::Percent(100.0),
+        commands
+            .entity(entity)
+            .insert(NodeBundle {
+                style: Style {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::FlexEnd,
+                    align_items: AlignItems::Center,
+                    width: Val::Percent(65.0),
+                    height: Val::Percent(100.0),
+                    ..Default::default()
+                },
+                background_color: DCOLOR,
                 ..Default::default()
-            },
-            background_color: DCOLOR,
-            ..Default::default()
-        });
+            })
+            .with_children(|p| {
+                p.spawn((NodeBundle::default(), CardHolder))
+                    .with_children(|p| {
+                        p.spawn((NodeBundle::default(), CardHeader));
+                        p.spawn((NodeBundle::default(), CardLevels));
+                        p.spawn((
+                            CardDesc,
+                            TextBundle::from_section("Card 1", TextStyle::default()),
+                        ));
+                        p.spawn((NodeBundle::default(), CardFooter));
+                    });
+                p.spawn((NodeBundle::default(), CardHolder))
+                    .with_children(|p| {
+                        p.spawn((NodeBundle::default(), CardHeader));
+                        p.spawn((NodeBundle::default(), CardLevels));
+                        p.spawn((
+                            CardDesc,
+                            TextBundle::from_section("Card 2", TextStyle::default()),
+                        ));
+                        p.spawn((NodeBundle::default(), CardFooter));
+                    });
+                p.spawn((NodeBundle::default(), CardHolder))
+                    .with_children(|p| {
+                        p.spawn((NodeBundle::default(), CardHeader));
+                        p.spawn((NodeBundle::default(), CardLevels));
+                        p.spawn((
+                            CardDesc,
+                            TextBundle::from_section("Card 3", TextStyle::default()),
+                        ));
+                        p.spawn((NodeBundle::default(), CardFooter));
+                    });
+            });
     }
 }
 
 #[derive(Component)]
-pub struct CardHolder;
+struct CardHolder;
 
 fn init_card_holder(mut commands: Commands, query: Query<Entity, Added<CardHolder>>) {
     for entity in query.iter() {
@@ -98,7 +138,7 @@ fn update_card_holder(mut query: Query<(&mut BackgroundColor, &Interaction), Wit
 }
 
 #[derive(Component)]
-pub struct CardHeader;
+struct CardHeader;
 
 fn init_card_header(mut commands: Commands, query: Query<Entity, Added<CardHeader>>) {
     for entity in query.iter() {
@@ -117,7 +157,7 @@ fn init_card_header(mut commands: Commands, query: Query<Entity, Added<CardHeade
 }
 
 #[derive(Component)]
-pub struct CardLevels;
+struct CardLevels;
 
 fn init_card_levels(mut commands: Commands, query: Query<Entity, Added<CardLevels>>) {
     for entity in query.iter() {
@@ -136,7 +176,7 @@ fn init_card_levels(mut commands: Commands, query: Query<Entity, Added<CardLevel
 }
 
 #[derive(Component)]
-pub struct CardLevelActive;
+struct CardLevelActive;
 
 fn init_card_level_active(mut commands: Commands, query: Query<Entity, Added<CardLevelActive>>) {
     for entity in query.iter() {
@@ -153,7 +193,7 @@ fn init_card_level_active(mut commands: Commands, query: Query<Entity, Added<Car
 }
 
 #[derive(Component)]
-pub struct CardLevelInactive;
+struct CardLevelInactive;
 
 fn init_card_level_inactive(
     mut commands: Commands,
@@ -173,7 +213,7 @@ fn init_card_level_inactive(
 }
 
 #[derive(Component)]
-pub struct CardDesc;
+struct CardDesc;
 
 fn init_card_desc(mut commands: Commands, query: Query<Entity, Added<CardDesc>>) {
     for entity in query.iter() {
@@ -192,7 +232,7 @@ fn init_card_desc(mut commands: Commands, query: Query<Entity, Added<CardDesc>>)
 }
 
 #[derive(Component)]
-pub struct CardFooter;
+struct CardFooter;
 
 fn init_card_footer(mut commands: Commands, query: Query<Entity, Added<CardFooter>>) {
     for entity in query.iter() {
@@ -219,43 +259,66 @@ fn init_card_footer(mut commands: Commands, query: Query<Entity, Added<CardFoote
 }
 
 #[derive(Component)]
-pub struct CardsControls;
+struct CardsControls;
 
 fn init_cards_controls(mut commands: Commands, query: Query<Entity, Added<CardsControls>>) {
     for entity in query.iter() {
-        commands.entity(entity).insert(NodeBundle {
-            style: Style {
-                display: Display::Flex,
-                flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                width: Val::Percent(10.0),
-                height: Val::Percent(100.0),
+        commands
+            .entity(entity)
+            .insert(NodeBundle {
+                style: Style {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    width: Val::Percent(10.0),
+                    height: Val::Percent(100.0),
+                    ..Default::default()
+                },
+                background_color: DCOLOR,
                 ..Default::default()
-            },
-            background_color: DCOLOR,
-            ..Default::default()
-        });
+            })
+            .with_children(|p| {
+                p.spawn((NodeBundle::default(), CardsControl("control 1".to_string())));
+                p.spawn((NodeBundle::default(), CardsControl("control 2".to_string())));
+                p.spawn((NodeBundle::default(), CardsControl("control 3".to_string())));
+                p.spawn((NodeBundle::default(), CardsControl("control 4".to_string())));
+            });
     }
 }
 
 #[derive(Component)]
-pub struct CardsControl;
+struct CardsControl(String);
 
-fn init_cards_control(mut commands: Commands, query: Query<Entity, Added<CardsControl>>) {
-    for entity in query.iter() {
-        commands.entity(entity).insert(NodeBundle {
-            style: Style {
-                display: Display::Flex,
-                flex_direction: FlexDirection::Row,
-                width: Val::Percent(100.0),
-                height: Val::Percent(20.0),
-                margin: UiRect::vertical(Val::Auto),
-                // padding: UiRect::vertical(Val::Percent(20.0)),
+fn init_cards_control(
+    mut commands: Commands,
+    query: Query<(Entity, &CardsControl), Added<CardsControl>>,
+) {
+    for (entity, cards_control) in query.iter() {
+        commands
+            .entity(entity)
+            .insert(NodeBundle {
+                style: Style {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(20.0),
+                    margin: UiRect::vertical(Val::Auto),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..Default::default()
+                },
+                background_color: DCOLOR,
                 ..Default::default()
-            },
-            background_color: DCOLOR,
-            ..Default::default()
-        });
+            })
+            .with_children(|p| {
+                p.spawn(TextBundle::from_section(
+                    &cards_control.0,
+                    TextStyle {
+                        font_size: 25.0,
+                        ..Default::default()
+                    },
+                ));
+            });
     }
 }

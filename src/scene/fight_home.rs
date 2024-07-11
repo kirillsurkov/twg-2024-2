@@ -1,7 +1,6 @@
 use std::error::Error;
 
 use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
-use bevy_round_ui::prelude::SuperellipseUiMaterial;
 
 use crate::{
     battle_bridge::{BattleResource, RoundCaptureResource},
@@ -32,10 +31,8 @@ impl Plugin for FightHome {
 
 fn init(
     mut commands: Commands,
-    mut ui_materials: ResMut<Assets<SuperellipseUiMaterial>>,
     selected: Res<HeroSelected>,
     root: Query<Entity, Added<Root>>,
-    asset_server: Res<AssetServer>,
 ) -> Result<(), Box<dyn Error>> {
     let root = root.get_single()?;
     println!("FIGHT HOME INIT FOR {}", selected.id);
@@ -74,137 +71,6 @@ fn init(
         // });
     });
 
-    let font: Handle<Font> = asset_server.load("embedded://comic.ttf");
-
-    let text_card = TextStyle {
-        font: font.clone(),
-        font_size: 25.0,
-        ..Default::default()
-    };
-
-    let cards_holder = || NodeBundle {
-        style: Style {
-            margin: UiRect::new(
-                Val::Percent(20.0),
-                Val::Px(0.0),
-                Val::Px(0.0),
-                Val::Percent(5.0),
-            ),
-            width: Val::Percent(50.0),
-            ..Default::default()
-        },
-        ..Default::default()
-    };
-
-    let card_holder = || NodeBundle {
-        style: Style {
-            // margin: UiRect::all(Val::Percent(5.0)),
-            padding: UiRect::horizontal(Val::Percent(5.0)),
-            width: Val::Percent(100.0),
-            height: Val::Vh(40.0),
-            justify_content: JustifyContent::Center,
-            align_self: AlignSelf::FlexEnd,
-            flex_direction: FlexDirection::Column,
-            ..Default::default()
-        },
-        // background_color: Color::RED.into(),
-        ..Default::default()
-    };
-
-    let card_header =
-        |ui_materials: &mut ResMut<Assets<SuperellipseUiMaterial>>| MaterialNodeBundle {
-            material: ui_materials.add(SuperellipseUiMaterial {
-                background_color: Color::BLACK,
-                border_radius: Vec4::splat(25.0),
-                border_color: Color::WHITE,
-                border_thickness: 2.0,
-            }),
-            style: Style {
-                margin: UiRect::bottom(Val::Percent(5.0)),
-                padding: UiRect::all(Val::Px(25.0)),
-                width: Val::Percent(100.0),
-                height: Val::Percent(80.0),
-                justify_content: JustifyContent::Center,
-                ..Default::default()
-            },
-            ..Default::default()
-        };
-
-    let card_footer =
-        |ui_materials: &mut ResMut<Assets<SuperellipseUiMaterial>>| MaterialNodeBundle {
-            material: ui_materials.add(SuperellipseUiMaterial {
-                background_color: Color::BLACK,
-                border_radius: Vec4::splat(25.0),
-                border_color: Color::WHITE,
-                border_thickness: 2.0,
-            }),
-            style: Style {
-                padding: UiRect::all(Val::Px(5.0)),
-                width: Val::Percent(100.0),
-                height: Val::Percent(20.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..Default::default()
-            },
-            ..Default::default()
-        };
-
-    let info_holder = || NodeBundle {
-        style: Style {
-            margin: UiRect::new(
-                Val::Percent(0.0),
-                Val::Px(0.0),
-                Val::Px(0.0),
-                Val::Percent(1.0),
-            ),
-            padding: UiRect::horizontal(Val::Percent(5.0)),
-            width: Val::Percent(30.0),
-            height: Val::Percent(90.0),
-            flex_direction: FlexDirection::Column,
-            ..Default::default()
-        },
-        // background_color: Color::CYAN.into(),
-        ..Default::default()
-    };
-
-    let info_header =
-        |ui_materials: &mut ResMut<Assets<SuperellipseUiMaterial>>| MaterialNodeBundle {
-            material: ui_materials.add(SuperellipseUiMaterial {
-                background_color: Color::BLACK,
-                border_radius: Vec4::splat(25.0),
-                border_color: Color::WHITE,
-                border_thickness: 2.0,
-            }),
-            style: Style {
-                margin: UiRect::bottom(Val::Percent(10.0)),
-                padding: UiRect::all(Val::Px(25.0)),
-                width: Val::Percent(100.0),
-                height: Val::Percent(85.0),
-                justify_content: JustifyContent::Center,
-                ..Default::default()
-            },
-            ..Default::default()
-        };
-
-    let info_footer =
-        |ui_materials: &mut ResMut<Assets<SuperellipseUiMaterial>>| MaterialNodeBundle {
-            material: ui_materials.add(SuperellipseUiMaterial {
-                background_color: Color::BLACK,
-                border_radius: Vec4::splat(25.0),
-                border_color: Color::WHITE,
-                border_thickness: 2.0,
-            }),
-            style: Style {
-                // margin: UiRect::bottom(Val::Percent(5.0)),
-                padding: UiRect::all(Val::Px(25.0)),
-                width: Val::Percent(100.0),
-                height: Val::Percent(15.0),
-                justify_content: JustifyContent::FlexStart,
-                ..Default::default()
-            },
-            ..Default::default()
-        };
-
     commands.spawn((UiRoot, FightHomeLayout));
 
     Ok(())
@@ -218,8 +84,8 @@ fn update(
     time: Res<Time>,
 ) {
     state.timer += time.delta_seconds();
-    if state.timer >= 3.0 {
+    if state.timer >= 0.0 {
         commands.insert_resource(RoundCaptureResource(battle.round()));
-        // next_state.set(GameState::FightArena);
+        next_state.set(GameState::FightArena);
     }
 }
