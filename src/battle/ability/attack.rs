@@ -23,7 +23,7 @@ impl Effect for Attack {
         if self.timer >= myself.attack_speed {
             self.timer = 0.0;
             vec![ModifierDesc {
-                modifier: Modifier::Damage(myself.attack),
+                modifier: Modifier::AffectHP(-myself.attack * 6.0),
                 target: Target::Enemy,
                 value_kind: ValueKind::Units,
             }]

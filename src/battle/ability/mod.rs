@@ -8,9 +8,7 @@ pub struct Ability<T: Effect> {
 
 impl<T: Effect> Clone for Ability<T> {
     fn clone(&self) -> Self {
-        Self {
-            _pd: self._pd
-        }
+        Self { _pd: self._pd }
     }
 }
 
@@ -24,5 +22,8 @@ impl<T: Effect> Ability<T> {
 
 mod attack;
 pub use attack::Attack;
+
+mod regen_mana;
+pub use regen_mana::RegenMana;
 
 mod foo;

@@ -1,5 +1,5 @@
 use super::{
-    ability::{Ability, Attack},
+    ability::{Ability, Attack, RegenMana},
     effect::HasEffect,
 };
 
@@ -28,7 +28,10 @@ pub fn nulch() -> Hero {
         attack_speed: 0.95,
         crit: 0.16,
         evasion: 0.15,
-        abils: vec![Ability::<Attack>::new().into()],
+        abils: vec![
+            Ability::<Attack>::new().into(),
+            Ability::<RegenMana>::new().into(),
+        ],
     }
 }
 
@@ -43,7 +46,10 @@ pub fn rasp() -> Hero {
         attack_speed: 1.04,
         crit: 0.11,
         evasion: 0.18,
-        abils: vec![Ability::<Attack>::new().into()],
+        abils: vec![
+            Ability::<Attack>::new().into(),
+            Ability::<RegenMana>::new().into(),
+        ],
     }
 }
 
@@ -58,7 +64,10 @@ pub fn dtyan() -> Hero {
         attack_speed: 0.75,
         crit: 0.20,
         evasion: 0.08,
-        abils: vec![Ability::<Attack>::new().into()],
+        abils: vec![
+            Ability::<Attack>::new().into(),
+            Ability::<RegenMana>::new().into(),
+        ],
     }
 }
 
@@ -73,7 +82,10 @@ pub fn dimas() -> Hero {
         attack_speed: 0.71,
         crit: 0.17,
         evasion: 0.09,
-        abils: vec![Ability::<Attack>::new().into()],
+        abils: vec![
+            Ability::<Attack>::new().into(),
+            Ability::<RegenMana>::new().into(),
+        ],
     }
 }
 
@@ -88,7 +100,10 @@ pub fn duck() -> Hero {
         attack_speed: 0.95,
         crit: 0.15,
         evasion: 0.14,
-        abils: vec![Ability::<Attack>::new().into()],
+        abils: vec![
+            Ability::<Attack>::new().into(),
+            Ability::<RegenMana>::new().into(),
+        ],
     }
 }
 
@@ -103,6 +118,9 @@ pub fn kisanya() -> Hero {
         attack_speed: 1.11,
         crit: 0.15,
         evasion: 0.12,
-        abils: vec![Ability::<Attack>::new().into()],
+        abils: vec![
+            Ability::<Attack>::new().into(),
+            Ability::<RegenMana>::new().into(),
+        ],
     }
 }

@@ -1,7 +1,8 @@
 #[derive(Debug, Clone)]
 pub enum Modifier {
     ChangeAttack(f32),
-    Damage(f32),
+    AffectHP(f32),
+    AffectMana(f32),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
