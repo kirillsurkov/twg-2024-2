@@ -1,6 +1,7 @@
 use arena::ArenaPlugin;
 use bevy::{ecs::schedule::ScheduleLabel, prelude::*};
 use complex_anim_player::ComplexAnimPlayerPlugin;
+use fight_state::FightStatePlugin;
 use game_timer::GameTimerPlugin;
 use home::HomePlugin;
 use land::LandPlugin;
@@ -8,6 +9,7 @@ use wheel::WheelPlugin;
 
 pub mod arena;
 pub mod complex_anim_player;
+pub mod fight_state;
 pub mod game_timer;
 pub mod home;
 pub mod land;
@@ -23,6 +25,7 @@ impl Plugin for ComponentsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
             GameTimerPlugin,
+            FightStatePlugin,
             WheelPlugin,
             ComplexAnimPlayerPlugin,
             LandPlugin,

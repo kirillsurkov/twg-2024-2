@@ -4,11 +4,10 @@ use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
 
 use crate::{
     battle::fight::DURATION,
-    battle_bridge::RoundCaptureResource,
     component::{arena::Arena, game_timer::GameTimer},
     hero::HeroesRoot,
     scene::UiRoot,
-    ui::{fight_arena_layout::FightArenaLayout, FightState},
+    ui::fight_arena_layout::FightArenaLayout,
 };
 
 use super::{landing::HeroSelected, GameState, LocalSchedule, Root};
@@ -79,26 +78,7 @@ fn init(
     Ok(())
 }
 
-fn update(
-    mut commands: Commands,
-    mut next_state: ResMut<NextState<GameState>>,
-    mut game_timer: ResMut<GameTimer>,
-    selected: Res<HeroSelected>,
-    capture: Res<RoundCaptureResource>,
-    time: Res<Time>,
-) {
-    if !game_timer.red {
-        let capture = capture.by_player(&selected.id).unwrap();
-        let fight = &capture.fight_capture;
-        if let Some(fight_state) =
-            fight.state(game_timer.value, game_timer.value + time.delta_seconds())
-        {
-            commands.insert_resource(FightState {
-                current: fight_state,
-            });
-        }
-    }
-
+fn update(mut next_state: ResMut<NextState<GameState>>, mut game_timer: ResMut<GameTimer>) {
     if game_timer.fired && game_timer.red {
         next_state.set(GameState::FightHome);
     }

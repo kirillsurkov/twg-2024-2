@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
-use crate::battle::fight::Owner;
+use crate::{battle::fight::Owner, component::fight_state::FightState};
 
-use super::{FightState, LocalSchedule};
+use super::LocalSchedule;
 
 pub struct HpManaBarsPlugin;
 
@@ -140,8 +140,8 @@ fn init_bar(mut commands: Commands, query: Query<(Entity, &Bar), Added<Bar>>) {
 fn update_bar(mut query: Query<(&Bar, &mut Style)>, fight_state: Res<FightState>) {
     for (bar, mut style) in query.iter_mut() {
         let fighter = match bar.0 {
-            Owner::Fighter1 => &fight_state.current.fighter1,
-            Owner::Fighter2 => &fight_state.current.fighter2,
+            Owner::Fighter1 => &fight_state.fighter1,
+            Owner::Fighter2 => &fight_state.fighter2,
         };
         match bar.1 {
             BarKind::Hp => {

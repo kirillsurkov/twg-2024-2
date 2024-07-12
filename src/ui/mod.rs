@@ -21,11 +21,6 @@ pub mod screen;
 
 const DCOLOR: BackgroundColor = BackgroundColor(Color::rgba(0.0, 0.0, 1.0, 0.1));
 
-#[derive(Resource)]
-pub struct FightState {
-    pub current: fight::State,
-}
-
 #[derive(ScheduleLabel, Debug, Hash, PartialEq, Eq, Clone)]
 pub struct LocalSchedule;
 
