@@ -22,8 +22,11 @@ impl Plugin for PlayersPlugin {
                 init_player_name,
                 init_player_stats,
                 init_player_money,
+                update_player_money,
                 init_player_attack,
+                update_player_attack,
                 init_player_footer,
+                update_player_footer,
                 init_player_info_root,
                 update_player_info_root,
                 init_player_info,
@@ -37,11 +40,7 @@ impl Plugin for PlayersPlugin {
 #[derive(Component)]
 pub struct PlayersRoot;
 
-fn init_players_root(
-    mut commands: Commands,
-    query: Query<Entity, Added<PlayersRoot>>,
-    battle: Res<BattleResource>,
-) {
+fn init_players_root(mut commands: Commands, query: Query<Entity, Added<PlayersRoot>>) {
     for entity in query.iter() {
         commands
             .entity(entity)
@@ -153,6 +152,7 @@ struct PlayerHeader;
 
 fn init_player_header(
     mut commands: Commands,
+    battle: Res<BattleResource>,
     query: Query<(Entity, &HeroId), Added<PlayerHeader>>,
 ) {
     for (entity, id) in query.iter() {
@@ -247,8 +247,33 @@ fn init_player_stats(mut commands: Commands, query: Query<(Entity, &HeroId), Add
                 ..Default::default()
             })
             .with_children(|p| {
-                p.spawn((NodeBundle::default(), HeroId(id.to_string()), PlayerMoney));
-                p.spawn((NodeBundle::default(), HeroId(id.to_string()), PlayerAttack));
+                p.spawn(NodeBundle {
+                    style: Style {
+                        display: Display::Flex,
+                        width: Val::Percent(70.0),
+                        height: Val::Percent(100.0),
+                        justify_content: JustifyContent::FlexStart,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                })
+                .with_children(|p| {
+                    p.spawn((NodeBundle::default(), HeroId(id.to_string()), PlayerMoney));
+                });
+
+                p.spawn(NodeBundle {
+                    style: Style {
+                        display: Display::Flex,
+                        flex_grow: 1.0,
+                        height: Val::Percent(100.0),
+                        justify_content: JustifyContent::FlexStart,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                })
+                .with_children(|p| {
+                    p.spawn((NodeBundle::default(), HeroId(id.to_string()), PlayerAttack));
+                });
             });
     }
 }
@@ -262,27 +287,24 @@ fn init_player_money(
     query: Query<(Entity, &HeroId), Added<PlayerMoney>>,
 ) {
     for (entity, id) in query.iter() {
-        commands
-            .entity(entity)
-            .insert(NodeBundle {
-                style: Style {
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Row,
-                    width: Val::Percent(100.0),
-                    ..Default::default()
-                },
-                ..Default::default()
-            })
-            .with_children(|p| {
-                p.spawn(TextBundle::from_section(
-                    "300$",
-                    TextStyle {
-                        font: assets.font_comic.clone_weak(),
-                        font_size: 25.0,
-                        color: Color::GREEN,
-                    },
-                ));
-            });
+        commands.entity(entity).insert(TextBundle::from_section(
+            "",
+            TextStyle {
+                font: assets.font_comic.clone_weak(),
+                font_size: 25.0,
+                color: Color::GREEN,
+            },
+        ));
+    }
+}
+
+fn update_player_money(
+    mut query: Query<(&HeroId, &mut Text), With<PlayerMoney>>,
+    battle: Res<BattleResource>,
+) {
+    for (id, mut text) in query.iter_mut() {
+        let player = battle.players.iter().find(|p| p.hero.id == id.0).unwrap();
+        text.sections[0].value = format!("{}$", player.money);
     }
 }
 
@@ -295,28 +317,24 @@ fn init_player_attack(
     query: Query<(Entity, &HeroId), Added<PlayerAttack>>,
 ) {
     for (entity, id) in query.iter() {
-        commands
-            .entity(entity)
-            .insert(NodeBundle {
-                style: Style {
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Row,
-                    width: Val::Percent(100.0),
-                    justify_content: JustifyContent::Center,
-                    ..Default::default()
-                },
-                ..Default::default()
-            })
-            .with_children(|p| {
-                p.spawn(TextBundle::from_section(
-                    "3",
-                    TextStyle {
-                        font: assets.font_comic.clone_weak(),
-                        font_size: 25.0,
-                        color: Color::RED,
-                    },
-                ));
-            });
+        commands.entity(entity).insert(TextBundle::from_section(
+            "",
+            TextStyle {
+                font: assets.font_comic.clone_weak(),
+                font_size: 25.0,
+                color: Color::RED,
+            },
+        ));
+    }
+}
+
+fn update_player_attack(
+    mut query: Query<(&HeroId, &mut Text), With<PlayerAttack>>,
+    battle: Res<BattleResource>,
+) {
+    for (id, mut text) in query.iter_mut() {
+        let player = battle.players.iter().find(|p| p.hero.id == id.0).unwrap();
+        text.sections[0].value = format!("{}", player.attack);
     }
 }
 
@@ -329,39 +347,41 @@ fn init_player_footer(
     query: Query<(Entity, &HeroId), Added<PlayerFooter>>,
 ) {
     for (entity, id) in query.iter() {
-        commands
-            .entity(entity)
-            .insert(NodeBundle {
-                style: Style {
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Row,
-                    flex_grow: 1.0,
-                    height: Val::Percent(100.0),
+        commands.entity(entity).insert(
+            TextBundle::from_section(
+                "50",
+                TextStyle {
+                    font: assets.font_comic.clone_weak(),
+                    font_size: 50.0,
                     ..Default::default()
                 },
-                background_color: DCOLOR,
+            )
+            .with_style(Style {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Row,
+                flex_grow: 1.0,
+                height: Val::Percent(100.0),
                 ..Default::default()
             })
-            .with_children(|p| {
-                p.spawn(TextBundle::from_section(
-                    "50",
-                    TextStyle {
-                        font: assets.font_comic.clone_weak(),
-                        font_size: 50.0,
-                        ..Default::default()
-                    },
-                ));
-            });
+            .with_background_color(DCOLOR.0),
+        );
+    }
+}
+
+fn update_player_footer(
+    mut query: Query<(&HeroId, &mut Text), With<PlayerFooter>>,
+    battle: Res<BattleResource>,
+) {
+    for (id, mut text) in query.iter_mut() {
+        let player = battle.players.iter().find(|p| p.hero.id == id.0).unwrap();
+        text.sections[0].value = format!("{}", player.hp);
     }
 }
 
 #[derive(Component)]
 struct PlayerInfoRoot;
 
-fn init_player_info_root(
-    mut commands: Commands,
-    query: Query<Entity, Added<PlayerInfoRoot>>,
-) {
+fn init_player_info_root(mut commands: Commands, query: Query<Entity, Added<PlayerInfoRoot>>) {
     for entity in query.iter() {
         commands
             .entity(entity)

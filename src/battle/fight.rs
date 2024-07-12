@@ -9,6 +9,7 @@ pub const DURATION: f32 = 10.0;
 #[derive(Debug, Clone)]
 pub struct Fighter {
     hero: Hero,
+    pub id: String,
     pub hp: f32,
     pub max_hp: f32,
     pub mana: f32,
@@ -21,6 +22,7 @@ impl Fighter {
     pub fn new(hero: &Hero) -> Self {
         Self {
             hero: hero.clone(),
+            id: hero.id.to_string(),
             hp: hero.hp,
             max_hp: hero.hp,
             mana: 0.0,
