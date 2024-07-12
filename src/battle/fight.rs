@@ -8,6 +8,7 @@ pub const DURATION: f32 = 10.0;
 
 #[derive(Debug, Clone)]
 pub struct Fighter {
+    hero: Hero,
     pub hp: f32,
     pub max_hp: f32,
     pub mana: f32,
@@ -19,6 +20,7 @@ pub struct Fighter {
 impl Fighter {
     pub fn new(hero: &Hero) -> Self {
         Self {
+            hero: hero.clone(),
             hp: hero.hp,
             max_hp: hero.hp,
             mana: 0.0,
@@ -26,6 +28,11 @@ impl Fighter {
             attack: hero.attack,
             attack_speed: 1.0 / hero.attack_speed,
         }
+    }
+
+    fn prepare(&mut self) {
+        self.attack = self.hero.attack;
+        self.attack_speed = 1.0 / self.hero.attack_speed;
     }
 }
 
@@ -45,6 +52,7 @@ pub struct Fight {
 pub struct State {
     pub fighter1: Fighter,
     pub fighter2: Fighter,
+    pub winner: Option<Owner>,
     pub modifiers: Vec<(Owner, ModifierDesc)>,
 }
 
@@ -75,6 +83,7 @@ impl FightCapture {
         states.last().map(|(_, state)| State {
             fighter1: state.fighter1.clone(),
             fighter2: state.fighter2.clone(),
+            winner: state.winner,
             modifiers: states
                 .iter()
                 .flat_map(|(_, state)| state.modifiers.clone())
@@ -108,6 +117,7 @@ impl Fight {
                 State {
                     fighter1: self.fighter1.clone(),
                     fighter2: self.fighter2.clone(),
+                    winner: None,
                     modifiers: vec![],
                 },
             )],
@@ -132,6 +142,9 @@ impl Fight {
                 .collect::<Vec<_>>();
             modifiers.sort_by_key(|(o, m)| (*o, m.key()));
 
+            self.fighter1.prepare();
+            self.fighter2.prepare();
+
             for (owner, m) in &modifiers {
                 let (mut myself, mut enemy) = match owner {
                     Owner::Fighter1 => (&mut self.fighter1, &mut self.fighter2),
@@ -155,24 +168,29 @@ impl Fight {
             }
 
             if !modifiers.is_empty() {
+                let winner = if self.fighter1.hp <= 0.0 {
+                    self.fighter1.hp = 0.0;
+                    Some(Owner::Fighter2)
+                } else if self.fighter2.hp <= 0.0 {
+                    self.fighter2.hp = 0.0;
+                    Some(Owner::Fighter1)
+                } else {
+                    None
+                };
+
                 capture.states.push((
                     time,
                     State {
                         fighter1: self.fighter1.clone(),
                         fighter2: self.fighter2.clone(),
+                        winner,
                         modifiers,
                     },
                 ));
-            }
 
-            if self.fighter1.hp <= 0.0 {
-                self.fighter1.hp = 0.0;
-                break;
-            }
-
-            if self.fighter2.hp <= 0.0 {
-                self.fighter2.hp = 0.0;
-                break;
+                if winner.is_some() {
+                    break;
+                }
             }
         }
 

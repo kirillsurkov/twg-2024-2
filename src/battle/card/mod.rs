@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use crate::battle::effect::Effect;
 
+#[derive(Debug)]
 pub struct Card<T: Effect> {
     pub level: u8,
     pub max_level: u8,

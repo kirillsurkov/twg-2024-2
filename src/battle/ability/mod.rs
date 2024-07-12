@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use crate::battle::effect::Effect;
 
+#[derive(Debug)]
 pub struct Ability<T: Effect> {
     _pd: PhantomData<T>,
 }

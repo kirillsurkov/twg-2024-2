@@ -3,7 +3,7 @@ use super::{
     effect::HasEffect,
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Hero {
     pub id: &'static str,
     pub name: &'static str,

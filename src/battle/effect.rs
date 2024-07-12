@@ -14,7 +14,7 @@ impl<T: Effect + 'static> From<T> for Box<dyn Effect> {
     }
 }
 
-pub trait HasEffect: Send + Sync + DynClone {
+pub trait HasEffect: Debug + Send + Sync + DynClone {
     fn effect(&self) -> Box<dyn Effect>;
 }
 
