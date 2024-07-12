@@ -8,6 +8,8 @@ use layout::LayoutPlugin;
 use players::PlayersPlugin;
 use screen::ScreenPlugin;
 
+use crate::battle::fight;
+
 pub mod cards;
 pub mod fight_arena_layout;
 pub mod fight_home_layout;
@@ -18,6 +20,11 @@ pub mod players;
 pub mod screen;
 
 const DCOLOR: BackgroundColor = BackgroundColor(Color::rgba(0.0, 0.0, 1.0, 0.1));
+
+#[derive(Resource)]
+pub struct FightState {
+    pub current: fight::State,
+}
 
 #[derive(ScheduleLabel, Debug, Hash, PartialEq, Eq, Clone)]
 pub struct LocalSchedule;

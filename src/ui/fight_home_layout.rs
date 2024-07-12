@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use super::{
     cards::CardsRoot,
+    game_timer::GameTimerRoot,
     players::PlayersRoot,
     screen::{ScreenBody, ScreenFooter, ScreenHeader, ScreenMain, ScreenRoot, ScreenSide},
     LocalSchedule,
@@ -24,7 +25,10 @@ fn init(mut commands: Commands, query: Query<Entity, Added<FightHomeLayout>>) {
             .with_children(|p| {
                 p.spawn((NodeBundle::default(), ScreenMain))
                     .with_children(|p| {
-                        p.spawn((NodeBundle::default(), ScreenHeader));
+                        p.spawn((NodeBundle::default(), ScreenHeader))
+                            .with_children(|p| {
+                                p.spawn((NodeBundle::default(), GameTimerRoot));
+                            });
                         p.spawn((NodeBundle::default(), ScreenBody))
                             .with_children(|p| {
                                 p.spawn((NodeBundle::default(), PlayersRoot));

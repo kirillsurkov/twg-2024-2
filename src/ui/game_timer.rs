@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::scene::fight_arena;
+use crate::component::game_timer::GameTimer;
 
 use super::{LocalSchedule, UiAssets};
 
@@ -8,10 +8,7 @@ pub struct GameTimerPlugin;
 
 impl Plugin for GameTimerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            LocalSchedule,
-            (init_root, update_timer).run_if(resource_exists::<fight_arena::State>),
-        );
+        app.add_systems(LocalSchedule, (init_root, update_timer));
     }
 }
 
@@ -35,11 +32,14 @@ fn init_root(
     }
 }
 
-fn update_timer(
-    mut query: Query<&mut Text, With<GameTimerRoot>>,
-    arena_state: Res<fight_arena::State>,
-) {
+fn update_timer(mut query: Query<&mut Text, With<GameTimerRoot>>, state: Res<GameTimer>) {
     for mut text in query.iter_mut() {
-        text.sections[0].value = format!("{:.0}", arena_state.timer_max - arena_state.timer);
+        let section = &mut text.sections[0];
+        if state.red {
+            section.style.color = Color::RED;
+        } else {
+            section.style.color = Color::WHITE;
+        }
+        section.value = format!("{:.0}", (state.max - state.value).ceil() - 1.0);
     }
 }

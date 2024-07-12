@@ -3,22 +3,18 @@ use std::{error::Error, f32::consts::PI};
 use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
 
 use crate::{
-    battle::fight::{self, DURATION},
+    battle::fight::DURATION,
     battle_bridge::RoundCaptureResource,
-    component::arena::Arena,
+    component::{arena::Arena, game_timer::GameTimer},
     hero::HeroesRoot,
     scene::UiRoot,
-    ui::fight_arena_layout::FightArenaLayout,
+    ui::{fight_arena_layout::FightArenaLayout, FightState},
 };
 
 use super::{landing::HeroSelected, GameState, LocalSchedule, Root};
 
 #[derive(Resource)]
-pub struct State {
-    pub timer: f32,
-    pub timer_max: f32,
-    pub current_state: Option<fight::State>,
-}
+struct State {}
 
 pub struct FightArena;
 
@@ -34,17 +30,13 @@ impl Plugin for FightArena {
 
 fn init(
     mut commands: Commands,
+    mut game_timer: ResMut<GameTimer>,
     selected: Res<HeroSelected>,
     root: Query<Entity, Added<Root>>,
 ) -> Result<(), Box<dyn Error>> {
     let root = root.get_single()?;
     println!("FIGHT ARENA INIT FOR {}", selected.id);
 
-    commands.insert_resource(State {
-        timer: 0.0,
-        timer_max: DURATION,
-        current_state: None,
-    });
     commands.entity(root).with_children(|p| {
         p.spawn((
             Camera3dBundle {
@@ -80,24 +72,38 @@ fn init(
 
     commands.spawn((UiRoot, FightArenaLayout));
 
+    commands.insert_resource(State {});
+
+    game_timer.restart(DURATION, false);
+
     Ok(())
 }
 
 fn update(
+    mut commands: Commands,
     mut next_state: ResMut<NextState<GameState>>,
-    mut state: ResMut<State>,
+    mut game_timer: ResMut<GameTimer>,
     selected: Res<HeroSelected>,
     capture: Res<RoundCaptureResource>,
     time: Res<Time>,
 ) {
-    let capture = capture.by_player(&selected.id).unwrap();
-    let fight = &capture.fight_capture;
-    if let Some(fight_state) = fight.state(state.timer, state.timer + time.delta_seconds()) {
-        println!("{fight_state:#?}");
-        state.current_state = Some(fight_state);
+    if !game_timer.red {
+        let capture = capture.by_player(&selected.id).unwrap();
+        let fight = &capture.fight_capture;
+        if let Some(fight_state) =
+            fight.state(game_timer.value, game_timer.value + time.delta_seconds())
+        {
+            commands.insert_resource(FightState {
+                current: fight_state,
+            });
+        }
     }
-    state.timer += time.delta_seconds();
-    if state.timer >= DURATION + 3.0 {
+
+    if game_timer.fired && game_timer.red {
         next_state.set(GameState::FightHome);
+    }
+
+    if game_timer.fired {
+        game_timer.restart(3.0, true);
     }
 }

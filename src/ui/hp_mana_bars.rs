@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
-use crate::{battle::fight::Owner, scene::fight_arena};
+use crate::battle::fight::Owner;
 
-use super::LocalSchedule;
+use super::{FightState, LocalSchedule};
 
 pub struct HpManaBarsPlugin;
 
@@ -17,7 +17,7 @@ impl Plugin for HpManaBarsPlugin {
                 init_bar,
                 update_bar,
             )
-                .run_if(resource_exists::<fight_arena::State>),
+                .run_if(resource_exists::<FightState>),
         );
     }
 }
@@ -137,15 +137,11 @@ fn init_bar(mut commands: Commands, query: Query<(Entity, &Bar), Added<Bar>>) {
     }
 }
 
-fn update_bar(mut query: Query<(&Bar, &mut Style)>, arena_state: Res<fight_arena::State>) {
+fn update_bar(mut query: Query<(&Bar, &mut Style)>, fight_state: Res<FightState>) {
     for (bar, mut style) in query.iter_mut() {
-        let Some(ref fight_state) = arena_state.current_state else {
-            continue;
-        };
-
         let fighter = match bar.0 {
-            Owner::Fighter1 => &fight_state.fighter1,
-            Owner::Fighter2 => &fight_state.fighter2,
+            Owner::Fighter1 => &fight_state.current.fighter1,
+            Owner::Fighter2 => &fight_state.current.fighter2,
         };
         match bar.1 {
             BarKind::Hp => {

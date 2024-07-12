@@ -4,7 +4,7 @@ use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
 
 use crate::{
     battle_bridge::{BattleResource, RoundCaptureResource},
-    component::home::Home,
+    component::{game_timer::GameTimer, home::Home},
     hero::HeroesRoot,
     scene::UiRoot,
     ui::fight_home_layout::FightHomeLayout,
@@ -13,9 +13,7 @@ use crate::{
 use super::{landing::HeroSelected, GameState, LocalSchedule, Root};
 
 #[derive(Resource)]
-struct State {
-    timer: f32,
-}
+struct State {}
 
 pub struct FightHome;
 
@@ -31,12 +29,12 @@ impl Plugin for FightHome {
 
 fn init(
     mut commands: Commands,
+    mut game_timer: ResMut<GameTimer>,
     selected: Res<HeroSelected>,
     root: Query<Entity, Added<Root>>,
 ) -> Result<(), Box<dyn Error>> {
     let root = root.get_single()?;
     println!("FIGHT HOME INIT FOR {}", selected.id);
-    commands.insert_resource(State { timer: 0.0 });
     commands.entity(root).with_children(|p| {
         p.spawn((
             Camera3dBundle {
@@ -73,18 +71,20 @@ fn init(
 
     commands.spawn((UiRoot, FightHomeLayout));
 
+    commands.insert_resource(State {});
+
+    game_timer.restart(5.0, false);
+
     Ok(())
 }
 
 fn update(
     mut commands: Commands,
     mut next_state: ResMut<NextState<GameState>>,
-    mut state: ResMut<State>,
     mut battle: ResMut<BattleResource>,
-    time: Res<Time>,
+    game_timer: Res<GameTimer>,
 ) {
-    state.timer += time.delta_seconds();
-    if state.timer >= 0.0 {
+    if game_timer.fired {
         commands.insert_resource(RoundCaptureResource(battle.round()));
         next_state.set(GameState::FightArena);
     }
