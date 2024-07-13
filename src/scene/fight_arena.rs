@@ -3,7 +3,12 @@ use std::{error::Error, f32::consts::PI};
 use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
 
 use crate::{
-    battle::fight::DURATION, battle_bridge::BattleResource, component::{arena::Arena, game_timer::GameTimer}, hero::HeroesRoot, scene::UiRoot, ui::fight_arena_layout::FightArenaLayout
+    battle::fight::DURATION,
+    battle_bridge::{BattleResource, RoundCaptureResource},
+    component::{arena::Arena, game_timer::GameTimer},
+    hero::HeroesRoot,
+    scene::UiRoot,
+    ui::fight_arena_layout::FightArenaLayout,
 };
 
 use super::{
@@ -88,6 +93,7 @@ fn update(
             commands.insert_resource(HeroWatch {
                 id: selected.id.clone(),
             });
+            commands.remove_resource::<RoundCaptureResource>();
             battle.apply();
             next_state.set(GameState::FightHome);
         } else {

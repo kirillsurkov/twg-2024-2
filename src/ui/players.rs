@@ -1,7 +1,9 @@
+use std::cmp::Reverse;
+
 use bevy::prelude::*;
 
 use crate::{
-    battle_bridge::BattleResource,
+    battle_bridge::{BattleResource, RoundCaptureResource},
     hero::HeroId,
     scene::landing::{HeroSelected, HeroWatch},
 };
@@ -72,6 +74,7 @@ fn init_players_list(
     mut commands: Commands,
     query: Query<Entity, Added<PlayersList>>,
     battle: Res<BattleResource>,
+    round: Option<Res<RoundCaptureResource>>,
 ) {
     for entity in query.iter() {
         commands
@@ -87,22 +90,44 @@ fn init_players_list(
                 ..Default::default()
             })
             .with_children(|p| {
-                battle.players.iter().for_each(|player| {
+                let players = if let Some(round) = round.as_ref() {
+                    round
+                        .0
+                        .iter()
+                        .flat_map(|r| vec![r.player1, r.player2])
+                        .map(|p| {
+                            battle
+                                .players
+                                .iter()
+                                .find(|player| player.hero.id == p)
+                                .unwrap()
+                        })
+                        .collect()
+                } else {
+                    let mut players = battle.players.iter().collect::<Vec<_>>();
+                    players.sort_by_key(|p| Reverse((p.hp, p.money)));
+                    players
+                };
+
+                for (i, player) in players.iter().enumerate() {
                     p.spawn((
                         NodeBundle::default(),
                         HeroId(player.hero.id.to_string()),
-                        PlayerRoot,
+                        PlayerRoot(round.is_some() && i % 2 == 1),
                     ));
-                })
+                }
             });
     }
 }
 
 #[derive(Component)]
-struct PlayerRoot;
+struct PlayerRoot(bool);
 
-fn init_player_root(mut commands: Commands, query: Query<(Entity, &HeroId), Added<PlayerRoot>>) {
-    for (entity, id) in query.iter() {
+fn init_player_root(
+    mut commands: Commands,
+    query: Query<(Entity, &HeroId, &PlayerRoot), Added<PlayerRoot>>,
+) {
+    for (entity, id, root) in query.iter() {
         commands
             .entity(entity)
             .insert(ButtonBundle {
@@ -111,7 +136,12 @@ fn init_player_root(mut commands: Commands, query: Query<(Entity, &HeroId), Adde
                     flex_direction: FlexDirection::Row,
                     width: Val::Px(HEIGHT * 4.0),
                     height: Val::Px(HEIGHT),
-                    margin: UiRect::top(Val::Px(5.0)),
+                    margin: UiRect::new(
+                        Val::Px(0.0),
+                        Val::Px(0.0),
+                        Val::Px(5.0),
+                        Val::Px(10.0 * root.0 as u32 as f32),
+                    ),
                     ..Default::default()
                 },
                 ..Default::default()
