@@ -3,11 +3,7 @@ use std::{error::Error, f32::consts::PI};
 use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
 
 use crate::{
-    battle::fight::DURATION,
-    component::{arena::Arena, game_timer::GameTimer},
-    hero::HeroesRoot,
-    scene::UiRoot,
-    ui::fight_arena_layout::FightArenaLayout,
+    battle::fight::DURATION, battle_bridge::BattleResource, component::{arena::Arena, game_timer::GameTimer}, hero::HeroesRoot, scene::UiRoot, ui::fight_arena_layout::FightArenaLayout
 };
 
 use super::{
@@ -83,6 +79,7 @@ fn update(
     mut commands: Commands,
     mut next_state: ResMut<NextState<GameState>>,
     mut game_timer: ResMut<GameTimer>,
+    mut battle: ResMut<BattleResource>,
     selected: Res<HeroSelected>,
 ) {
     if game_timer.fired {
@@ -91,6 +88,7 @@ fn update(
             commands.insert_resource(HeroWatch {
                 id: selected.id.clone(),
             });
+            battle.apply();
             next_state.set(GameState::FightHome);
         } else {
             game_timer.restart(3.0, true);

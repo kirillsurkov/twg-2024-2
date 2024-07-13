@@ -1,5 +1,6 @@
 use super::{effect::HasEffect, hero::Hero};
 
+#[derive(Clone)]
 pub struct Player {
     pub hero: Hero,
     pub money: u32,

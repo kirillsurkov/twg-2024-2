@@ -43,17 +43,16 @@ pub enum Owner {
     Fighter2,
 }
 
-pub struct Fight {
-    fighter1: Fighter,
-    fighter2: Fighter,
+pub struct Fight<'a> {
     effects: Vec<(Box<dyn Effect>, Owner)>,
+    player1: &'a mut Player,
+    player2: &'a mut Player,
 }
 
 #[derive(Debug, Clone)]
 pub struct State {
     pub fighter1: Fighter,
     pub fighter2: Fighter,
-    pub winner: Option<Owner>,
     pub modifiers: Vec<(Owner, ModifierDesc)>,
 }
 
@@ -84,7 +83,6 @@ impl FightCapture {
         states.last().map(|(_, state)| State {
             fighter1: state.fighter1.clone(),
             fighter2: state.fighter2.clone(),
-            winner: state.winner,
             modifiers: states
                 .iter()
                 .flat_map(|(_, state)| state.modifiers.clone())
@@ -101,11 +99,9 @@ impl FightCapture {
     }
 }
 
-impl Fight {
-    pub fn new(p1: &Player, p2: &Player) -> Self {
+impl<'a> Fight<'a> {
+    pub fn new(p1: &'a mut Player, p2: &'a mut Player) -> Self {
         Self {
-            fighter1: Fighter::new(&p1.hero),
-            fighter2: Fighter::new(&p2.hero),
             effects: vec![]
                 .into_iter()
                 .chain(p1.hero.abils.iter().map(|a| (a.effect(), Owner::Fighter1)))
@@ -113,24 +109,30 @@ impl Fight {
                 .chain(p1.cards.iter().map(|c| (c.effect(), Owner::Fighter1)))
                 .chain(p2.cards.iter().map(|c| (c.effect(), Owner::Fighter2)))
                 .collect(),
+            player1: p1,
+            player2: p2,
         }
     }
 
-    pub fn run(&mut self) -> FightCapture {
+    pub fn run(&mut self) -> (Owner, FightCapture) {
         let fps = 100.0;
         let delta = 1.0 / fps as f32;
+
+        let mut fighter1 = Fighter::new(&self.player1.hero);
+        let mut fighter2 = Fighter::new(&self.player2.hero);
 
         let mut capture = FightCapture {
             states: vec![(
                 0.0,
                 State {
-                    fighter1: self.fighter1.clone(),
-                    fighter2: self.fighter2.clone(),
-                    winner: None,
+                    fighter1: fighter1.clone(),
+                    fighter2: fighter2.clone(),
                     modifiers: vec![],
                 },
             )],
         };
+
+        let mut winner = None;
 
         for time in 0..(DURATION * fps) as u32 {
             let time = time as f32 / fps as f32;
@@ -140,8 +142,8 @@ impl Fight {
                 .iter_mut()
                 .flat_map(|(effect, owner)| {
                     let (myself, enemy) = match owner {
-                        Owner::Fighter1 => (&mut self.fighter1, &mut self.fighter2),
-                        Owner::Fighter2 => (&mut self.fighter2, &mut self.fighter1),
+                        Owner::Fighter1 => (&mut fighter1, &mut fighter2),
+                        Owner::Fighter2 => (&mut fighter2, &mut fighter1),
                     };
                     effect
                         .update(delta, myself, enemy)
@@ -151,13 +153,13 @@ impl Fight {
                 .collect::<Vec<_>>();
             modifiers.sort_by_key(|(o, m)| (*o, m.key()));
 
-            self.fighter1.prepare();
-            self.fighter2.prepare();
+            fighter1.prepare();
+            fighter2.prepare();
 
             for (owner, m) in &modifiers {
                 let (mut myself, mut enemy) = match owner {
-                    Owner::Fighter1 => (&mut self.fighter1, &mut self.fighter2),
-                    Owner::Fighter2 => (&mut self.fighter2, &mut self.fighter1),
+                    Owner::Fighter1 => (&mut fighter1, &mut fighter2),
+                    Owner::Fighter2 => (&mut fighter2, &mut fighter1),
                 };
                 let target = match m.target {
                     Target::Myself => &mut myself,
@@ -177,22 +179,19 @@ impl Fight {
             }
 
             if !modifiers.is_empty() {
-                let winner = if self.fighter1.hp <= 0.0 {
-                    self.fighter1.hp = 0.0;
-                    Some(Owner::Fighter2)
-                } else if self.fighter2.hp <= 0.0 {
-                    self.fighter2.hp = 0.0;
-                    Some(Owner::Fighter1)
-                } else {
-                    None
+                if fighter1.hp <= 0.0 {
+                    fighter1.hp = 0.0;
+                    winner = Some(Owner::Fighter2);
+                } else if fighter2.hp <= 0.0 {
+                    fighter2.hp = 0.0;
+                    winner = Some(Owner::Fighter1);
                 };
 
                 capture.states.push((
                     time,
                     State {
-                        fighter1: self.fighter1.clone(),
-                        fighter2: self.fighter2.clone(),
-                        winner,
+                        fighter1: fighter1.clone(),
+                        fighter2: fighter2.clone(),
                         modifiers,
                     },
                 ));
@@ -203,6 +202,30 @@ impl Fight {
             }
         }
 
-        capture
+        let winner = winner.unwrap_or(if fighter1.hp < fighter2.hp {
+            Owner::Fighter2
+        } else {
+            Owner::Fighter1
+        });
+
+        let (w, l) = match winner {
+            Owner::Fighter1 => (&mut self.player1, &mut self.player2),
+            Owner::Fighter2 => (&mut self.player2, &mut self.player1),
+        };
+
+        w.money += (w.money / 100).min(10) * 10;
+        l.money += (l.money / 100).min(10) * 10;
+        w.money += 250;
+        l.money += 250;
+
+        w.money += 50;
+        l.money += w.attack * 15;
+
+        l.hp = (l.hp - w.attack).max(0);
+
+        l.attack = 3;
+        w.attack = (w.attack + 1).min(10);
+
+        (winner, capture)
     }
 }
