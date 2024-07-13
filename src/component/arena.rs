@@ -2,7 +2,10 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::prelude::*;
 
-use crate::{battle_bridge::RoundCaptureResource, hero::HeroId, scene::landing::HeroSelected};
+use crate::{
+    battle::fight::Owner, battle_bridge::RoundCaptureResource, hero::HeroId,
+    scene::landing::HeroWatch,
+};
 
 use super::LocalSchedule;
 
@@ -10,7 +13,10 @@ pub struct ArenaPlugin;
 
 impl Plugin for ArenaPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(LocalSchedule, added.run_if(any_with_component::<Arena>));
+        app.add_systems(
+            LocalSchedule,
+            (init, update).run_if(any_with_component::<Arena>),
+        );
     }
 }
 
@@ -25,42 +31,35 @@ pub struct Arena {}
 
 impl Arena {}
 
-fn added(
+fn init(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(Entity, &mut Arena, &Children), Added<Arena>>,
-    selected: Res<HeroSelected>,
     capture: Res<RoundCaptureResource>,
     hero_ids: Query<&HeroId>,
     with_parent: Query<&Parent>,
 ) {
     for (entity, mut arena, children) in query.iter_mut() {
-        let capture = capture.by_player(&selected.id).unwrap();
-        println!("{} vs {}", capture.player1, capture.player2);
+        for capture in &capture.0 {
+            for hero in children.iter() {
+                let id = &hero_ids.get(*hero).unwrap().0;
+                let fighter = if id == capture.player1 {
+                    Owner::Fighter1
+                } else if id == capture.player2 {
+                    Owner::Fighter2
+                } else {
+                    continue;
+                };
 
-        for hero in children.iter() {
-            let id = &hero_ids.get(*hero).unwrap().0;
-            let fighter = if id == capture.player1 {
-                1
-            } else if id == capture.player2 {
-                2
-            } else {
-                0
-            };
-            if fighter == 0 {
-                commands.entity(*hero).despawn_recursive();
-            } else {
                 let x = match fighter {
-                    1 => -4.0,
-                    2 => 4.0,
-                    _ => unreachable!(),
+                    Owner::Fighter1 => -4.0,
+                    Owner::Fighter2 => 4.0,
                 };
 
                 let rotation = match fighter {
-                    1 => Quat::from_rotation_y(FRAC_PI_2),
-                    2 => Quat::from_rotation_y(-FRAC_PI_2),
-                    _ => unreachable!(),
+                    Owner::Fighter1 => Quat::from_rotation_y(FRAC_PI_2),
+                    Owner::Fighter2 => Quat::from_rotation_y(-FRAC_PI_2),
                 };
 
                 let transform = TransformBundle {
@@ -83,7 +82,10 @@ fn added(
                             changed: true,
                         },
                         TransformBundle::default(),
-                        VisibilityBundle::default(),
+                        VisibilityBundle {
+                            visibility: Visibility::Hidden,
+                            ..Default::default()
+                        },
                     ))
                     .set_parent(hero_node);
             }
@@ -111,5 +113,25 @@ fn added(
                     ..Default::default()
                 });
             });
+    }
+}
+
+fn update(
+    mut commands: Commands,
+    capture: Res<RoundCaptureResource>,
+    watch: Res<HeroWatch>,
+    heroes: Query<Entity, With<HeroState>>,
+    hero_ids: Query<&HeroId>,
+) {
+    let capture = capture.by_player(&watch.id).unwrap();
+    for entity in heroes.iter() {
+        let Ok(hero) = hero_ids.get(entity) else {
+            continue;
+        };
+        if hero.0 == capture.player1 || hero.0 == capture.player2 {
+            commands.entity(entity).insert(Visibility::Inherited);
+        } else {
+            commands.entity(entity).insert(Visibility::Hidden);
+        }
     }
 }

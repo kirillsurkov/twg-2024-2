@@ -35,6 +35,9 @@ impl Plugin for GameTimerPlugin {
 
 fn update(mut timer: ResMut<GameTimer>, time: Res<Time>) {
     if !timer.fired {
+        if timer.value >= timer.max {
+            return;
+        }
         timer.value += time.delta_seconds();
         if timer.value >= timer.max {
             timer.value = timer.max;

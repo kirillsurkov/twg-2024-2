@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{hero::HeroId, scene::landing::HeroSelected};
+use crate::{hero::HeroId, scene::landing::HeroWatch};
 
 use super::LocalSchedule;
 
@@ -8,7 +8,10 @@ pub struct HomePlugin;
 
 impl Plugin for HomePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(LocalSchedule, added.run_if(any_with_component::<Home>));
+        app.add_systems(
+            LocalSchedule,
+            (init, update).run_if(any_with_component::<Home>),
+        );
     }
 }
 
@@ -23,39 +26,31 @@ pub struct Home {}
 
 impl Home {}
 
-fn added(
+fn init(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(Entity, &mut Home, &Children), Added<Home>>,
-    selected: Res<HeroSelected>,
-    hero_ids: Query<&HeroId>,
 ) {
     for (entity, mut home, children) in query.iter_mut() {
         for hero in children.iter() {
-            if hero_ids.get(*hero).unwrap().0 != selected.id {
-                commands.entity(*hero).despawn_recursive();
-            }
+            let transform = TransformBundle {
+                local: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
+                ..Default::default()
+            };
+
+            commands.entity(*hero).insert((
+                transform,
+                HeroState {
+                    active: true,
+                    changed: true,
+                },
+                VisibilityBundle {
+                    visibility: Visibility::Hidden,
+                    ..Default::default()
+                },
+            ));
         }
-
-        let hero = *children
-            .iter()
-            .find(|c| hero_ids.get(**c).unwrap().0 == selected.id)
-            .unwrap();
-
-        let transform = TransformBundle {
-            local: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
-            ..Default::default()
-        };
-
-        commands.entity(hero).insert((
-            transform,
-            HeroState {
-                active: true,
-                changed: true,
-            },
-            VisibilityBundle::default(),
-        ));
 
         commands
             .entity(entity)
@@ -79,5 +74,25 @@ fn added(
                     ..Default::default()
                 });
             });
+    }
+}
+
+fn update(
+    mut commands: Commands,
+    watch: Res<HeroWatch>,
+    query: Query<&Children, With<Home>>,
+    hero_ids: Query<&HeroId>,
+) {
+    for children in query.iter() {
+        for entity in children {
+            let Ok(hero) = hero_ids.get(*entity) else {
+                continue;
+            };
+            if hero.0 == watch.id {
+                commands.entity(*entity).insert(Visibility::Inherited);
+            } else {
+                commands.entity(*entity).insert(Visibility::Hidden);
+            }
+        }
     }
 }

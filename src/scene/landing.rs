@@ -33,13 +33,13 @@ pub struct HeroSelected {
     pub id: String,
 }
 
-fn init(
-    mut commands: Commands,
-    selected: Res<HeroSelected>,
-    root: Query<Entity, Added<Root>>,
-) -> Result<(), Box<dyn Error>> {
+#[derive(Resource)]
+pub struct HeroWatch {
+    pub id: String,
+}
+
+fn init(mut commands: Commands, root: Query<Entity, Added<Root>>) -> Result<(), Box<dyn Error>> {
     let root = root.get_single()?;
-    println!("LANDING INIT FOR {}", selected.id);
     commands.insert_resource(State { timer: 0.0 });
     commands.entity(root).with_children(|p| {
         p.spawn((
@@ -82,9 +82,9 @@ fn update(
 ) {
     let land = land.single();
 
-    if land.ready() {
+    if true || land.ready() {
         state.timer += time.delta_seconds();
-        if state.timer >= 3.0 {
+        if state.timer >= 0.0 {
             commands.insert_resource(BattleResource(Battle::new(
                 heroes.iter().map(|(h, _)| Player::new(h.clone())).collect(),
             )));

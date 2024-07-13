@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use crate::{battle_bridge::BattleResource, hero::HeroId};
+use crate::{
+    battle_bridge::BattleResource,
+    hero::HeroId,
+    scene::landing::{HeroSelected, HeroWatch},
+};
 
 use super::{LocalSchedule, UiAssets, DCOLOR};
 
@@ -110,7 +114,6 @@ fn init_player_root(mut commands: Commands, query: Query<(Entity, &HeroId), Adde
                     margin: UiRect::top(Val::Px(5.0)),
                     ..Default::default()
                 },
-                background_color: DCOLOR,
                 ..Default::default()
             })
             .with_children(|p| {
@@ -137,6 +140,7 @@ fn update_player_root(
                 *color = Color::WHITE.with_a(0.05).into();
             }
             Interaction::Pressed => {
+                commands.insert_resource(HeroWatch { id: id.to_string() });
                 *color = Color::WHITE.with_a(0.07).into();
             }
             Interaction::None => {
@@ -173,7 +177,11 @@ fn init_player_header(
 #[derive(Component)]
 struct PlayerBody;
 
-fn init_player_body(mut commands: Commands, query: Query<(Entity, &HeroId), Added<PlayerBody>>) {
+fn init_player_body(
+    mut commands: Commands,
+    selected: Res<HeroSelected>,
+    query: Query<(Entity, &HeroId), Added<PlayerBody>>,
+) {
     for (entity, id) in query.iter() {
         commands
             .entity(entity)
@@ -185,7 +193,11 @@ fn init_player_body(mut commands: Commands, query: Query<(Entity, &HeroId), Adde
                     height: Val::Percent(100.0),
                     ..Default::default()
                 },
-                background_color: DCOLOR,
+                background_color: if selected.id == id.0 {
+                    Color::GREEN.with_a(0.1).into()
+                } else {
+                    DCOLOR
+                },
                 ..Default::default()
             })
             .with_children(|p| {

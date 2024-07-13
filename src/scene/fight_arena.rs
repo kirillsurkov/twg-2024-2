@@ -10,7 +10,10 @@ use crate::{
     ui::fight_arena_layout::FightArenaLayout,
 };
 
-use super::{landing::HeroSelected, GameState, LocalSchedule, Root};
+use super::{
+    landing::{HeroSelected, HeroWatch},
+    GameState, LocalSchedule, Root,
+};
 
 #[derive(Resource)]
 struct State {}
@@ -30,11 +33,9 @@ impl Plugin for FightArena {
 fn init(
     mut commands: Commands,
     mut game_timer: ResMut<GameTimer>,
-    selected: Res<HeroSelected>,
     root: Query<Entity, Added<Root>>,
 ) -> Result<(), Box<dyn Error>> {
     let root = root.get_single()?;
-    println!("FIGHT ARENA INIT FOR {}", selected.id);
 
     commands.entity(root).with_children(|p| {
         p.spawn((
@@ -78,12 +79,21 @@ fn init(
     Ok(())
 }
 
-fn update(mut next_state: ResMut<NextState<GameState>>, mut game_timer: ResMut<GameTimer>) {
-    if game_timer.fired && game_timer.red {
-        next_state.set(GameState::FightHome);
-    }
-
+fn update(
+    mut commands: Commands,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut game_timer: ResMut<GameTimer>,
+    selected: Res<HeroSelected>,
+) {
     if game_timer.fired {
-        game_timer.restart(3.0, true);
+        if game_timer.red {
+            game_timer.fired = false;
+            commands.insert_resource(HeroWatch {
+                id: selected.id.clone(),
+            });
+            next_state.set(GameState::FightHome);
+        } else {
+            game_timer.restart(3.0, true);
+        }
     }
 }

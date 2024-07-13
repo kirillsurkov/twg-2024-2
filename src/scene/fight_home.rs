@@ -10,7 +10,10 @@ use crate::{
     ui::fight_home_layout::FightHomeLayout,
 };
 
-use super::{landing::HeroSelected, GameState, LocalSchedule, Root};
+use super::{
+    landing::{HeroSelected, HeroWatch},
+    GameState, LocalSchedule, Root,
+};
 
 #[derive(Resource)]
 struct State {}
@@ -30,11 +33,10 @@ impl Plugin for FightHome {
 fn init(
     mut commands: Commands,
     mut game_timer: ResMut<GameTimer>,
-    selected: Res<HeroSelected>,
     root: Query<Entity, Added<Root>>,
 ) -> Result<(), Box<dyn Error>> {
     let root = root.get_single()?;
-    println!("FIGHT HOME INIT FOR {}", selected.id);
+    println!("FIGHT HOME");
     commands.entity(root).with_children(|p| {
         p.spawn((
             Camera3dBundle {
@@ -82,10 +84,14 @@ fn update(
     mut commands: Commands,
     mut next_state: ResMut<NextState<GameState>>,
     mut battle: ResMut<BattleResource>,
+    selected: Res<HeroSelected>,
     game_timer: Res<GameTimer>,
 ) {
     if game_timer.fired {
         commands.insert_resource(RoundCaptureResource(battle.round()));
+        commands.insert_resource(HeroWatch {
+            id: selected.id.clone(),
+        });
         next_state.set(GameState::FightArena);
     }
 }

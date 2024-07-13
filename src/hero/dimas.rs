@@ -97,6 +97,8 @@ fn on_add(
     }
 }
 
+fn render_avatar() {}
+
 fn filter_animations(
     mut query: Query<&Animations, With<Dimas>>,
     mut named: Query<(&Name, &mut Visibility)>,

@@ -8,7 +8,7 @@ use crate::{
     scene::landing::HeroSelected,
 };
 
-use super::{GameState, LocalSchedule, Root, UiRoot};
+use super::{landing::HeroWatch, GameState, LocalSchedule, Root, UiRoot};
 
 #[derive(Resource, Default)]
 struct State {
@@ -228,6 +228,9 @@ fn update(
 
     if wheel.selected() {
         commands.insert_resource(HeroSelected {
+            id: selected_hero.id.to_string(),
+        });
+        commands.insert_resource(HeroWatch {
             id: selected_hero.id.to_string(),
         });
         next_state.set(GameState::Landing);
