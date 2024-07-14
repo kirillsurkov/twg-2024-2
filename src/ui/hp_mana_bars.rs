@@ -136,19 +136,19 @@ fn init_bar(mut commands: Commands, query: Query<(Entity, &Bar), Added<Bar>>) {
     }
 }
 
-fn update_bar(mut query: Query<(&Bar, &mut Style)>, fight_state: Res<FightState>) {
+fn update_bar(mut query: Query<(&Bar, &mut Style)>, fight_state: Res<FightState>, time: Res<Time>) {
     for (bar, mut style) in query.iter_mut() {
         let fighter = match bar.0 {
             Owner::Fighter1 => &fight_state.fighter1,
             Owner::Fighter2 => &fight_state.fighter2,
         };
-        match bar.1 {
-            BarKind::Hp => {
-                style.width = Val::Percent(100.0 * fighter.hp / fighter.max_hp);
-            }
-            BarKind::Mana => {
-                style.width = Val::Percent(fighter.mana);
-            }
-        }
+        let target = match bar.1 {
+            BarKind::Hp => 100.0 * fighter.hp / fighter.max_hp,
+            BarKind::Mana => fighter.mana,
+        };
+        style.width = Val::Percent(match style.width {
+            Val::Percent(current) => current + (target - current) * time.delta_seconds() * 10.0,
+            _ => continue,
+        });
     }
 }
