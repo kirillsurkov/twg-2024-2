@@ -43,15 +43,8 @@ pub struct AvatarsResource {
     current_thumbnail: usize,
 }
 
-#[derive(Component)]
-pub struct HeroState;
-
-#[derive(Component)]
-pub enum Avatar {
-    Thumbnail,
-    Left,
-    Right,
-}
+#[derive(Component, Default)]
+pub struct AvatarCameraTransform(pub Transform);
 
 fn image() -> Image {
     let size = Extent3d {
@@ -79,7 +72,20 @@ fn image() -> Image {
 }
 
 #[derive(Component)]
+enum Avatar {
+    Thumbnail,
+    Left,
+    Right,
+}
+
+#[derive(Component)]
 struct ThumbnailCamera;
+
+#[derive(Component)]
+struct PortraitLeftCamera;
+
+#[derive(Component)]
+struct PortraitRightCamera;
 
 fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>, heroes: Res<HeroesResource>) {
     let camera = |image_handle: Handle<Image>| Camera3dBundle {
@@ -118,12 +124,14 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>, heroes: Res<
 
     commands.spawn((
         camera(image_left_handle),
+        PortraitLeftCamera,
         BloomSettings::default(),
         RenderLayers::layer(2),
     ));
 
     commands.spawn((
         camera(image_right_handle),
+        PortraitRightCamera,
         BloomSettings::default(),
         RenderLayers::layer(3),
     ));
@@ -131,6 +139,27 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>, heroes: Res<
     commands.spawn((HeroesRoot, Avatar::Thumbnail));
     commands.spawn((HeroesRoot, Avatar::Left));
     commands.spawn((HeroesRoot, Avatar::Right));
+
+    let light = |layer| {
+        (
+            DirectionalLightBundle {
+                directional_light: DirectionalLight {
+                    color: Color::rgb(0.98, 0.95, 0.82),
+                    shadows_enabled: true,
+                    illuminance: 1000.0,
+                    ..Default::default()
+                },
+                transform: Transform::from_xyz(0.0, 0.0, 0.0)
+                    .looking_at(Vec3::new(0.15, -0.15, -0.25), Vec3::Y),
+                ..Default::default()
+            },
+            RenderLayers::layer(layer),
+        )
+    };
+
+    commands.spawn(light(1));
+    commands.spawn(light(2));
+    commands.spawn(light(3));
 }
 
 fn init(mut commands: Commands, mut query: Query<(Entity, &Children), Added<Avatar>>) {
@@ -138,7 +167,7 @@ fn init(mut commands: Commands, mut query: Query<(Entity, &Children), Added<Avat
         println!("INIT AVATARS");
         for hero in children.iter() {
             commands.entity(*hero).insert((
-                HeroState,
+                AvatarCameraTransform::default(),
                 TransformBundle::default(),
                 VisibilityBundle {
                     visibility: Visibility::Hidden,
@@ -174,11 +203,11 @@ fn move_to_layer(
 fn update_thumbnails(
     mut commands: Commands,
     mut avatars: ResMut<AvatarsResource>,
-    mut camera: Query<&mut Camera, With<ThumbnailCamera>>,
+    mut camera: Query<(&mut Camera, &mut Transform), With<ThumbnailCamera>>,
     heroes: Query<(&Avatar, &Children)>,
-    hero_ids: Query<&HeroId>,
+    hero: Query<(&HeroId, &AvatarCameraTransform)>,
 ) {
-    let mut camera = camera.single_mut();
+    let (mut camera, mut camera_transform) = camera.single_mut();
 
     for (avatar, children) in heroes.iter() {
         match avatar {
@@ -186,14 +215,16 @@ fn update_thumbnails(
             _ => continue,
         };
 
-        camera.target = avatars.thumbnails
-            [&hero_ids.get(children[avatars.current_thumbnail]).unwrap().0]
-            .clone_weak()
-            .into();
+        let Ok((id, ct)) = hero.get(children[avatars.current_thumbnail]) else {
+            continue;
+        };
 
-        for (i, h) in children.iter().enumerate() {
+        camera.target = avatars.thumbnails[&id.0].clone_weak().into();
+        *camera_transform = ct.0;
+
+        for (i, hero) in children.iter().enumerate() {
             commands
-                .entity(*h)
+                .entity(*hero)
                 .insert(if i == avatars.current_thumbnail {
                     Visibility::Inherited
                 } else {

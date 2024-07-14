@@ -2,15 +2,18 @@ use std::{f32::consts::FRAC_PI_2, time::Duration};
 
 use bevy::{gltf::Gltf, prelude::*};
 
-use crate::component::{
-    arena,
-    complex_anim_player::{
-        self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff, SHOWOFF_IMMEDIATE,
-        SHOWOFF_LAZY,
+use crate::{
+    component::{
+        arena,
+        complex_anim_player::{
+            self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff, SHOWOFF_IMMEDIATE,
+            SHOWOFF_LAZY,
+        },
+        land,
+        model::Model,
+        wheel,
     },
-    land,
-    model::Model,
-    wheel,
+    scene::avatars::AvatarCameraTransform,
 };
 
 use super::LocalSchedule;
@@ -28,7 +31,14 @@ impl Plugin for Dimas {
     fn build(&self, app: &mut App) {
         app.add_systems(
             LocalSchedule,
-            (on_add, filter_animations, on_wheel, on_land, on_arena),
+            (
+                on_add,
+                filter_animations,
+                on_avatar,
+                on_wheel,
+                on_land,
+                on_arena,
+            ),
         );
     }
 }
@@ -97,12 +107,16 @@ fn on_add(
     }
 }
 
-fn render_avatar() {}
-
 fn filter_animations(
     mut query: Query<&Animations, With<Dimas>>,
     mut named: Query<(&Name, &mut Visibility)>,
 ) {
+}
+
+fn on_avatar(mut query: Query<&mut AvatarCameraTransform, With<Dimas>>) {
+    for mut t in query.iter_mut() {
+        t.0 = Transform::from_translation(Vec3::new(0.6, 2.4, 1.8)).looking_to(-Vec3::Z, Vec3::Y);
+    }
 }
 
 fn on_wheel(mut query: Query<(&mut ComplexAnimPlayer, &wheel::HeroState), With<Dimas>>) {

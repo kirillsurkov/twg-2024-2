@@ -2,14 +2,17 @@ use std::time::Duration;
 
 use bevy::{gltf::Gltf, prelude::*};
 
-use crate::component::{
-    complex_anim_player::{
-        self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff, SHOWOFF_IMMEDIATE,
-        SHOWOFF_LAZY,
+use crate::{
+    component::{
+        complex_anim_player::{
+            self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff, SHOWOFF_IMMEDIATE,
+            SHOWOFF_LAZY,
+        },
+        land,
+        model::Model,
+        wheel,
     },
-    land,
-    model::Model,
-    wheel,
+    scene::avatars::AvatarCameraTransform,
 };
 
 use super::LocalSchedule;
@@ -27,7 +30,7 @@ impl Plugin for Rasp {
     fn build(&self, app: &mut App) {
         app.add_systems(
             LocalSchedule,
-            (on_add, filter_animations, on_wheel, on_land),
+            (on_add, filter_animations, on_avatar, on_wheel, on_land),
         );
     }
 }
@@ -117,6 +120,12 @@ fn filter_animations(
                 };
             }
         }
+    }
+}
+
+fn on_avatar(mut query: Query<&mut AvatarCameraTransform, With<Rasp>>) {
+    for mut t in query.iter_mut() {
+        t.0 = Transform::from_translation(Vec3::new(-0.15, 2.1, 1.0)).looking_to(-Vec3::Z, Vec3::Y);
     }
 }
 

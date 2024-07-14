@@ -38,6 +38,7 @@ impl Showoff {
 }
 
 pub enum State {
+    Stop,
     Idle,
     Showoff(Duration),
 }
@@ -80,7 +81,7 @@ impl ComplexAnimPlayer {
         Self {
             anim_player,
             state_changed: true,
-            state: State::Idle,
+            state: State::Stop,
             idle: None,
             showoffs: vec![],
             current_showoff: None,
@@ -114,6 +115,7 @@ fn play(
     for (mut player, mut animations) in query.iter_mut() {
         let mut anim_player = anim_players.get_mut(player.anim_player).unwrap();
         match player.state {
+            State::Stop => anim_player.pause(),
             State::Idle => match &player.idle {
                 Some(idle) => {
                     animations.current = idle.clone();
