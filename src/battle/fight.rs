@@ -8,8 +8,7 @@ pub const DURATION: f32 = 10.0;
 
 #[derive(Debug, Clone)]
 pub struct Fighter {
-    hero: Hero,
-    // pub id: String,
+    pub hero: Hero,
     pub hp: f32,
     pub max_hp: f32,
     pub mana: f32,
@@ -27,13 +26,13 @@ impl Fighter {
             mana: 0.0,
             mana_regen: hero.mana_regen,
             attack: hero.attack,
-            attack_speed: 1.0 / hero.attack_speed,
+            attack_speed: hero.attack_speed,
         }
     }
 
     fn prepare(&mut self) {
         self.attack = self.hero.attack;
-        self.attack_speed = 1.0 / self.hero.attack_speed;
+        self.attack_speed = self.hero.attack_speed;
     }
 }
 
@@ -53,6 +52,7 @@ pub struct Fight<'a> {
 pub struct State {
     pub fighter1: Fighter,
     pub fighter2: Fighter,
+    pub winner: Option<Owner>,
     pub modifiers: Vec<(Owner, ModifierDesc)>,
 }
 
@@ -83,6 +83,7 @@ impl FightCapture {
         states.last().map(|(_, state)| State {
             fighter1: state.fighter1.clone(),
             fighter2: state.fighter2.clone(),
+            winner: state.winner,
             modifiers: states
                 .iter()
                 .flat_map(|(_, state)| state.modifiers.clone())
@@ -127,6 +128,7 @@ impl<'a> Fight<'a> {
                 State {
                     fighter1: fighter1.clone(),
                     fighter2: fighter2.clone(),
+                    winner: None,
                     modifiers: vec![],
                 },
             )],
@@ -169,12 +171,17 @@ impl<'a> Fight<'a> {
                     Modifier::ChangeAttack(val) => {
                         target.attack += val;
                     }
+                    Modifier::AffectAttackSpeed(val) => {
+                        target.attack_speed += val;
+                    }
                     Modifier::AffectHP(val) => {
                         target.hp += val;
                     }
                     Modifier::AffectMana(val) => {
                         target.mana += val;
                     }
+                    // markers
+                    Modifier::NormalAttack => {}
                 }
             }
 
@@ -192,6 +199,7 @@ impl<'a> Fight<'a> {
                     State {
                         fighter1: fighter1.clone(),
                         fighter2: fighter2.clone(),
+                        winner: winner.clone(),
                         modifiers,
                     },
                 ));
@@ -202,11 +210,26 @@ impl<'a> Fight<'a> {
             }
         }
 
-        let winner = winner.unwrap_or(if fighter1.hp < fighter2.hp {
-            Owner::Fighter2
-        } else {
-            Owner::Fighter1
-        });
+        let winner = match winner {
+            Some(winner) => winner,
+            None => {
+                let winner = if fighter1.hp < fighter2.hp {
+                    Owner::Fighter2
+                } else {
+                    Owner::Fighter1
+                };
+                capture.states.push((
+                    DURATION,
+                    State {
+                        fighter1,
+                        fighter2,
+                        winner: Some(winner),
+                        modifiers: vec![],
+                    },
+                ));
+                winner
+            }
+        };
 
         let (w, l) = match winner {
             Owner::Fighter1 => (&mut self.player1, &mut self.player2),

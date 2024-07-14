@@ -2,6 +2,8 @@ use std::time::Duration;
 
 use bevy::{animation::RepeatAnimation, prelude::*, utils::hashbrown::HashMap};
 
+use crate::hero::HeroId;
+
 use super::LocalSchedule;
 
 pub struct ComplexAnimPlayerPlugin;
@@ -37,9 +39,13 @@ impl Showoff {
     }
 }
 
+#[derive(Debug)]
 pub enum State {
     Stop,
     Idle,
+    Attack(f32),
+    Win,
+    Lose,
     Showoff(Duration),
 }
 
@@ -70,7 +76,11 @@ pub struct ComplexAnimPlayer {
     anim_player: Entity,
     state_changed: bool,
     state: State,
+    replay: bool,
     idle: Option<String>,
+    attack: Option<(String, u32)>,
+    win: Option<String>,
+    lose: Option<String>,
     showoffs: Vec<Showoff>,
     current_showoff: Option<Showoff>,
     timer: f32,
@@ -82,7 +92,11 @@ impl ComplexAnimPlayer {
             anim_player,
             state_changed: true,
             state: State::Stop,
+            replay: false,
             idle: None,
+            attack: None,
+            win: None,
+            lose: None,
             showoffs: vec![],
             current_showoff: None,
             timer: 0.0,
@@ -91,6 +105,21 @@ impl ComplexAnimPlayer {
 
     pub fn with_idle(mut self, track: &str) -> Self {
         self.idle = Some(track.to_string());
+        self
+    }
+
+    pub fn with_attack(mut self, attack: &str, frames: u32) -> Self {
+        self.attack = Some((attack.to_string(), frames));
+        self
+    }
+
+    pub fn with_win(mut self, track: &str) -> Self {
+        self.win = Some(track.to_string());
+        self
+    }
+
+    pub fn with_lose(mut self, track: &str) -> Self {
+        self.lose = Some(track.to_string());
         self
     }
 
@@ -103,6 +132,10 @@ impl ComplexAnimPlayer {
         self.state_changed = state_changed;
         self.state = state;
     }
+
+    pub fn replay(&mut self) {
+        self.replay = true;
+    }
 }
 
 fn play(
@@ -114,22 +147,52 @@ fn play(
 
     for (mut player, mut animations) in query.iter_mut() {
         let mut anim_player = anim_players.get_mut(player.anim_player).unwrap();
+
         match player.state {
             State::Stop => anim_player.pause(),
-            State::Idle => {
-                anim_player.resume();
-                match &player.idle {
-                    Some(idle) => {
-                        animations.current = idle.clone();
-                        anim_player
-                            .play_with_transition(animations.by_name[idle].clone_weak(), TRANSITION)
-                            .repeat();
-                    }
-                    None => {}
+            _ => anim_player.resume(),
+        }
+
+        match player.state {
+            State::Stop => {}
+            State::Idle => match &player.idle {
+                Some(idle) => {
+                    animations.current = idle.clone();
+                    anim_player
+                        .play_with_transition(animations.by_name[idle].clone_weak(), TRANSITION)
+                        .repeat();
                 }
-            }
+                None => {}
+            },
+            State::Attack(speed) => match &player.attack {
+                Some((attack, frames)) => {
+                    let duration = *frames as f32 / 24.0;
+                    animations.current = attack.clone();
+                    anim_player
+                        .play_with_transition(animations.by_name[attack].clone_weak(), TRANSITION)
+                        .set_speed(duration * speed)
+                        .repeat();
+                }
+                None => {}
+            },
+            State::Win => match &player.win {
+                Some(win) => {
+                    animations.current = win.clone();
+                    anim_player
+                        .play_with_transition(animations.by_name[win].clone_weak(), TRANSITION)
+                        .repeat();
+                }
+                None => {}
+            },
+            State::Lose => match &player.lose {
+                Some(lose) => {
+                    animations.current = lose.clone();
+                    anim_player
+                        .play_with_transition(animations.by_name[lose].clone_weak(), TRANSITION);
+                }
+                None => {}
+            },
             State::Showoff(interval) => {
-                anim_player.resume();
                 if player.state_changed {
                     player.current_showoff = None;
                 }

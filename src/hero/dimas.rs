@@ -8,13 +8,9 @@ use bevy::{gltf::Gltf, prelude::*};
 use crate::{
     component::{
         arena,
-        complex_anim_player::{
-            self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff, SHOWOFF_IMMEDIATE,
-            SHOWOFF_LAZY,
-        },
-        land,
+        complex_anim_player::{self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff},
+        fight_state::FightState,
         model::Model,
-        wheel,
     },
     scene::avatars::{self, AvatarLocation},
 };
@@ -38,9 +34,7 @@ impl Plugin for Dimas {
                 on_add,
                 filter_animations,
                 on_avatar,
-                on_wheel,
-                on_land,
-                on_arena,
+                on_arena.run_if(resource_exists::<FightState>),
             ),
         );
     }
@@ -96,6 +90,9 @@ fn on_add(
                     entity.insert((
                         ComplexAnimPlayer::new(anim_player)
                             .with_idle("idle_track")
+                            .with_attack("attack_track", 40)
+                            .with_win("win_track")
+                            .with_lose("lose_track")
                             .with_showoff(Showoff::new(vec![ComplexAnimPart {
                                 name: "legs_sit_track".to_string(),
                                 repeat: 1,
@@ -135,23 +132,7 @@ fn on_avatar(mut query: Query<(&mut ComplexAnimPlayer, &mut avatars::HeroState),
     }
 }
 
-fn on_wheel(mut query: Query<(&mut ComplexAnimPlayer, &wheel::HeroState), With<Dimas>>) {
-    for (mut anim_player, state) in query.iter_mut() {
-        if state.active {
-            anim_player.play(state.changed, SHOWOFF_LAZY);
-        } else {
-            anim_player.play(state.changed, complex_anim_player::State::Idle);
-        }
-    }
-}
-
-fn on_land(mut query: Query<&mut ComplexAnimPlayer, (With<land::HeroState>, With<Dimas>)>) {
-    for mut anim_player in query.iter_mut() {
-        anim_player.play(false, SHOWOFF_IMMEDIATE);
-    }
-}
-
-fn on_arena(mut query: Query<&mut Transform, (Added<arena::HeroState>, With<Dimas>)>) {
+fn on_arena(mut query: Query<&mut Transform, (With<arena::HeroState>, With<Dimas>)>) {
     for mut transform in query.iter_mut() {
         transform.rotation = Quat::from_rotation_y(-FRAC_PI_2);
     }
