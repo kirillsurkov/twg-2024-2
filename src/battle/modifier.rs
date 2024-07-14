@@ -1,8 +1,11 @@
 #[derive(Debug, Clone)]
 pub enum Modifier {
     ChangeAttack(f32),
+    AffectAttackSpeed(f32),
     AffectHP(f32),
     AffectMana(f32),
+    // markers
+    NormalAttack,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

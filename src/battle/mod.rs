@@ -3,7 +3,7 @@ mod card;
 mod effect;
 pub mod fight;
 pub mod hero;
-mod modifier;
+pub mod modifier;
 pub mod player;
 
 use fight::{Fight, FightCapture, Owner};

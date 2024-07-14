@@ -20,13 +20,20 @@ impl HasEffect for Ability<Attack> {
 impl Effect for Attack {
     fn update(&mut self, delta: f32, myself: &Fighter, enemy: &Fighter) -> Vec<ModifierDesc> {
         self.timer += delta;
-        if self.timer >= myself.attack_speed {
+        if self.timer >= 1.0 / myself.attack_speed {
             self.timer = 0.0;
-            vec![ModifierDesc {
-                modifier: Modifier::AffectHP(-myself.attack * 6.0),
-                target: Target::Enemy,
-                value_kind: ValueKind::Units,
-            }]
+            vec![
+                ModifierDesc {
+                    modifier: Modifier::AffectHP(-myself.attack),
+                    target: Target::Enemy,
+                    value_kind: ValueKind::Units,
+                },
+                ModifierDesc {
+                    modifier: Modifier::NormalAttack,
+                    target: Target::Enemy,
+                    value_kind: ValueKind::Units,
+                },
+            ]
         } else {
             vec![]
         }
