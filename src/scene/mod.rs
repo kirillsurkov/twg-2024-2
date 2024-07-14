@@ -1,3 +1,4 @@
+use avatars::AvatarsPlugin;
 use bevy::{ecs::schedule::ScheduleLabel, prelude::*};
 use fight_arena::FightArena;
 use fight_home::FightHome;
@@ -23,8 +24,16 @@ pub struct ScenesPlugin;
 impl Plugin for ScenesPlugin {
     fn build(&self, app: &mut App) {
         app.insert_state(GameState::default());
-        app.add_plugins((Splash, SelectHero, Landing, FightHome, FightArena));
+        app.add_plugins((
+            AvatarsPlugin,
+            Splash,
+            SelectHero,
+            Landing,
+            FightHome,
+            FightArena,
+        ));
         app.add_systems(Update, cleanup.run_if(state_changed::<GameState>));
+        app.add_systems(Update, invalidate_tree);
 
         app.insert_state(GameState::Landing);
         app.insert_resource(HeroSelected {
@@ -61,6 +70,27 @@ fn cleanup(
     ));
 }
 
+#[derive(Component)]
+struct InvalidateTree;
+
+fn invalidate_tree(
+    mut commands: Commands,
+    invalid: Query<Entity, With<InvalidateTree>>,
+    query: Query<Entity, Changed<Parent>>,
+    parents_query: Query<&Parent>,
+) {
+    for entity in invalid.iter() {
+        commands.entity(entity).remove::<InvalidateTree>();
+    }
+    for entity in query.iter() {
+        commands.entity(entity).insert(InvalidateTree);
+        for entity in parents_query.iter_ancestors(entity) {
+            commands.entity(entity).insert(InvalidateTree);
+        }
+    }
+}
+
+pub mod avatars;
 pub mod fight_arena;
 pub mod fight_home;
 pub mod landing;

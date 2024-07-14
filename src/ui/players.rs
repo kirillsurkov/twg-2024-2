@@ -1,11 +1,14 @@
-use std::cmp::Reverse;
+use std::{cmp::Reverse, default};
 
 use bevy::prelude::*;
 
 use crate::{
     battle_bridge::{BattleResource, RoundCaptureResource},
     hero::HeroId,
-    scene::landing::{HeroSelected, HeroWatch},
+    scene::{
+        avatars::AvatarsResource,
+        landing::{HeroSelected, HeroWatch},
+    },
 };
 
 use super::{LocalSchedule, UiAssets, DCOLOR};
@@ -23,7 +26,7 @@ impl Plugin for PlayersPlugin {
                 init_players_list,
                 init_player_root,
                 update_player_root,
-                init_player_header,
+                init_player_avatar,
                 init_player_body,
                 init_player_name,
                 init_player_stats,
@@ -31,7 +34,7 @@ impl Plugin for PlayersPlugin {
                 update_player_money,
                 init_player_attack,
                 update_player_attack,
-                init_player_footer,
+                init_player_hp,
                 update_player_footer,
                 init_player_info_root,
                 update_player_info_root,
@@ -54,10 +57,10 @@ fn init_players_root(mut commands: Commands, query: Query<Entity, Added<PlayersR
                 style: Style {
                     display: Display::Flex,
                     flex_direction: FlexDirection::Row,
-                    margin: UiRect::right(Val::Auto),
+                    margin: UiRect::bottom(Val::Auto),
                     ..Default::default()
                 },
-                // background_color: DCOLOR,
+                background_color: DCOLOR,
                 ..Default::default()
             })
             .with_children(|p| {
@@ -109,11 +112,12 @@ fn init_players_list(
                     players
                 };
 
+                let last = players.len() - 1;
                 for (i, player) in players.iter().enumerate() {
                     p.spawn((
                         NodeBundle::default(),
                         HeroId(player.hero.id.to_string()),
-                        PlayerRoot(round.is_some() && i % 2 == 1),
+                        PlayerRoot(round.is_some() && i != last && i % 2 == 1),
                     ));
                 }
             });
@@ -147,9 +151,9 @@ fn init_player_root(
                 ..Default::default()
             })
             .with_children(|p| {
-                p.spawn((NodeBundle::default(), HeroId(id.to_string()), PlayerHeader));
+                p.spawn((NodeBundle::default(), HeroId(id.to_string()), PlayerAvatar));
                 p.spawn((NodeBundle::default(), HeroId(id.to_string()), PlayerBody));
-                p.spawn((NodeBundle::default(), HeroId(id.to_string()), PlayerFooter));
+                p.spawn((NodeBundle::default(), HeroId(id.to_string()), PlayerHp));
             });
     }
 }
@@ -182,23 +186,30 @@ fn update_player_root(
 }
 
 #[derive(Component)]
-struct PlayerHeader;
+struct PlayerAvatar;
 
-fn init_player_header(
+fn init_player_avatar(
     mut commands: Commands,
-    battle: Res<BattleResource>,
-    query: Query<(Entity, &HeroId), Added<PlayerHeader>>,
+    avatars: Res<AvatarsResource>,
+    query: Query<(Entity, &HeroId), With<PlayerAvatar>>,
+    images: Query<(), (With<PlayerAvatar>, With<UiImage>)>,
 ) {
+    if !avatars.is_changed() && !images.is_empty() {
+        return;
+    }
+
     for (entity, id) in query.iter() {
-        commands.entity(entity).insert(NodeBundle {
+        commands.entity(entity).insert(ImageBundle {
+            image: UiImage {
+                texture: avatars.thumbnails.get(&id.0).unwrap().clone(),
+                ..Default::default()
+            },
             style: Style {
                 display: Display::Flex,
-                flex_direction: FlexDirection::Row,
                 width: Val::Px(HEIGHT),
                 height: Val::Px(HEIGHT),
                 ..Default::default()
             },
-            background_color: DCOLOR,
             ..Default::default()
         });
     }
@@ -326,9 +337,9 @@ struct PlayerMoney;
 fn init_player_money(
     mut commands: Commands,
     assets: Res<UiAssets>,
-    query: Query<(Entity, &HeroId), Added<PlayerMoney>>,
+    query: Query<Entity, Added<PlayerMoney>>,
 ) {
-    for (entity, id) in query.iter() {
+    for entity in query.iter() {
         commands.entity(entity).insert(TextBundle::from_section(
             "",
             TextStyle {
@@ -356,9 +367,9 @@ struct PlayerAttack;
 fn init_player_attack(
     mut commands: Commands,
     assets: Res<UiAssets>,
-    query: Query<(Entity, &HeroId), Added<PlayerAttack>>,
+    query: Query<Entity, Added<PlayerAttack>>,
 ) {
-    for (entity, id) in query.iter() {
+    for entity in query.iter() {
         commands.entity(entity).insert(TextBundle::from_section(
             "",
             TextStyle {
@@ -381,14 +392,14 @@ fn update_player_attack(
 }
 
 #[derive(Component)]
-struct PlayerFooter;
+struct PlayerHp;
 
-fn init_player_footer(
+fn init_player_hp(
     mut commands: Commands,
     assets: Res<UiAssets>,
-    query: Query<(Entity, &HeroId), Added<PlayerFooter>>,
+    query: Query<Entity, Added<PlayerHp>>,
 ) {
-    for (entity, id) in query.iter() {
+    for entity in query.iter() {
         commands.entity(entity).insert(
             TextBundle::from_section(
                 "50",
@@ -411,7 +422,7 @@ fn init_player_footer(
 }
 
 fn update_player_footer(
-    mut query: Query<(&HeroId, &mut Text), With<PlayerFooter>>,
+    mut query: Query<(&HeroId, &mut Text), With<PlayerHp>>,
     battle: Res<BattleResource>,
 ) {
     for (id, mut text) in query.iter_mut() {

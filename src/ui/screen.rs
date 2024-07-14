@@ -11,10 +11,12 @@ impl Plugin for ScreenPlugin {
             (
                 init_root,
                 init_main,
-                init_side,
                 init_header,
-                init_body,
+                init_body_root,
+                init_body_top,
+                init_body_bot,
                 init_footer,
+                init_bottom,
             ),
         );
     }
@@ -58,26 +60,6 @@ fn init_main(mut commands: Commands, query: Query<Entity, Added<ScreenMain>>) {
 }
 
 #[derive(Component)]
-pub struct ScreenSide;
-
-fn init_side(mut commands: Commands, query: Query<Entity, Added<ScreenSide>>) {
-    for entity in query.iter() {
-        commands.entity(entity).insert(NodeBundle {
-            style: Style {
-                display: Display::Flex,
-                flex_direction: FlexDirection::Column,
-                width: Val::Percent(25.0),
-                height: Val::Percent(100.0),
-                margin: UiRect::left(Val::Percent(-25.0)),
-                ..Default::default()
-            },
-            background_color: DCOLOR,
-            ..Default::default()
-        });
-    }
-}
-
-#[derive(Component)]
 pub struct ScreenHeader;
 
 fn init_header(mut commands: Commands, query: Query<Entity, Added<ScreenHeader>>) {
@@ -86,7 +68,7 @@ fn init_header(mut commands: Commands, query: Query<Entity, Added<ScreenHeader>>
             style: Style {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Row,
-                height: Val::Percent(10.0),
+                height: Val::Px(50.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 ..Default::default()
@@ -98,17 +80,52 @@ fn init_header(mut commands: Commands, query: Query<Entity, Added<ScreenHeader>>
 }
 
 #[derive(Component)]
-pub struct ScreenBody;
+pub struct ScreenBodyRoot;
 
-fn init_body(mut commands: Commands, query: Query<Entity, Added<ScreenBody>>) {
+fn init_body_root(mut commands: Commands, query: Query<Entity, Added<ScreenBodyRoot>>) {
     for entity in query.iter() {
         commands.entity(entity).insert(NodeBundle {
             style: Style {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
-                height: Val::Percent(85.0),
+                flex_grow: 1.0,
                 ..Default::default()
             },
+            ..Default::default()
+        });
+    }
+}
+
+#[derive(Component)]
+pub struct ScreenBodyTop;
+
+fn init_body_top(mut commands: Commands, query: Query<Entity, Added<ScreenBodyTop>>) {
+    for entity in query.iter() {
+        commands.entity(entity).insert(NodeBundle {
+            style: Style {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Row,
+                height: Val::Percent(50.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        });
+    }
+}
+
+#[derive(Component)]
+pub struct ScreenBodyBot;
+
+fn init_body_bot(mut commands: Commands, query: Query<Entity, Added<ScreenBodyBot>>) {
+    for entity in query.iter() {
+        commands.entity(entity).insert(NodeBundle {
+            style: Style {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Column,
+                height: Val::Percent(50.0),
+                ..Default::default()
+            },
+            // background_color: Color::RED.into(),
             ..Default::default()
         });
     }
@@ -123,12 +140,32 @@ fn init_footer(mut commands: Commands, query: Query<Entity, Added<ScreenFooter>>
             style: Style {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Row,
-                height: Val::Percent(5.0),
+                height: Val::Px(50.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 ..Default::default()
             },
             background_color: DCOLOR,
+            ..Default::default()
+        });
+    }
+}
+
+#[derive(Component)]
+pub struct ScreenBottom;
+
+fn init_bottom(mut commands: Commands, query: Query<Entity, Added<ScreenBottom>>) {
+    for entity in query.iter() {
+        commands.entity(entity).insert(NodeBundle {
+            style: Style {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Row,
+                width: Val::Percent(100.0),
+                height: Val::Px(200.0),
+                margin: UiRect::top(Val::Px(-200.0)),
+                ..Default::default()
+            },
+            // background_color: DCOLOR,
             ..Default::default()
         });
     }

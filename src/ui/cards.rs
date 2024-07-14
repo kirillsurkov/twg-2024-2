@@ -37,7 +37,7 @@ fn init_root(mut commands: Commands, query: Query<Entity, Added<CardsRoot>>) {
                 style: Style {
                     display: Display::Flex,
                     flex_direction: FlexDirection::Row,
-                    margin: UiRect::top(Val::Auto),
+                    // margin: UiRect::top(Val::Auto),
                     width: Val::Percent(100.0),
                     height: Val::Percent(40.0),
                     ..Default::default()

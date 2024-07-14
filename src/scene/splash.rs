@@ -41,7 +41,7 @@ fn init(
                 },
                 transform: Transform::from_translation(Vec3::new(0.0, 5.0, 5.0))
                     .looking_at(Vec3::new(0.0, 2.0, 0.0), Vec3::Y),
-                ..default()
+                ..Default::default()
             },
             BloomSettings::default(),
         ));

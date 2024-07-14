@@ -46,7 +46,7 @@ fn init(
                 },
                 transform: Transform::from_translation(Vec3::new(0.0, 5.0, 9.0))
                     .looking_at(Vec3::new(0.0, 2.0, 4.0), Vec3::Y),
-                ..default()
+                ..Default::default()
             },
             BloomSettings::default(),
         ));
@@ -56,7 +56,7 @@ fn init(
                 color: Color::rgb(0.98, 0.95, 0.82),
                 shadows_enabled: true,
                 illuminance: 1000.0,
-                ..default()
+                ..Default::default()
             },
             transform: Transform::from_xyz(0.0, 0.0, 0.0)
                 .looking_at(Vec3::new(0.15, -0.15, -0.25), Vec3::Y),
@@ -75,7 +75,7 @@ fn init(
 
     commands.insert_resource(State {});
 
-    game_timer.restart(5.0, false);
+    game_timer.restart(10.0, false);
 
     Ok(())
 }

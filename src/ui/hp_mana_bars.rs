@@ -41,7 +41,6 @@ fn init_root(mut commands: Commands, query: Query<Entity, Added<HpManaBarsRoot>>
                     flex_direction: FlexDirection::Column,
                     width: Val::Percent(100.0),
                     height: Val::Percent(50.0),
-                    margin: UiRect::top(Val::Auto),
                     align_items: AlignItems::Center,
                     ..Default::default()
                 },

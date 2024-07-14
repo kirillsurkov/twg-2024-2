@@ -1,7 +1,6 @@
 use std::error::Error;
 
 use bevy::{core_pipeline::bloom::BloomSettings, prelude::*};
-use bevy_round_ui::prelude::SuperellipseUiMaterial;
 
 use crate::{
     battle_bridge::HeroesResource, component::wheel::Wheel, hero::HeroesRoot,
@@ -38,7 +37,6 @@ struct StatsNode;
 
 fn init(
     mut commands: Commands,
-    mut ui_materials: ResMut<Assets<SuperellipseUiMaterial>>,
     asset_server: Res<AssetServer>,
     root: Query<Entity, Added<Root>>,
 ) -> Result<(), Box<dyn Error>> {
@@ -54,7 +52,7 @@ fn init(
                 },
                 transform: Transform::from_translation(Vec3::new(-0.5, 3.0, 6.0))
                     .looking_at(Vec3::new(0.0, 1.5, 0.0), Vec3::Y),
-                ..default()
+                ..Default::default()
             },
             BloomSettings::default(),
         ));
@@ -64,7 +62,7 @@ fn init(
                 color: Color::rgb(0.98, 0.95, 0.82),
                 shadows_enabled: true,
                 illuminance: 1000.0,
-                ..default()
+                ..Default::default()
             },
             transform: Transform::from_xyz(0.0, 0.0, 0.0)
                 .looking_at(Vec3::new(0.15, -0.15, -0.25), Vec3::Y),
@@ -81,112 +79,112 @@ fn init(
 
     let font: Handle<Font> = asset_server.load("embedded://comic.ttf");
 
-    commands
-        .spawn((
-            UiRoot,
-            NodeBundle {
-                style: Style {
-                    width: Val::Vw(100.0),
-                    height: Val::Vh(100.0),
-                    display: Display::Flex,
-                    align_items: AlignItems::FlexStart,
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
-        ))
-        .with_children(|p| {
-            p.spawn(MaterialNodeBundle {
-                material: ui_materials.add(SuperellipseUiMaterial {
-                    background_color: Color::BLACK,
-                    border_radius: Vec4::splat(25.0),
-                    border_color: Color::WHITE,
-                    border_thickness: 2.0,
-                    ..Default::default()
-                }),
-                style: Style {
-                    margin: UiRect::all(Val::Percent(5.0)),
-                    padding: UiRect::all(Val::Px(25.0)),
-                    width: Val::Percent(20.0),
-                    align_self: AlignSelf::Center,
-                    ..Default::default()
-                },
-                ..Default::default()
-            })
-            .with_children(|p| {
-                p.spawn((
-                    DescNode,
-                    TextBundle::from_section(
-                        "",
-                        TextStyle {
-                            font: font.clone(),
-                            font_size: 25.0,
-                            ..Default::default()
-                        },
-                    ),
-                ));
-            });
-            p.spawn(MaterialNodeBundle {
-                material: ui_materials.add(SuperellipseUiMaterial {
-                    background_color: Color::BLACK,
-                    border_radius: Vec4::splat(25.0),
-                    border_color: Color::WHITE,
-                    border_thickness: 2.0,
-                    ..Default::default()
-                }),
-                style: Style {
-                    margin: UiRect::axes(Val::Percent(10.0), Val::Px(50.0)),
-                    padding: UiRect::all(Val::Px(25.0)),
-                    width: Val::Percent(30.0),
-                    justify_content: JustifyContent::Center,
-                    ..Default::default()
-                },
-                ..Default::default()
-            })
-            .with_children(|p| {
-                p.spawn((
-                    NameNode,
-                    TextBundle::from_section(
-                        "",
-                        TextStyle {
-                            font: font.clone(),
-                            font_size: 50.0,
-                            ..Default::default()
-                        },
-                    ),
-                ));
-            });
-            p.spawn(MaterialNodeBundle {
-                material: ui_materials.add(SuperellipseUiMaterial {
-                    background_color: Color::BLACK,
-                    border_radius: Vec4::splat(25.0),
-                    border_color: Color::WHITE,
-                    border_thickness: 2.0,
-                    ..Default::default()
-                }),
-                style: Style {
-                    margin: UiRect::all(Val::Percent(5.0)),
-                    padding: UiRect::all(Val::Px(25.0)),
-                    width: Val::Percent(20.0),
-                    align_self: AlignSelf::Center,
-                    ..Default::default()
-                },
-                ..Default::default()
-            })
-            .with_children(|p| {
-                p.spawn((
-                    StatsNode,
-                    TextBundle::from_section(
-                        "",
-                        TextStyle {
-                            font: font.clone(),
-                            font_size: 25.0,
-                            ..Default::default()
-                        },
-                    ),
-                ));
-            });
-        });
+    // commands
+    //     .spawn((
+    //         UiRoot,
+    //         NodeBundle {
+    //             style: Style {
+    //                 width: Val::Vw(100.0),
+    //                 height: Val::Vh(100.0),
+    //                 display: Display::Flex,
+    //                 align_items: AlignItems::FlexStart,
+    //                 ..Default::default()
+    //             },
+    //             ..Default::default()
+    //         },
+    //     ))
+    //     .with_children(|p| {
+    //         p.spawn(MaterialNodeBundle {
+    //             material: ui_materials.add(SuperellipseUiMaterial {
+    //                 background_color: Color::BLACK,
+    //                 border_radius: Vec4::splat(25.0),
+    //                 border_color: Color::WHITE,
+    //                 border_thickness: 2.0,
+    //                 ..Default::default()
+    //             }),
+    //             style: Style {
+    //                 margin: UiRect::all(Val::Percent(5.0)),
+    //                 padding: UiRect::all(Val::Px(25.0)),
+    //                 width: Val::Percent(20.0),
+    //                 align_self: AlignSelf::Center,
+    //                 ..Default::default()
+    //             },
+    //             ..Default::default()
+    //         })
+    //         .with_children(|p| {
+    //             p.spawn((
+    //                 DescNode,
+    //                 TextBundle::from_section(
+    //                     "",
+    //                     TextStyle {
+    //                         font: font.clone(),
+    //                         font_size: 25.0,
+    //                         ..Default::default()
+    //                     },
+    //                 ),
+    //             ));
+    //         });
+    //         p.spawn(MaterialNodeBundle {
+    //             material: ui_materials.add(SuperellipseUiMaterial {
+    //                 background_color: Color::BLACK,
+    //                 border_radius: Vec4::splat(25.0),
+    //                 border_color: Color::WHITE,
+    //                 border_thickness: 2.0,
+    //                 ..Default::default()
+    //             }),
+    //             style: Style {
+    //                 margin: UiRect::axes(Val::Percent(10.0), Val::Px(50.0)),
+    //                 padding: UiRect::all(Val::Px(25.0)),
+    //                 width: Val::Percent(30.0),
+    //                 justify_content: JustifyContent::Center,
+    //                 ..Default::default()
+    //             },
+    //             ..Default::default()
+    //         })
+    //         .with_children(|p| {
+    //             p.spawn((
+    //                 NameNode,
+    //                 TextBundle::from_section(
+    //                     "",
+    //                     TextStyle {
+    //                         font: font.clone(),
+    //                         font_size: 50.0,
+    //                         ..Default::default()
+    //                     },
+    //                 ),
+    //             ));
+    //         });
+    //         p.spawn(MaterialNodeBundle {
+    //             material: ui_materials.add(SuperellipseUiMaterial {
+    //                 background_color: Color::BLACK,
+    //                 border_radius: Vec4::splat(25.0),
+    //                 border_color: Color::WHITE,
+    //                 border_thickness: 2.0,
+    //                 ..Default::default()
+    //             }),
+    //             style: Style {
+    //                 margin: UiRect::all(Val::Percent(5.0)),
+    //                 padding: UiRect::all(Val::Px(25.0)),
+    //                 width: Val::Percent(20.0),
+    //                 align_self: AlignSelf::Center,
+    //                 ..Default::default()
+    //             },
+    //             ..Default::default()
+    //         })
+    //         .with_children(|p| {
+    //             p.spawn((
+    //                 StatsNode,
+    //                 TextBundle::from_section(
+    //                     "",
+    //                     TextStyle {
+    //                         font: font.clone(),
+    //                         font_size: 25.0,
+    //                         ..Default::default()
+    //                     },
+    //                 ),
+    //             ));
+    //         });
+    //     });
     Ok(())
 }
 

@@ -1,10 +1,17 @@
 use bevy::prelude::*;
 
+use crate::scene::avatars::Avatar;
+
 use super::{
+    avatar::AvatarRoot,
     cards::CardsRoot,
     game_timer::GameTimerRoot,
     players::PlayersRoot,
-    screen::{ScreenBody, ScreenFooter, ScreenHeader, ScreenMain, ScreenRoot, ScreenSide},
+    screen::{
+        ScreenBodyBot, ScreenBodyRoot, ScreenBodyTop, ScreenBottom, ScreenFooter, ScreenHeader,
+        ScreenMain, ScreenRoot,
+    },
+    stats::StatsRoot,
     LocalSchedule,
 };
 
@@ -29,14 +36,24 @@ fn init(mut commands: Commands, query: Query<Entity, Added<FightHomeLayout>>) {
                             .with_children(|p| {
                                 p.spawn((NodeBundle::default(), GameTimerRoot));
                             });
-                        p.spawn((NodeBundle::default(), ScreenBody))
+                        p.spawn((NodeBundle::default(), ScreenBodyRoot))
                             .with_children(|p| {
-                                p.spawn((NodeBundle::default(), PlayersRoot));
-                                p.spawn((NodeBundle::default(), CardsRoot));
+                                p.spawn((NodeBundle::default(), ScreenBodyTop))
+                                    .with_children(|p| {
+                                        p.spawn((NodeBundle::default(), PlayersRoot));
+                                        p.spawn((NodeBundle::default(), StatsRoot));
+                                    });
+                                p.spawn((NodeBundle::default(), ScreenBodyBot))
+                                    .with_children(|p| {
+                                        p.spawn((NodeBundle::default(), CardsRoot));
+                                    });
                             });
                         p.spawn((NodeBundle::default(), ScreenFooter));
+                        p.spawn((NodeBundle::default(), ScreenBottom))
+                            .with_children(|p| {
+                                p.spawn((NodeBundle::default(), AvatarRoot::Right));
+                            });
                     });
-                p.spawn((NodeBundle::default(), ScreenSide));
             });
     }
 }

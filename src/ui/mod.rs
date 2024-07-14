@@ -1,3 +1,4 @@
+use avatar::AvatarPlugin;
 use bevy::{ecs::schedule::ScheduleLabel, prelude::*};
 use cards::CardsPlugin;
 use fight_arena_layout::FightArenaLayout;
@@ -7,17 +8,19 @@ use hp_mana_bars::HpManaBarsPlugin;
 use layout::LayoutPlugin;
 use players::PlayersPlugin;
 use screen::ScreenPlugin;
+use stats::StatsPlugin;
 
-use crate::battle::fight;
-
-pub mod cards;
 pub mod fight_arena_layout;
 pub mod fight_home_layout;
-pub mod game_timer;
-pub mod hp_mana_bars;
-pub mod layout;
-pub mod players;
-pub mod screen;
+
+mod avatar;
+mod cards;
+mod game_timer;
+mod hp_mana_bars;
+mod layout;
+mod players;
+mod screen;
+mod stats;
 
 const DCOLOR: BackgroundColor = BackgroundColor(Color::rgba(0.0, 0.0, 1.0, 0.1));
 
@@ -33,6 +36,8 @@ impl Plugin for UIPlugin {
             ScreenPlugin,
             GameTimerPlugin,
             PlayersPlugin,
+            StatsPlugin,
+            AvatarPlugin,
             CardsPlugin,
             HpManaBarsPlugin,
             FightHomeLayout,

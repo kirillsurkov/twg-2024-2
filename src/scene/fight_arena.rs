@@ -45,8 +45,8 @@ fn init(
                     hdr: true,
                     ..Default::default()
                 },
-                transform: Transform::from_translation(Vec3::new(0.0, 7.5, 7.5))
-                    .looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
+                transform: Transform::from_translation(Vec3::new(0.0, 7.5, 8.5))
+                    .looking_at(Vec3::new(0.0, 0.0, 1.0), Vec3::Y),
                 projection: Projection::Perspective(PerspectiveProjection {
                     fov: PI * 5.0 / 12.0,
                     ..Default::default()
@@ -61,7 +61,7 @@ fn init(
                 color: Color::rgb(0.98, 0.95, 0.82),
                 shadows_enabled: true,
                 illuminance: 1000.0,
-                ..default()
+                ..Default::default()
             },
             transform: Transform::from_xyz(0.0, 0.0, 0.0)
                 .looking_at(Vec3::new(0.05, -0.15, -0.25), Vec3::Y),

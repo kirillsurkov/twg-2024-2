@@ -27,7 +27,7 @@ pub struct HeroesPlugin;
 impl Plugin for HeroesPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((Nulch, Rasp, DTyan, Dimas, Duck, Kisanya));
-        app.add_systems(LocalSchedule, init_heroes.map(drop));
+        app.add_systems(LocalSchedule, init_heroes);
         app.insert_resource(HeroesResource(vec![
             (nulch(), Box::new(|cmd| cmd.spawn(Nulch))),
             (rasp(), Box::new(|cmd| cmd.spawn(Rasp))),
@@ -43,15 +43,15 @@ fn init_heroes(
     mut commands: Commands,
     root: Query<Entity, Added<HeroesRoot>>,
     heroes: Res<HeroesResource>,
-) -> Result<(), Box<dyn Error>> {
-    let root = root.get_single()?;
-    println!("HEROES INIT");
-    commands.entity(root).with_children(|p| {
-        heroes.iter().for_each(|(hero, spawn)| {
-            spawn(p).insert(HeroId(hero.id.to_string()));
-        })
-    });
-    Ok(())
+) {
+    for root in root.iter() {
+        println!("HEROES INIT");
+        commands.entity(root).with_children(|p| {
+            heroes.iter().for_each(|(hero, spawn)| {
+                spawn(p).insert(HeroId(hero.id.to_string()));
+            })
+        });
+    }
 }
 
 pub mod dimas;
