@@ -31,3 +31,4 @@ impl<T: Effect> Card<T> {
 
 pub mod decrease_attack;
 pub mod increase_attack;
+pub mod increase_attack_speed;
