@@ -1,4 +1,4 @@
-use std::{cmp::Reverse, default};
+use std::cmp::Reverse;
 
 use bevy::prelude::*;
 

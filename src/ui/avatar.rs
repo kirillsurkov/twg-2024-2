@@ -1,19 +1,12 @@
 use bevy::prelude::*;
 
-use crate::{
-    battle_bridge::{BattleResource, RoundCaptureResource},
-    hero::HeroId,
-    scene::{
-        avatars::{Avatar, AvatarsResource},
-        landing::{HeroSelected, HeroWatch},
-    },
-};
+use crate::{battle_bridge::BattleResource, scene::avatars::AvatarsResource};
 
-use super::{LocalSchedule, UiAssets, DCOLOR};
+use super::{LocalSchedule, DCOLOR};
 
 pub struct AvatarPlugin;
 
-const HEIGHT: f32 = 50.0;
+const SIZE: f32 = 200.0;
 
 impl Plugin for AvatarPlugin {
     fn build(&self, app: &mut App) {
@@ -46,7 +39,7 @@ fn init_avatar_root(
                         AvatarRoot::Left => Val::ZERO,
                         AvatarRoot::Right => Val::Auto,
                     }),
-                    width: Val::Px(200.0),
+                    width: Val::Px(SIZE),
                     ..Default::default()
                 },
                 background_color: DCOLOR,

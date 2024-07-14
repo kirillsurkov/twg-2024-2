@@ -1,16 +1,12 @@
 use bevy::prelude::*;
 
-use crate::{
-    battle_bridge::{BattleResource, RoundCaptureResource},
-    hero::HeroId,
-    scene::landing::{HeroSelected, HeroWatch},
-};
+use crate::battle_bridge::BattleResource;
 
-use super::{LocalSchedule, UiAssets, DCOLOR};
+use super::{LocalSchedule, DCOLOR};
 
 pub struct StatsPlugin;
 
-const HEIGHT: f32 = 50.0;
+const WIDTH: f32 = 200.0;
 
 impl Plugin for StatsPlugin {
     fn build(&self, app: &mut App) {
@@ -26,19 +22,16 @@ pub struct StatsRoot;
 
 fn init_stats_root(mut commands: Commands, query: Query<Entity, Added<StatsRoot>>) {
     for entity in query.iter() {
-        commands
-            .entity(entity)
-            .insert(NodeBundle {
-                style: Style {
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Column,
-                    margin: UiRect::left(Val::Auto),
-                    width: Val::Px(200.0),
-                    ..Default::default()
-                },
-                background_color: DCOLOR,
+        commands.entity(entity).insert(NodeBundle {
+            style: Style {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Column,
+                margin: UiRect::left(Val::Auto),
+                width: Val::Px(WIDTH),
                 ..Default::default()
-            })
-            .with_children(|p| {});
+            },
+            background_color: DCOLOR,
+            ..Default::default()
+        });
     }
 }

@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 
-use crate::scene::avatars::Avatar;
-
 use super::{
     avatar::AvatarRoot,
     game_timer::GameTimerRoot,
