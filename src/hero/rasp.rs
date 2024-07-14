@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{f32::consts::FRAC_PI_6, time::Duration};
 
 use bevy::{gltf::Gltf, prelude::*};
 
@@ -12,7 +12,7 @@ use crate::{
         model::Model,
         wheel,
     },
-    scene::avatars::AvatarCameraTransform,
+    scene::avatars::{self, AvatarLocation},
 };
 
 use super::LocalSchedule;
@@ -123,9 +123,24 @@ fn filter_animations(
     }
 }
 
-fn on_avatar(mut query: Query<&mut AvatarCameraTransform, With<Rasp>>) {
-    for mut t in query.iter_mut() {
-        t.0 = Transform::from_translation(Vec3::new(-0.15, 2.1, 1.0)).looking_to(-Vec3::Z, Vec3::Y);
+fn on_avatar(mut query: Query<(&mut ComplexAnimPlayer, &mut avatars::HeroState), With<Rasp>>) {
+    for (mut anim_player, mut state) in query.iter_mut() {
+        let origin = Vec3::new(-0.15, 2.1, 1.0);
+        let target = origin.xy().extend(0.0);
+        state.camera = match state.location {
+            AvatarLocation::Thumbnail => {
+                Transform::from_translation(origin).looking_at(target, Vec3::Y)
+            }
+            _ => {
+                let origin = Vec3::new(0.0, 2.2, 1.0);
+                let target = origin.xy().extend(0.2);
+                anim_player.play(false, complex_anim_player::State::Idle);
+                Transform::from_translation(
+                    target + Quat::from_rotation_y(-FRAC_PI_6) * (origin - target),
+                )
+                .looking_at(target, Vec3::Y)
+            }
+        }
     }
 }
 

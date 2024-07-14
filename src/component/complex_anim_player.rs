@@ -116,16 +116,20 @@ fn play(
         let mut anim_player = anim_players.get_mut(player.anim_player).unwrap();
         match player.state {
             State::Stop => anim_player.pause(),
-            State::Idle => match &player.idle {
-                Some(idle) => {
-                    animations.current = idle.clone();
-                    anim_player
-                        .play_with_transition(animations.by_name[idle].clone_weak(), TRANSITION)
-                        .repeat();
+            State::Idle => {
+                anim_player.resume();
+                match &player.idle {
+                    Some(idle) => {
+                        animations.current = idle.clone();
+                        anim_player
+                            .play_with_transition(animations.by_name[idle].clone_weak(), TRANSITION)
+                            .repeat();
+                    }
+                    None => {}
                 }
-                None => {}
-            },
+            }
             State::Showoff(interval) => {
+                anim_player.resume();
                 if player.state_changed {
                     player.current_showoff = None;
                 }

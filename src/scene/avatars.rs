@@ -43,8 +43,16 @@ pub struct AvatarsResource {
     current_thumbnail: usize,
 }
 
-#[derive(Component, Default)]
-pub struct AvatarCameraTransform(pub Transform);
+pub enum AvatarLocation {
+    Thumbnail,
+    Portrait,
+}
+
+#[derive(Component)]
+pub struct HeroState {
+    pub location: AvatarLocation,
+    pub camera: Transform,
+}
 
 fn image() -> Image {
     let size = Extent3d {
@@ -162,12 +170,18 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>, heroes: Res<
     commands.spawn(light(3));
 }
 
-fn init(mut commands: Commands, mut query: Query<(Entity, &Children), Added<Avatar>>) {
-    for (entity, children) in query.iter_mut() {
+fn init(mut commands: Commands, mut query: Query<(Entity, &Children, &Avatar), Added<Avatar>>) {
+    for (entity, children, avatar) in query.iter_mut() {
         println!("INIT AVATARS");
         for hero in children.iter() {
             commands.entity(*hero).insert((
-                AvatarCameraTransform::default(),
+                HeroState {
+                    camera: Transform::default(),
+                    location: match avatar {
+                        Avatar::Thumbnail => AvatarLocation::Thumbnail,
+                        _ => AvatarLocation::Portrait,
+                    },
+                },
                 TransformBundle::default(),
                 VisibilityBundle {
                     visibility: Visibility::Hidden,
@@ -205,7 +219,7 @@ fn update_thumbnails(
     mut avatars: ResMut<AvatarsResource>,
     mut camera: Query<(&mut Camera, &mut Transform), With<ThumbnailCamera>>,
     heroes: Query<(&Avatar, &Children)>,
-    hero: Query<(&HeroId, &AvatarCameraTransform)>,
+    hero: Query<(&HeroId, &HeroState)>,
 ) {
     let (mut camera, mut camera_transform) = camera.single_mut();
 
@@ -215,12 +229,12 @@ fn update_thumbnails(
             _ => continue,
         };
 
-        let Ok((id, ct)) = hero.get(children[avatars.current_thumbnail]) else {
+        let Ok((id, state)) = hero.get(children[avatars.current_thumbnail]) else {
             continue;
         };
 
         camera.target = avatars.thumbnails[&id.0].clone_weak().into();
-        *camera_transform = ct.0;
+        *camera_transform = state.camera;
 
         for (i, hero) in children.iter().enumerate() {
             commands
@@ -238,34 +252,50 @@ fn update_thumbnails(
 
 fn update_home(
     mut commands: Commands,
+    mut camera: Query<&mut Transform, With<PortraitRightCamera>>,
     query: Query<(&Avatar, &Children)>,
-    hero_ids: Query<&HeroId>,
+    hero: Query<(&HeroId, &HeroState)>,
     watch: Res<HeroWatch>,
 ) {
+    let mut camera = camera.single_mut();
+
     for (avatar, children) in query.iter() {
         match avatar {
             Avatar::Right => {}
             _ => continue,
         }
         for child in children {
-            commands
-                .entity(*child)
-                .insert(if hero_ids.get(*child).unwrap().0 == watch.id {
-                    Visibility::Inherited
-                } else {
-                    Visibility::Hidden
-                });
+            let Ok((id, state)) = hero.get(*child) else {
+                continue;
+            };
+            commands.entity(*child).insert(if id.0 == watch.id {
+                *camera = state.camera;
+                Visibility::Inherited
+            } else {
+                Visibility::Hidden
+            });
         }
     }
 }
 
 fn update_fight(
     mut commands: Commands,
+    mut camera_left: Query<
+        &mut Transform,
+        (With<PortraitLeftCamera>, Without<PortraitRightCamera>),
+    >,
+    mut camera_right: Query<
+        &mut Transform,
+        (With<PortraitRightCamera>, Without<PortraitLeftCamera>),
+    >,
     query: Query<(&Avatar, &Children)>,
-    hero_ids: Query<&HeroId>,
+    hero: Query<(&HeroId, &HeroState)>,
     watch: Res<HeroWatch>,
     round: Res<RoundCaptureResource>,
 ) {
+    let mut camera_left = camera_left.single_mut();
+    let mut camera_right = camera_right.single_mut();
+
     for (avatar, children) in query.iter() {
         match avatar {
             Avatar::Thumbnail => continue,
@@ -273,19 +303,26 @@ fn update_fight(
         }
         let round = round.by_player(&watch.id).unwrap();
         for child in children {
-            commands.entity(*child).insert(
-                if hero_ids.get(*child).unwrap().0
-                    == match avatar {
-                        Avatar::Left => round.player1,
-                        Avatar::Right => round.player2,
-                        _ => unreachable!(),
-                    }
-                {
-                    Visibility::Inherited
-                } else {
-                    Visibility::Hidden
-                },
-            );
+            let Ok((id, state)) = hero.get(*child) else {
+                continue;
+            };
+
+            let current_id = match avatar {
+                Avatar::Left => round.player1,
+                Avatar::Right => round.player2,
+                _ => unreachable!(),
+            };
+
+            commands.entity(*child).insert(if id.0 == current_id {
+                match avatar {
+                    Avatar::Left => *camera_left = state.camera,
+                    Avatar::Right => *camera_right = state.camera,
+                    _ => unreachable!(),
+                };
+                Visibility::Inherited
+            } else {
+                Visibility::Hidden
+            });
         }
     }
 }
