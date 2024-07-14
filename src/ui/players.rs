@@ -3,7 +3,7 @@ use std::cmp::Reverse;
 use bevy::prelude::*;
 
 use crate::{
-    battle_bridge::{BattleResource, RoundCaptureResource},
+    battle_bridge::{BattleResource, HeroesResource, RoundCaptureResource},
     hero::HeroId,
     scene::{
         avatars::AvatarsResource,
@@ -60,7 +60,7 @@ fn init_players_root(mut commands: Commands, query: Query<Entity, Added<PlayersR
                     margin: UiRect::bottom(Val::Auto),
                     ..Default::default()
                 },
-                background_color: DCOLOR,
+                // background_color: DCOLOR,
                 ..Default::default()
             })
             .with_children(|p| {
@@ -138,7 +138,7 @@ fn init_player_root(
                 style: Style {
                     display: Display::Flex,
                     flex_direction: FlexDirection::Row,
-                    width: Val::Px(HEIGHT * 4.0),
+                    width: Val::Px(HEIGHT * 4.0 + 10.0),
                     height: Val::Px(HEIGHT),
                     margin: UiRect::new(
                         Val::Px(0.0),
@@ -146,6 +146,7 @@ fn init_player_root(
                         Val::Px(5.0),
                         Val::Px(10.0 * root.0 as u32 as f32),
                     ),
+                    column_gap: Val::Px(5.0),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -164,22 +165,43 @@ struct PlayerListSelected(String);
 fn update_player_root(
     mut commands: Commands,
     mut query: Query<(Entity, &HeroId, &Interaction, &mut BackgroundColor), With<PlayerRoot>>,
+    selected: Res<HeroSelected>,
 ) {
     for (entity, id, act, mut color) in query.iter_mut() {
+        let base = if selected.id == id.0 {
+            Color::MIDNIGHT_BLUE
+        } else {
+            Color::BLACK
+        }
+        .with_a(0.5);
         match act {
             Interaction::Hovered => {
                 commands
                     .entity(entity)
                     .insert(PlayerListSelected(id.to_string()));
-                *color = Color::WHITE.with_a(0.05).into();
+                let tint = 0.25;
+                *color = Color::rgba(
+                    base.r() + (tint * (1.0 - base.r())),
+                    base.g() + (tint * (1.0 - base.g())),
+                    base.b() + (tint * (1.0 - base.b())),
+                    base.a(),
+                )
+                .into();
             }
             Interaction::Pressed => {
                 commands.insert_resource(HeroWatch { id: id.to_string() });
-                *color = Color::WHITE.with_a(0.07).into();
+                let tint = 0.30;
+                *color = Color::rgba(
+                    base.r() + (tint * (1.0 - base.r())),
+                    base.g() + (tint * (1.0 - base.g())),
+                    base.b() + (tint * (1.0 - base.b())),
+                    base.a(),
+                )
+                .into();
             }
             Interaction::None => {
                 commands.entity(entity).remove::<PlayerListSelected>();
-                *color = Color::NONE.into();
+                *color = base.into();
             }
         }
     }
@@ -218,11 +240,7 @@ fn init_player_avatar(
 #[derive(Component)]
 struct PlayerBody;
 
-fn init_player_body(
-    mut commands: Commands,
-    selected: Res<HeroSelected>,
-    query: Query<(Entity, &HeroId), Added<PlayerBody>>,
-) {
+fn init_player_body(mut commands: Commands, query: Query<(Entity, &HeroId), Added<PlayerBody>>) {
     for (entity, id) in query.iter() {
         commands
             .entity(entity)
@@ -233,11 +251,6 @@ fn init_player_body(
                     width: Val::Px(HEIGHT * 2.0),
                     height: Val::Percent(100.0),
                     ..Default::default()
-                },
-                background_color: if selected.id == id.0 {
-                    Color::GREEN.with_a(0.1).into()
-                } else {
-                    DCOLOR
                 },
                 ..Default::default()
             })
@@ -254,6 +267,7 @@ struct PlayerName;
 fn init_player_name(
     mut commands: Commands,
     assets: Res<UiAssets>,
+    heroes: Res<HeroesResource>,
     query: Query<(Entity, &HeroId), Added<PlayerName>>,
 ) {
     for (entity, id) in query.iter() {
@@ -271,7 +285,7 @@ fn init_player_name(
             })
             .with_children(|p| {
                 p.spawn(TextBundle::from_section(
-                    &id.0,
+                    heroes.iter().find(|(h, _)| h.id == id.0).unwrap().0.name,
                     TextStyle {
                         font: assets.font_comic.clone_weak(),
                         font_size: 25.0,
@@ -415,8 +429,7 @@ fn init_player_hp(
                 flex_grow: 1.0,
                 height: Val::Percent(100.0),
                 ..Default::default()
-            })
-            .with_background_color(DCOLOR.0),
+            }),
         );
     }
 }
