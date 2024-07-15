@@ -19,7 +19,7 @@ impl Effect for RegenMana {
     fn update(&mut self, delta: f32, myself: &Fighter, enemy: &Fighter) -> Vec<ModifierDesc> {
         vec![ModifierDesc {
             modifier: Modifier::AffectMana(myself.mana_regen * delta),
-            target: Target::Enemy,
+            target: Target::Myself,
             value_kind: ValueKind::Units,
         }]
     }
