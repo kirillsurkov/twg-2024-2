@@ -5,7 +5,8 @@ use bevy::{gltf::Gltf, prelude::*};
 use crate::{
     component::{
         complex_anim_player::{self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff},
-        model::Model, projectile::ProjectileConfig,
+        model::Model,
+        projectile::ProjectileConfig,
     },
     scene::avatars::{self, AvatarLocation},
 };
@@ -96,10 +97,12 @@ fn on_add(
                             ])),
                         Animations::new(gltf.named_animations.clone()),
                         ProjectileConfig {
-                            offset: Vec3::new(0.0, 0.0, 0.0),
+                            transform: Transform::from_translation(Vec3::new(
+                                0.0, 1.14302, -0.113629,
+                            )),
                             color: Color::RED,
                             radius: 0.08,
-                            model: None,
+                            ..Default::default()
                         },
                     ));
                 }

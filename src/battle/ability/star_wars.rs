@@ -8,7 +8,6 @@ use super::Ability;
 
 #[derive(Debug)]
 pub struct StarWars {
-    timer: f32,
     current: u32,
     swiborgs_charging: Vec<(u32, f32)>,
     swiborgs_ready: Vec<(u32, f32)>,
@@ -18,7 +17,6 @@ pub struct StarWars {
 impl HasEffect for Ability<StarWars> {
     fn effect(&self) -> Box<dyn Effect> {
         StarWars {
-            timer: 0.0,
             current: 0,
             swiborgs_charging: vec![],
             swiborgs_ready: vec![],

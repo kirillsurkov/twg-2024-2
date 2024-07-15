@@ -176,7 +176,7 @@ impl<'a> Fight<'a> {
                         target.attack_speed += val;
                     }
                     Modifier::AffectHP(val) => {
-                        target.hp += val * 4.0;
+                        target.hp += val;
                     }
                     Modifier::AffectMana(val) => {
                         target.mana += val;
@@ -185,6 +185,7 @@ impl<'a> Fight<'a> {
                     Modifier::NormalAttack => {}
                     Modifier::SpawnSwiborg(_) => {}
                     Modifier::ShootSwiborg(_) => {}
+                    Modifier::ShootDuck => {}
                 }
             }
 

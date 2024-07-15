@@ -95,10 +95,12 @@ fn on_add(
                             ])),
                         Animations::new(gltf.named_animations.clone()),
                         ProjectileConfig {
-                            offset: Vec3::new(0.0, 0.0, 0.0),
+                            transform: Transform::from_translation(Vec3::new(
+                                0.0359386, 1.85802, 1.39652,
+                            )),
                             color: Color::PINK,
                             radius: 0.05,
-                            model: None,
+                            ..Default::default()
                         },
                     ));
                 }

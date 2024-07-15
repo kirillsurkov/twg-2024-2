@@ -8,6 +8,7 @@ pub enum Modifier {
     NormalAttack,
     SpawnSwiborg(u32),
     ShootSwiborg(u32),
+    ShootDuck,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

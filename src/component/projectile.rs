@@ -24,12 +24,13 @@ impl Projectile {
     }
 }
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Default)]
 pub struct ProjectileConfig {
-    pub offset: Vec3,
+    pub transform: Transform,
     pub radius: f32,
     pub color: Color,
     pub model: Option<Handle<Scene>>,
+    pub model_transform: Transform,
 }
 
 pub struct ProjectilePlugin;
@@ -55,7 +56,7 @@ fn init(
 
         let mut color_gradient = Gradient::new();
         color_gradient.add_key(0.0, color);
-        color_gradient.add_key(1.0, Vec4::ZERO);
+        color_gradient.add_key(1.0, Vec4::new(1.0, 1.0, 1.0, 0.0));
 
         let mut size_gradient = Gradient::new();
         size_gradient.add_key(0.0, Vec2::new(0.2, 0.1));
@@ -116,7 +117,10 @@ fn init(
             commands.entity(entity).with_children(|p| {
                 p.spawn((
                     model.clone_weak(),
-                    TransformBundle::default(),
+                    TransformBundle {
+                        local: config.model_transform,
+                        ..Default::default()
+                    },
                     VisibilityBundle::default(),
                 ));
             });
@@ -178,7 +182,13 @@ fn update(
             continue;
         };
 
-        let origin = transforms.get(projectile.origin).unwrap().translation() + config.offset;
+        let t = transforms
+            .get(projectile.origin)
+            .unwrap()
+            .mul_transform(config.transform)
+            .compute_transform();
+
+        let origin = t.translation;
         let target = transforms.get(target).unwrap().translation() + Vec3::new(0.0, 1.0, 0.0);
 
         let dir = target - origin;
@@ -186,6 +196,8 @@ fn update(
 
         projectile.timer += time.delta_seconds();
         properties.set("normal", (dir.normalize()).into());
-        *transform = Transform::from_translation(origin).looking_to(dir, Vec3::Y);
+        *transform = Transform::from_translation(origin)
+            .with_scale(t.scale)
+            .with_rotation(Transform::IDENTITY.looking_to(dir, Vec3::Y).rotation * t.rotation);
     }
 }

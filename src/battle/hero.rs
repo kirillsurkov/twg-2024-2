@@ -1,5 +1,5 @@
 use super::{
-    ability::{Ability, Attack, RegenMana, StarWars},
+    ability::{Ability, Attack, Halve, RegenMana, StarWars},
     effect::HasEffect,
 };
 
@@ -104,6 +104,7 @@ pub fn duck() -> Hero {
         abils: vec![
             Ability::<Attack>::new().into(),
             Ability::<RegenMana>::new().into(),
+            Ability::<Halve>::new().into(),
         ],
     }
 }

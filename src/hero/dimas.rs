@@ -94,10 +94,10 @@ fn on_add(
                     swiborg: asset_server.load("embedded://swiborg.glb#Scene0"),
                 },
                 ProjectileConfig {
-                    offset: Vec3::new(0.0, 0.0, 0.0),
+                    transform: Transform::from_translation(Vec3::new(1.03829, 1.91548, 0.0)),
                     color: Color::ORANGE,
                     radius: 0.3,
-                    model: None,
+                    ..Default::default()
                 },
             ))
             .with_children(|p| {
@@ -199,10 +199,11 @@ fn on_arena(
                                 id.clone(),
                                 Projectile::new(p.parent_entity(), None, 0.5),
                                 ProjectileConfig {
-                                    offset: Vec3::ZERO,
+                                    transform: Transform::IDENTITY,
                                     color: Color::LIME_GREEN,
                                     radius: 0.25,
                                     model: Some(state.swiborg.clone_weak()),
+                                    ..Default::default()
                                 },
                             ));
                         });
@@ -221,10 +222,11 @@ fn on_arena(
                             id.clone(),
                             Projectile::new(root, Some(arena_state.enemy), 0.5),
                             ProjectileConfig {
-                                offset,
+                                transform: Transform::from_translation(offset),
                                 color: Color::LIME_GREEN,
                                 radius: 0.25,
                                 model: Some(state.swiborg.clone_weak()),
+                                ..Default::default()
                             },
                         ));
                     });

@@ -1,19 +1,34 @@
-use std::{f32::consts::FRAC_PI_6, time::Duration};
+use std::{
+    f32::consts::{FRAC_PI_2, FRAC_PI_6, PI},
+    time::Duration,
+};
 
 use bevy::{gltf::Gltf, prelude::*};
 
 use crate::{
+    battle::modifier::Modifier,
     component::{
+        arena,
         complex_anim_player::{self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff},
-        model::Model, projectile::ProjectileConfig,
+        fight_state::FightState,
+        model::Model,
+        projectile::{Projectile, ProjectileConfig},
     },
-    scene::avatars::{self, AvatarLocation},
+    scene::{
+        avatars::{self, AvatarLocation},
+        Root,
+    },
 };
 
-use super::LocalSchedule;
+use super::{HeroId, LocalSchedule};
 
 #[derive(Component)]
 pub struct Duck;
+
+#[derive(Component)]
+struct State {
+    duck: Handle<Scene>,
+}
 
 #[derive(Component)]
 pub struct Ready;
@@ -23,7 +38,15 @@ pub struct ModelReady;
 
 impl Plugin for Duck {
     fn build(&self, app: &mut App) {
-        app.add_systems(LocalSchedule, (on_add, filter_animations, on_avatar));
+        app.add_systems(
+            LocalSchedule,
+            (
+                on_add,
+                filter_animations,
+                on_avatar,
+                on_arena.run_if(resource_exists::<FightState>),
+            ),
+        );
     }
 }
 
@@ -56,7 +79,18 @@ fn on_add(
     for entity in query_model.iter() {
         commands
             .entity(entity)
-            .insert(ModelReady)
+            .insert((
+                ModelReady,
+                State {
+                    duck: asset_server.load("embedded://duck.glb#Scene0"),
+                },
+                ProjectileConfig {
+                    transform: Transform::from_translation(Vec3::new(0.0, 1.086545, 0.97346)),
+                    color: Color::YELLOW,
+                    radius: 0.1,
+                    ..Default::default()
+                },
+            ))
             .with_children(|p| {
                 p.spawn(SceneBundle {
                     scene: gltf.scenes[0].clone(),
@@ -85,12 +119,6 @@ fn on_add(
                                 wait: Duration::from_millis(0),
                             }])),
                         Animations::new(gltf.named_animations.clone()),
-                        ProjectileConfig {
-                            offset: Vec3::new(0.0, 0.0, 0.0),
-                            color: Color::YELLOW,
-                            radius: 0.1,
-                            model: None,
-                        },
                     ));
                 }
             }
@@ -120,6 +148,45 @@ fn on_avatar(mut query: Query<(&mut ComplexAnimPlayer, &mut avatars::HeroState),
                     target + Quat::from_rotation_y(-FRAC_PI_6) * (origin - target),
                 )
                 .looking_at(target, Vec3::Y)
+            }
+        }
+    }
+}
+
+fn on_arena(
+    mut commands: Commands,
+    query: Query<(Entity, &arena::HeroState, &State, &HeroId), With<Duck>>,
+    transforms: Query<&GlobalTransform>,
+    root: Query<Entity, With<Root>>,
+) {
+    let Ok(root) = root.get_single() else {
+        return;
+    };
+
+    for (entity, arena_state, state, id) in query.iter() {
+        for modifier in &arena_state.modifiers {
+            match modifier {
+                Modifier::ShootDuck => {
+                    let offset = transforms.get(entity).unwrap().translation();
+                    commands.entity(root).with_children(|p| {
+                        p.spawn((
+                            id.clone(),
+                            Projectile::new(root, Some(arena_state.enemy), 0.5),
+                            ProjectileConfig {
+                                transform: Transform::from_translation(offset)
+                                    .with_rotation(Quat::from_rotation_y(PI))
+                                    .with_scale(Vec3::splat(0.5)),
+                                color: Color::DARK_GREEN,
+                                radius: 0.5,
+                                model: Some(state.duck.clone_weak()),
+                                model_transform: Transform::from_translation(Vec3::new(
+                                    0.0, -1.25, 0.0,
+                                )),
+                            },
+                        ));
+                    });
+                }
+                _ => {}
             }
         }
     }
