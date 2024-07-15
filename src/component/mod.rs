@@ -5,6 +5,7 @@ use fight_state::FightStatePlugin;
 use game_timer::GameTimerPlugin;
 use home::HomePlugin;
 use land::LandPlugin;
+use projectile::ProjectilePlugin;
 use wheel::WheelPlugin;
 
 pub mod arena;
@@ -14,6 +15,7 @@ pub mod game_timer;
 pub mod home;
 pub mod land;
 pub mod model;
+pub mod projectile;
 pub mod wheel;
 
 #[derive(ScheduleLabel, Debug, Hash, PartialEq, Eq, Clone)]
@@ -26,8 +28,9 @@ impl Plugin for ComponentsPlugin {
         app.add_plugins((
             GameTimerPlugin,
             FightStatePlugin,
-            WheelPlugin,
             ComplexAnimPlayerPlugin,
+            ProjectilePlugin,
+            WheelPlugin,
             LandPlugin,
             HomePlugin,
             ArenaPlugin,

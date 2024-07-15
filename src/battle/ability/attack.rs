@@ -9,33 +9,45 @@ use super::Ability;
 #[derive(Debug)]
 pub struct Attack {
     timer: f32,
+    projectiles: Vec<f32>,
 }
 
 impl HasEffect for Ability<Attack> {
     fn effect(&self) -> Box<dyn Effect> {
-        Attack { timer: 0.0 }.into()
+        Attack {
+            timer: 0.0,
+            projectiles: vec![],
+        }
+        .into()
     }
 }
 
 impl Effect for Attack {
     fn update(&mut self, delta: f32, myself: &Fighter, enemy: &Fighter) -> Vec<ModifierDesc> {
-        self.timer += delta;
+        let mut modifiers = vec![];
+        self.projectiles.retain_mut(|time| {
+            *time += delta;
+            if *time >= 0.5 {
+                modifiers.push(ModifierDesc {
+                    modifier: Modifier::AffectHP(-myself.attack * 6.0),
+                    target: Target::Enemy,
+                    value_kind: ValueKind::Units,
+                });
+                false
+            } else {
+                true
+            }
+        });
         if self.timer >= 1.0 / myself.attack_speed {
             self.timer = 0.0;
-            vec![
-                ModifierDesc {
-                    modifier: Modifier::AffectHP(-myself.attack),
-                    target: Target::Enemy,
-                    value_kind: ValueKind::Units,
-                },
-                ModifierDesc {
-                    modifier: Modifier::NormalAttack,
-                    target: Target::Enemy,
-                    value_kind: ValueKind::Units,
-                },
-            ]
-        } else {
-            vec![]
+            self.projectiles.push(0.0);
+            modifiers.push(ModifierDesc {
+                modifier: Modifier::NormalAttack,
+                target: Target::Enemy,
+                value_kind: ValueKind::Units,
+            });
         }
+        self.timer += delta;
+        modifiers
     }
 }

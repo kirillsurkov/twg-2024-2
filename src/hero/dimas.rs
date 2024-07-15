@@ -21,6 +21,9 @@ use super::LocalSchedule;
 pub struct Dimas;
 
 #[derive(Component)]
+struct Swiborg;
+
+#[derive(Component)]
 pub struct Ready;
 
 #[derive(Component)]
@@ -43,6 +46,7 @@ impl Plugin for Dimas {
 fn on_add(
     mut commands: Commands,
     model: Option<Res<Model<Dimas>>>,
+    swiborg: Option<Res<Model<Swiborg>>>,
     asset_server: Res<AssetServer>,
     assets_gltf: Res<Assets<Gltf>>,
     query: Query<Entity, (With<Dimas>, Without<Ready>)>,
@@ -67,6 +71,12 @@ fn on_add(
             return;
         }
     };
+
+    if swiborg.is_none() {
+        commands.insert_resource(Model::<Swiborg>::new(
+            asset_server.load("embedded://swiborg.glb"),
+        ));
+    }
 
     for entity in query_model.iter() {
         commands
