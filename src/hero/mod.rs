@@ -122,7 +122,7 @@ fn on_arena(
 
 fn on_arena_projectiles(
     mut commands: Commands,
-    mut query: Query<&HeroId, With<arena::HeroState>>,
+    mut query: Query<(&mut ComplexAnimPlayer, &HeroId), With<arena::HeroState>>,
     fight: Res<FightState>,
     heroes: Query<(Entity, &HeroId), With<arena::HeroState>>,
     root: Query<Entity, With<Root>>,
@@ -131,7 +131,7 @@ fn on_arena_projectiles(
         return;
     };
 
-    for id in query.iter_mut() {
+    for (mut anim_player, id) in query.iter_mut() {
         if fight.winner.is_some() {
             continue;
         }
@@ -163,6 +163,7 @@ fn on_arena_projectiles(
             }
             match m.modifier {
                 Modifier::NormalAttack => {
+                    anim_player.replay();
                     commands.entity(root).with_children(|p| {
                         p.spawn((Projectile::new(myself, enemy, 0.5), id.clone()));
                     });

@@ -148,6 +148,11 @@ fn play(
     for (mut player, mut animations) in query.iter_mut() {
         let mut anim_player = anim_players.get_mut(player.anim_player).unwrap();
 
+        if player.replay {
+            player.replay = false;
+            anim_player.replay();
+        }
+
         match player.state {
             State::Stop => anim_player.pause(),
             _ => anim_player.resume(),
@@ -170,8 +175,7 @@ fn play(
                     animations.current = attack.clone();
                     anim_player
                         .play_with_transition(animations.by_name[attack].clone_weak(), TRANSITION)
-                        .set_speed(duration * speed)
-                        .repeat();
+                        .set_speed(duration * speed);
                 }
                 None => {}
             },
