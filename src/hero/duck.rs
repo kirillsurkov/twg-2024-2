@@ -75,6 +75,9 @@ fn on_add(
                     entity.insert((
                         ComplexAnimPlayer::new(anim_player)
                             .with_idle("idle_track")
+                            .with_attack("attack_track", 40)
+                            .with_win("win_track")
+                            .with_lose("lose_track")
                             .with_showoff(Showoff::new(vec![ComplexAnimPart {
                                 name: "flapping_track".to_string(),
                                 repeat: 1,
