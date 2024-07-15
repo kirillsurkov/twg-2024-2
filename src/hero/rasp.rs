@@ -6,6 +6,7 @@ use crate::{
     component::{
         complex_anim_player::{self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff},
         model::Model,
+        projectile::ProjectileConfig,
     },
     scene::avatars::{self, AvatarLocation},
 };
@@ -93,6 +94,12 @@ fn on_add(
                                 },
                             ])),
                         Animations::new(gltf.named_animations.clone()),
+                        ProjectileConfig {
+                            offset: Vec3::new(0.0, 0.0, 0.0),
+                            color: Color::PINK,
+                            radius: 0.05,
+                            model: None,
+                        },
                     ));
                 }
             }

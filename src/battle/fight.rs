@@ -80,6 +80,7 @@ impl FightCapture {
             .unwrap_err();
 
         let states = &self.states[from..to];
+
         states.last().map(|(_, state)| State {
             fighter1: state.fighter1.clone(),
             fighter2: state.fighter2.clone(),
@@ -168,20 +169,22 @@ impl<'a> Fight<'a> {
                     Target::Enemy => &mut enemy,
                 };
                 match m.modifier {
-                    Modifier::ChangeAttack(val) => {
+                    Modifier::AffectAttack(val) => {
                         target.attack += val;
                     }
                     Modifier::AffectAttackSpeed(val) => {
                         target.attack_speed += val;
                     }
                     Modifier::AffectHP(val) => {
-                        target.hp += val;
+                        target.hp += val * 4.0;
                     }
                     Modifier::AffectMana(val) => {
                         target.mana += val;
                     }
                     // markers
                     Modifier::NormalAttack => {}
+                    Modifier::SpawnSwiborg(_) => {}
+                    Modifier::ShootSwiborg(_) => {}
                 }
             }
 

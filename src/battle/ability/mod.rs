@@ -27,4 +27,5 @@ pub use attack::Attack;
 mod regen_mana;
 pub use regen_mana::RegenMana;
 
-mod foo;
+mod star_wars;
+pub use star_wars::StarWars;

@@ -1,5 +1,5 @@
 use super::{
-    ability::{Ability, Attack, RegenMana},
+    ability::{Ability, Attack, RegenMana, StarWars},
     effect::HasEffect,
 };
 
@@ -85,6 +85,7 @@ pub fn dimas() -> Hero {
         abils: vec![
             Ability::<Attack>::new().into(),
             Ability::<RegenMana>::new().into(),
+            Ability::<StarWars>::new().into(),
         ],
     }
 }

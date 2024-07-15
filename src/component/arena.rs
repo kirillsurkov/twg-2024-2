@@ -3,11 +3,13 @@ use std::f32::consts::FRAC_PI_2;
 use bevy::prelude::*;
 
 use crate::{
-    battle::fight::Owner, battle_bridge::RoundCaptureResource, hero::HeroId,
+    battle::{fight::Owner, modifier::Modifier},
+    battle_bridge::RoundCaptureResource,
+    hero::HeroId,
     scene::landing::HeroWatch,
 };
 
-use super::LocalSchedule;
+use super::{game_timer::GameTimer, LocalSchedule};
 
 pub struct ArenaPlugin;
 
@@ -22,8 +24,8 @@ impl Plugin for ArenaPlugin {
 
 #[derive(Component)]
 pub struct HeroState {
-    pub active: bool,
-    pub changed: bool,
+    pub modifiers: Vec<Modifier>,
+    pub enemy: Entity,
 }
 
 #[derive(Component)]
@@ -78,8 +80,8 @@ fn init(
                     .entity(*hero)
                     .insert((
                         HeroState {
-                            active: true,
-                            changed: true,
+                            modifiers: vec![],
+                            enemy: Entity::PLACEHOLDER,
                         },
                         TransformBundle::default(),
                         VisibilityBundle {
@@ -118,20 +120,52 @@ fn init(
 
 fn update(
     mut commands: Commands,
-    capture: Res<RoundCaptureResource>,
+    round: Res<RoundCaptureResource>,
     watch: Res<HeroWatch>,
-    heroes: Query<Entity, With<HeroState>>,
-    hero_ids: Query<&HeroId>,
+    game_timer: Res<GameTimer>,
+    time: Res<Time>,
+    query: Query<(Entity, &HeroId), With<HeroState>>,
 ) {
-    let capture = capture.by_player(&watch.id).unwrap();
-    for entity in heroes.iter() {
-        let Ok(hero) = hero_ids.get(entity) else {
-            continue;
-        };
-        if hero.0 == capture.player1 || hero.0 == capture.player2 {
+    for (entity, id) in query.iter() {
+        let round = round.by_player(&id.0).unwrap();
+
+        if round.player1 == watch.id || round.player2 == watch.id {
             commands.entity(entity).insert(Visibility::Inherited);
         } else {
             commands.entity(entity).insert(Visibility::Hidden);
         }
+
+        if game_timer.red {
+            continue;
+        }
+
+        let owner = if round.player1 == id.0 {
+            Owner::Fighter1
+        } else {
+            Owner::Fighter2
+        };
+
+        let enemy_id = match owner {
+            Owner::Fighter1 => round.player2,
+            Owner::Fighter2 => round.player1,
+        };
+
+        let fight = &round.fight_capture;
+        let modifiers = if let Some(state) =
+            fight.state(game_timer.value, game_timer.value + time.delta_seconds())
+        {
+            state
+                .modifiers
+                .into_iter()
+                .filter_map(|(o, m)| if o == owner { Some(m.modifier) } else { None })
+                .collect()
+        } else {
+            vec![]
+        };
+
+        commands.entity(entity).insert(HeroState {
+            enemy: query.iter().find(|(_, id)| id.0 == enemy_id).unwrap().0,
+            modifiers,
+        });
     }
 }

@@ -18,7 +18,7 @@ use crate::{
         complex_anim_player::{self, ComplexAnimPlayer, SHOWOFF_IMMEDIATE, SHOWOFF_LAZY},
         fight_state::FightState,
         land,
-        projectile::Projectile,
+        projectile::{Projectile, ProjectileConfig},
         wheel,
     },
     scene::Root,
@@ -44,7 +44,7 @@ impl Plugin for HeroesPlugin {
                 init_heroes,
                 on_wheel,
                 on_land,
-                (on_arena, on_arena_projectiles).run_if(resource_exists::<FightState>),
+                (on_arena_animations, on_arena_projectiles).run_if(resource_exists::<FightState>),
             ),
         );
         app.insert_resource(HeroesResource(vec![
@@ -89,7 +89,7 @@ fn on_land(mut query: Query<&mut ComplexAnimPlayer, (With<land::HeroState>, With
     }
 }
 
-fn on_arena(
+fn on_arena_animations(
     mut query: Query<(&mut ComplexAnimPlayer, &HeroId), With<arena::HeroState>>,
     fight: Res<FightState>,
 ) {
@@ -122,50 +122,30 @@ fn on_arena(
 
 fn on_arena_projectiles(
     mut commands: Commands,
-    mut query: Query<(&mut ComplexAnimPlayer, &HeroId), With<arena::HeroState>>,
-    fight: Res<FightState>,
-    heroes: Query<(Entity, &HeroId), With<arena::HeroState>>,
+    mut query: Query<(
+        Entity,
+        &mut ComplexAnimPlayer,
+        &HeroId,
+        &ProjectileConfig,
+        &arena::HeroState,
+    )>,
     root: Query<Entity, With<Root>>,
 ) {
     let Ok(root) = root.get_single() else {
         return;
     };
 
-    for (mut anim_player, id) in query.iter_mut() {
-        if fight.winner.is_some() {
-            continue;
-        }
-
-        let owner = if fight.fighter1.hero.id == id.0 {
-            Owner::Fighter1
-        } else if fight.fighter2.hero.id == id.0 {
-            Owner::Fighter2
-        } else {
-            continue;
-        };
-
-        let (myself_id, enemy_id) = {
-            (
-                id.0.as_str(),
-                match owner {
-                    Owner::Fighter1 => fight.fighter2.hero.id,
-                    Owner::Fighter2 => fight.fighter1.hero.id,
-                },
-            )
-        };
-
-        let myself = heroes.iter().find(|(_, id)| id.0 == myself_id).unwrap().0;
-        let enemy = heroes.iter().find(|(_, id)| id.0 == enemy_id).unwrap().0;
-
-        for (o, m) in &fight.modifiers {
-            if *o != owner {
-                continue;
-            }
-            match m.modifier {
+    for (entity, mut anim_player, id, projectile_config, hero_state) in query.iter_mut() {
+        for modifier in &hero_state.modifiers {
+            match modifier {
                 Modifier::NormalAttack => {
                     anim_player.replay();
                     commands.entity(root).with_children(|p| {
-                        p.spawn((Projectile::new(myself, enemy, 0.5), id.clone()));
+                        p.spawn((
+                            Projectile::new(entity, Some(hero_state.enemy), 0.5),
+                            id.clone(),
+                            projectile_config.clone(),
+                        ));
                     });
                 }
                 _ => {}

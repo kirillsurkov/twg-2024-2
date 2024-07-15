@@ -25,11 +25,11 @@ impl HasEffect for Ability<Attack> {
 impl Effect for Attack {
     fn update(&mut self, delta: f32, myself: &Fighter, enemy: &Fighter) -> Vec<ModifierDesc> {
         let mut modifiers = vec![];
-        self.projectiles.retain_mut(|time| {
-            *time += delta;
-            if *time >= 0.5 {
+        self.projectiles.retain_mut(|timer| {
+            *timer += delta;
+            if *timer >= 0.5 {
                 modifiers.push(ModifierDesc {
-                    modifier: Modifier::AffectHP(-myself.attack * 6.0),
+                    modifier: Modifier::AffectHP(-myself.attack),
                     target: Target::Enemy,
                     value_kind: ValueKind::Units,
                 });

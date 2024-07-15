@@ -30,7 +30,7 @@ impl HasEffect for Card<DecreaseAttack> {
 impl Effect for DecreaseAttack {
     fn update(&mut self, delta: f32, myself: &Fighter, enemy: &Fighter) -> Vec<ModifierDesc> {
         vec![ModifierDesc {
-            modifier: Modifier::ChangeAttack(-self.decrease),
+            modifier: Modifier::AffectAttack(-self.decrease),
             target: Target::Enemy,
             value_kind: ValueKind::Units,
         }]

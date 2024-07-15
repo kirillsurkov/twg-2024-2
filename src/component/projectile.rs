@@ -1,4 +1,4 @@
-use bevy::{gltf::Gltf, prelude::*};
+use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 
 use crate::{battle_bridge::RoundCaptureResource, hero::HeroId, scene::landing::HeroWatch};
@@ -8,13 +8,13 @@ use super::LocalSchedule;
 #[derive(Component)]
 pub struct Projectile {
     origin: Entity,
-    target: Entity,
+    target: Option<Entity>,
     eta: f32,
     timer: f32,
 }
 
 impl Projectile {
-    pub fn new(origin: Entity, target: Entity, eta: f32) -> Self {
+    pub fn new(origin: Entity, target: Option<Entity>, eta: f32) -> Self {
         Self {
             origin,
             target,
@@ -24,11 +24,12 @@ impl Projectile {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct ProjectileConfig {
-    size: f32,
-    color: Color,
-    model: Option<Handle<Gltf>>,
+    pub offset: Vec3,
+    pub radius: f32,
+    pub color: Color,
+    pub model: Option<Handle<Scene>>,
 }
 
 pub struct ProjectilePlugin;
@@ -45,12 +46,15 @@ impl Plugin for ProjectilePlugin {
 fn init(
     mut commands: Commands,
     mut effects: ResMut<Assets<EffectAsset>>,
-    query: Query<Entity, Added<Projectile>>,
+    query: Query<(Entity, &ProjectileConfig), Added<Projectile>>,
 ) {
-    for entity in query.iter() {
+    for (entity, config) in query.iter() {
+        let color = (config.color * 10.0)
+            .with_a(config.color.a())
+            .rgba_to_vec4();
+
         let mut color_gradient = Gradient::new();
-        color_gradient.add_key(0.0, Vec4::new(10.0, 10.0, 0.0, 1.0));
-        color_gradient.add_key(0.5, Vec4::new(10.0, 0.0, 0.0, 1.0));
+        color_gradient.add_key(0.0, color);
         color_gradient.add_key(1.0, Vec4::ZERO);
 
         let mut size_gradient = Gradient::new();
@@ -64,7 +68,7 @@ fn init(
 
         let init_pos = SetPositionSphereModifier {
             center: writer.lit(Vec3::ZERO).expr(),
-            radius: writer.lit(0.1).expr(),
+            radius: writer.lit(config.radius).expr(),
             dimension: ShapeDimension::Volume,
         };
 
@@ -75,12 +79,13 @@ fn init(
             .uniform(writer.lit(Vec3::NEG_ONE))
             .cross(writer.prop(normal))
             .normalized();
-        let velocity = (writer.prop(normal) + tangent * writer.lit(0.5).uniform(writer.lit(1.5)))
+        let velocity = (writer.prop(normal) + tangent * writer.lit(0.0).uniform(writer.lit(0.5)))
             * writer.lit(1.0).uniform(writer.lit(2.0));
 
         let init_vel = SetAttributeModifier::new(Attribute::VELOCITY, velocity.expr());
 
         let effect = EffectAsset::new(vec![1024], Spawner::rate(1024.0.into()), writer.finish())
+            .with_simulation_condition(SimulationCondition::Always)
             .init(init_pos)
             .init(init_vel)
             .init(init_age)
@@ -99,13 +104,23 @@ fn init(
             .render(OrientModifier::new(OrientMode::AlongVelocity));
 
         commands.entity(entity).insert((
-            EffectSpawner::new(&effect),
+            EffectSpawner::new(&effect).with_active(false),
             ParticleEffectBundle {
                 effect: ParticleEffect::new(effects.add(effect)),
                 visibility: Visibility::Hidden,
                 ..Default::default()
             },
         ));
+
+        if let Some(model) = &config.model {
+            commands.entity(entity).with_children(|p| {
+                p.spawn((
+                    model.clone_weak(),
+                    TransformBundle::default(),
+                    VisibilityBundle::default(),
+                ));
+            });
+        }
     }
 }
 
@@ -113,7 +128,9 @@ fn update(
     mut commands: Commands,
     mut projectiles: Query<(
         Entity,
+        Option<&Children>,
         &HeroId,
+        &ProjectileConfig,
         &mut Projectile,
         &mut EffectProperties,
         &mut EffectSpawner,
@@ -124,34 +141,51 @@ fn update(
     time: Res<Time>,
     transforms: Query<&GlobalTransform>,
 ) {
-    let capture = capture.by_player(&watch.id).unwrap();
-    for (entity, id, mut projectile, mut properties, mut spawner, mut transform) in
-        projectiles.iter_mut()
+    for (
+        entity,
+        children,
+        id,
+        config,
+        mut projectile,
+        mut properties,
+        mut spawner,
+        mut transform,
+    ) in projectiles.iter_mut()
     {
-        if projectile.timer >= projectile.eta {
-            spawner.set_active(false);
-            if projectile.timer >= projectile.eta + 0.2 {
-                commands.entity(entity).despawn_recursive();
-                continue;
-            }
+        let round = capture.by_player(&id.0).unwrap();
+
+        spawner.set_active(projectile.timer < projectile.eta);
+        if let Some(children) = children {
+            commands.entity(children[0]).insert(if spawner.is_active() {
+                Visibility::Inherited
+            } else {
+                Visibility::Hidden
+            });
         }
 
-        if id.0 == capture.player1 || id.0 == capture.player2 {
+        if projectile.timer >= projectile.eta + 0.2 {
+            commands.entity(entity).despawn_recursive();
+            continue;
+        }
+
+        if round.player1 == watch.id || round.player2 == watch.id {
             commands.entity(entity).insert(Visibility::Inherited);
         } else {
             commands.entity(entity).insert(Visibility::Hidden);
         }
 
-        let origin =
-            transforms.get(projectile.origin).unwrap().translation() + Vec3::new(0.0, 2.0, 0.0);
-        let target =
-            transforms.get(projectile.target).unwrap().translation() + Vec3::new(0.0, 1.0, 0.0);
+        let Some(target) = projectile.target else {
+            continue;
+        };
+
+        let origin = transforms.get(projectile.origin).unwrap().translation() + config.offset;
+        let target = transforms.get(target).unwrap().translation() + Vec3::new(0.0, 1.0, 0.0);
 
         let dir = target - origin;
         let origin = origin + dir * (projectile.timer / projectile.eta);
 
         projectile.timer += time.delta_seconds();
         properties.set("normal", (dir.normalize()).into());
-        *transform = Transform::from_translation(origin);
+        *transform = Transform::from_translation(origin).looking_to(dir, Vec3::Y);
     }
 }

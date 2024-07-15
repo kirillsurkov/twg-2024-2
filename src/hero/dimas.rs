@@ -1,33 +1,46 @@
 use std::{
-    f32::consts::{FRAC_PI_2, FRAC_PI_3},
+    f32::consts::{FRAC_PI_2, FRAC_PI_3, TAU},
     time::Duration,
 };
 
 use bevy::{gltf::Gltf, prelude::*};
 
 use crate::{
+    battle::modifier::Modifier,
     component::{
         arena,
         complex_anim_player::{self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff},
         fight_state::FightState,
         model::Model,
+        projectile::{Projectile, ProjectileConfig},
     },
-    scene::avatars::{self, AvatarLocation},
+    scene::{
+        avatars::{self, AvatarLocation},
+        Root,
+    },
 };
 
-use super::LocalSchedule;
+use super::{HeroId, LocalSchedule};
 
 #[derive(Component)]
 pub struct Dimas;
 
 #[derive(Component)]
-struct Swiborg;
+struct State {
+    swiborg: Handle<Scene>,
+}
 
 #[derive(Component)]
-pub struct Ready;
+struct Swiborg(u32);
 
 #[derive(Component)]
-pub struct ModelReady;
+struct Ready;
+
+#[derive(Component)]
+struct ModelReady;
+
+#[derive(Component)]
+struct SwiborgRing;
 
 impl Plugin for Dimas {
     fn build(&self, app: &mut App) {
@@ -38,6 +51,7 @@ impl Plugin for Dimas {
                 filter_animations,
                 on_avatar,
                 on_arena.run_if(resource_exists::<FightState>),
+                swiborg_ring,
             ),
         );
     }
@@ -46,7 +60,6 @@ impl Plugin for Dimas {
 fn on_add(
     mut commands: Commands,
     model: Option<Res<Model<Dimas>>>,
-    swiborg: Option<Res<Model<Swiborg>>>,
     asset_server: Res<AssetServer>,
     assets_gltf: Res<Assets<Gltf>>,
     query: Query<Entity, (With<Dimas>, Without<Ready>)>,
@@ -72,22 +85,32 @@ fn on_add(
         }
     };
 
-    if swiborg.is_none() {
-        commands.insert_resource(Model::<Swiborg>::new(
-            asset_server.load("embedded://swiborg.glb"),
-        ));
-    }
-
     for entity in query_model.iter() {
         commands
             .entity(entity)
-            .insert(ModelReady)
+            .insert((
+                ModelReady,
+                State {
+                    swiborg: asset_server.load("embedded://swiborg.glb#Scene0"),
+                },
+                ProjectileConfig {
+                    offset: Vec3::new(0.0, 0.0, 0.0),
+                    color: Color::ORANGE,
+                    radius: 0.3,
+                    model: None,
+                },
+            ))
             .with_children(|p| {
                 p.spawn(SceneBundle {
                     scene: gltf.scenes[0].clone(),
                     transform: Transform::from_scale(Vec3::splat(1.0)),
                     ..Default::default()
                 });
+                p.spawn((
+                    SwiborgRing,
+                    TransformBundle::default(),
+                    VisibilityBundle::default(),
+                ));
             });
     }
 
@@ -142,8 +165,94 @@ fn on_avatar(mut query: Query<(&mut ComplexAnimPlayer, &mut avatars::HeroState),
     }
 }
 
-fn on_arena(mut query: Query<&mut Transform, (With<arena::HeroState>, With<Dimas>)>) {
-    for mut transform in query.iter_mut() {
+fn on_arena(
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Transform, &arena::HeroState, &State, &HeroId), With<Dimas>>,
+    rings: Query<(Entity, &Parent, Option<&Children>), With<SwiborgRing>>,
+    swiborgs: Query<&Swiborg>,
+    transforms: Query<&GlobalTransform>,
+    root: Query<Entity, With<Root>>,
+) {
+    let Ok(root) = root.get_single() else {
+        return;
+    };
+
+    for (entity, mut transform, arena_state, state, id) in query.iter_mut() {
         transform.rotation = Quat::from_rotation_y(-FRAC_PI_2);
+
+        let (ring, _, children) = rings.iter().find(|(_, p, _)| p.get() == entity).unwrap();
+
+        for modifier in &arena_state.modifiers {
+            match modifier {
+                Modifier::SpawnSwiborg(i) => {
+                    commands.entity(ring).with_children(|p| {
+                        p.spawn((
+                            Swiborg(*i),
+                            TransformBundle {
+                                local: Transform::from_translation(Vec3::new(0.0, 3.0, 0.0)),
+                                ..Default::default()
+                            },
+                            VisibilityBundle::default(),
+                        ))
+                        .with_children(|p| {
+                            p.spawn((
+                                id.clone(),
+                                Projectile::new(p.parent_entity(), None, 0.5),
+                                ProjectileConfig {
+                                    offset: Vec3::ZERO,
+                                    color: Color::LIME_GREEN,
+                                    radius: 0.25,
+                                    model: Some(state.swiborg.clone_weak()),
+                                },
+                            ));
+                        });
+                    });
+                }
+                Modifier::ShootSwiborg(i) => {
+                    let swiborg = children
+                        .unwrap()
+                        .iter()
+                        .find(|c| swiborgs.get(**c).unwrap().0 == *i)
+                        .unwrap();
+                    let offset = transforms.get(*swiborg).unwrap().translation();
+                    commands.entity(*swiborg).despawn_recursive();
+                    commands.entity(root).with_children(|p| {
+                        p.spawn((
+                            id.clone(),
+                            Projectile::new(root, Some(arena_state.enemy), 0.5),
+                            ProjectileConfig {
+                                offset,
+                                color: Color::LIME_GREEN,
+                                radius: 0.25,
+                                model: Some(state.swiborg.clone_weak()),
+                            },
+                        ));
+                    });
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+fn swiborg_ring(
+    mut transforms: Query<&mut Transform>,
+    query: Query<(Entity, &SwiborgRing, &Children)>,
+    time: Res<Time>,
+) {
+    for (entity, ring, children) in query.iter() {
+        let step = TAU / children.len() as f32;
+        for (i, child) in children.iter().enumerate() {
+            let ang = i as f32 * step;
+            let x = ang.cos() * 2.0;
+            let y = ang.sin() * 2.0;
+            let mut transform = transforms.get_mut(*child).unwrap();
+            let delta = Vec3::new(x, 3.0, y) - transform.translation;
+            transform.translation += delta * time.delta_seconds() * 5.0;
+        }
+        transforms
+            .get_mut(entity)
+            .unwrap()
+            .rotate_y(time.delta_seconds());
     }
 }
