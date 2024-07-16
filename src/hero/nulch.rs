@@ -107,6 +107,21 @@ fn filter_animations(
     mut query: Query<&Animations, With<Nulch>>,
     mut named: Query<(&Name, &mut Visibility)>,
 ) {
+    for anims in query.iter_mut() {
+        let current_anim = anims.current();
+
+        for (name, mut visibility) in named.iter_mut() {
+            match name.as_str() {
+                "teacup" => {
+                    *visibility = match current_anim.as_str() {
+                        "attack_track" => Visibility::Hidden,
+                        _ => Visibility::Inherited,
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
 }
 
 fn on_avatar(mut query: Query<(&mut ComplexAnimPlayer, &mut avatars::HeroState), With<Nulch>>) {
