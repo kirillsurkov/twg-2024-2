@@ -7,17 +7,21 @@ use crate::battle::{
 use super::Ability;
 
 #[derive(Debug)]
-pub struct Beam<const HEAL: bool, const VALUE: u32> {
+pub struct Beam<const HEAL: bool, const VALUE: u32, const REDUCE_MANA: bool = true> {
     beams: Vec<f32>,
 }
 
-impl<const HEAL: bool, const VALUE: u32> HasEffect for Ability<Beam<HEAL, VALUE>> {
+impl<const HEAL: bool, const VALUE: u32, const REDUCE_MANA: bool> HasEffect
+    for Ability<Beam<HEAL, VALUE, REDUCE_MANA>>
+{
     fn effect(&self) -> Box<dyn Effect> {
         Beam::<HEAL, VALUE> { beams: vec![] }.into()
     }
 }
 
-impl<const HEAL: bool, const VALUE: u32> Effect for Beam<HEAL, VALUE> {
+impl<const HEAL: bool, const VALUE: u32, const REDUCE_MANA: bool> Effect
+    for Beam<HEAL, VALUE, REDUCE_MANA>
+{
     fn update(&mut self, delta: f32, myself: &Fighter, enemy: &Fighter) -> Vec<ModifierDesc> {
         let mut modifiers = vec![];
 
@@ -37,22 +41,22 @@ impl<const HEAL: bool, const VALUE: u32> Effect for Beam<HEAL, VALUE> {
 
         if myself.mana >= 100.0 {
             self.beams.push(0.0);
-            modifiers.extend(vec![
-                ModifierDesc {
-                    modifier: if HEAL {
-                        Modifier::ShootHealBeam
-                    } else {
-                        Modifier::ShootDamageBeam
-                    },
-                    target: Target::Myself,
-                    value_kind: ValueKind::Units,
+            modifiers.push(ModifierDesc {
+                modifier: if HEAL {
+                    Modifier::ShootHealBeam
+                } else {
+                    Modifier::ShootDamageBeam
                 },
-                ModifierDesc {
+                target: Target::Myself,
+                value_kind: ValueKind::Units,
+            });
+            if REDUCE_MANA {
+                modifiers.push(ModifierDesc {
                     modifier: Modifier::AffectMana(-100.0),
                     target: Target::Myself,
                     value_kind: ValueKind::Units,
-                },
-            ]);
+                });
+            }
         }
 
         modifiers

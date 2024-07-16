@@ -31,6 +31,8 @@ pub fn nulch() -> Hero {
         abils: vec![
             Ability::<Attack>::new().into(),
             Ability::<RegenMana>::new().into(),
+            Ability::<Beam<true, 150, true>>::new().into(),
+            Ability::<Beam<false, 150, false>>::new().into(),
         ],
     }
 }
