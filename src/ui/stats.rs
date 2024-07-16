@@ -6,7 +6,7 @@ use super::{LocalSchedule, DCOLOR};
 
 pub struct StatsPlugin;
 
-const WIDTH: f32 = 200.0;
+pub const WIDTH: f32 = 200.0;
 
 impl Plugin for StatsPlugin {
     fn build(&self, app: &mut App) {

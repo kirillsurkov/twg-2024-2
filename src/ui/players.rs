@@ -13,9 +13,9 @@ use crate::{
 
 use super::{LocalSchedule, UiAssets, DCOLOR};
 
-pub struct PlayersPlugin;
-
 const HEIGHT: f32 = 50.0;
+
+pub struct PlayersPlugin;
 
 impl Plugin for PlayersPlugin {
     fn build(&self, app: &mut App) {
