@@ -34,7 +34,7 @@ impl Effect for StarWars {
             *timer += delta;
             if *timer >= 0.5 {
                 modifiers.push(ModifierDesc {
-                    modifier: Modifier::AffectHP(-50.0),
+                    modifier: Modifier::AffectHP(-60.0),
                     target: Target::Enemy,
                     value_kind: ValueKind::Units,
                 });
