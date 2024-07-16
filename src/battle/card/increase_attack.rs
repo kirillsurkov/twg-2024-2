@@ -4,11 +4,33 @@ use crate::battle::{
     modifier::{Modifier, ModifierDesc, Target, ValueKind},
 };
 
-use super::Card;
+use super::{Card, CardInfo};
 
 #[derive(Debug)]
 pub struct IncreaseAttack {
     increase: f32,
+}
+
+impl CardInfo for IncreaseAttack {
+    fn id() -> &'static str {
+        "increase_attack"
+    }
+
+    fn max_level() -> u8 {
+        5
+    }
+
+    fn name() -> &'static str {
+        "Increase attack"
+    }
+
+    fn desc() -> &'static str {
+        "Increases your attack by 5/10/15/20/30"
+    }
+
+    fn cost() -> u32 {
+        100
+    }
 }
 
 impl HasEffect for Card<IncreaseAttack> {
