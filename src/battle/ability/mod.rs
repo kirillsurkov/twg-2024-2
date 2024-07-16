@@ -32,3 +32,6 @@ pub use star_wars::StarWars;
 
 mod halve;
 pub use halve::Halve;
+
+pub mod fire_cube;
+pub use fire_cube::FireCube;

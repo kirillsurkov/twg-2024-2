@@ -4,7 +4,7 @@ use crate::battle::modifier::{Modifier, ModifierDesc, Target};
 
 use super::{effect::Effect, hero::Hero, player::Player};
 
-pub const DURATION: f32 = 10.0;
+pub const DURATION: f32 = 11.0;
 
 #[derive(Debug, Clone)]
 pub struct Fighter {
@@ -170,22 +170,24 @@ impl<'a> Fight<'a> {
                 };
                 match m.modifier {
                     Modifier::AffectAttack(val) => {
-                        target.attack += val;
+                        target.attack = (target.attack + val).max(0.0);
                     }
                     Modifier::AffectAttackSpeed(val) => {
-                        target.attack_speed += val;
+                        target.attack_speed = (target.attack_speed + val).max(0.0);
                     }
                     Modifier::AffectHP(val) => {
-                        target.hp += val;
+                        target.hp = (target.hp + val).max(0.0).min(target.max_hp);
                     }
                     Modifier::AffectMana(val) => {
-                        target.mana += val;
+                        target.mana = (target.mana + val).max(0.0).min(100.0);
                     }
                     // markers
                     Modifier::NormalAttack => {}
                     Modifier::SpawnSwiborg(_) => {}
                     Modifier::ShootSwiborg(_) => {}
                     Modifier::ShootDuck => {}
+                    Modifier::SpawnFireCube(_) => {}
+                    Modifier::ShootFireCube(_) => {}
                 }
             }
 

@@ -1,5 +1,5 @@
 use super::{
-    ability::{Ability, Attack, Halve, RegenMana, StarWars},
+    ability::{Ability, Attack, FireCube, Halve, RegenMana, StarWars},
     effect::HasEffect,
 };
 
@@ -49,6 +49,7 @@ pub fn rasp() -> Hero {
         abils: vec![
             Ability::<Attack>::new().into(),
             Ability::<RegenMana>::new().into(),
+            Ability::<FireCube>::new().into(),
         ],
     }
 }

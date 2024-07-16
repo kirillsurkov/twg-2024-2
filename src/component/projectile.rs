@@ -24,13 +24,29 @@ impl Projectile {
     }
 }
 
-#[derive(Component, Clone, Default)]
+#[derive(Component, Clone)]
 pub struct ProjectileConfig {
     pub transform: Transform,
     pub radius: f32,
     pub color: Color,
+    pub color_end: Color,
     pub model: Option<Handle<Scene>>,
     pub model_transform: Transform,
+    pub particles: u32,
+}
+
+impl Default for ProjectileConfig {
+    fn default() -> Self {
+        Self {
+            transform: Transform::default(),
+            radius: 0.0,
+            color: Color::default(),
+            color_end: Color::WHITE.with_a(0.0),
+            model: None,
+            model_transform: Transform::default(),
+            particles: 1024,
+        }
+    }
 }
 
 pub struct ProjectilePlugin;
@@ -50,17 +66,21 @@ fn init(
     query: Query<(Entity, &ProjectileConfig), Added<Projectile>>,
 ) {
     for (entity, config) in query.iter() {
-        let color = (config.color * 10.0)
+        let color_start = (config.color * 10.0)
             .with_a(config.color.a())
             .rgba_to_vec4();
 
+        let color_end = (config.color_end * 1.0)
+            .with_a(config.color_end.a())
+            .rgba_to_vec4();
+
         let mut color_gradient = Gradient::new();
-        color_gradient.add_key(0.0, color);
-        color_gradient.add_key(1.0, Vec4::new(1.0, 1.0, 1.0, 0.0));
+        color_gradient.add_key(0.0, color_start);
+        color_gradient.add_key(1.0, color_end);
 
         let mut size_gradient = Gradient::new();
-        size_gradient.add_key(0.0, Vec2::new(0.2, 0.1));
-        size_gradient.add_key(1.0, Vec2::new(0.2, 0.0));
+        size_gradient.add_key(0.0, Vec2::new(0.1, 0.1));
+        size_gradient.add_key(1.0, Vec2::new(0.0, 0.0));
 
         let writer = ExprWriter::new();
 
@@ -83,26 +103,31 @@ fn init(
         let velocity = (writer.prop(normal) + tangent * writer.lit(0.0).uniform(writer.lit(0.5)))
             * writer.lit(1.0).uniform(writer.lit(2.0));
 
-        let init_vel = SetAttributeModifier::new(Attribute::VELOCITY, velocity.expr());
+        let init_vel =
+            SetAttributeModifier::new(Attribute::VELOCITY, writer.lit(Vec3::ZERO).expr());
 
-        let effect = EffectAsset::new(vec![1024], Spawner::rate(1024.0.into()), writer.finish())
-            .with_simulation_condition(SimulationCondition::Always)
-            .init(init_pos)
-            .init(init_vel)
-            .init(init_age)
-            .init(init_lifetime)
-            .render(ColorOverLifetimeModifier {
-                gradient: color_gradient,
-            })
-            .render(OrientModifier {
-                mode: OrientMode::FaceCameraPosition,
-                rotation: None,
-            })
-            .render(SizeOverLifetimeModifier {
-                gradient: size_gradient,
-                screen_space_size: false,
-            })
-            .render(OrientModifier::new(OrientMode::AlongVelocity));
+        let effect = EffectAsset::new(
+            vec![config.particles * 2],
+            Spawner::rate(CpuValue::Single(config.particles as f32)),
+            writer.finish(),
+        )
+        .with_simulation_condition(SimulationCondition::Always)
+        .init(init_pos)
+        .init(init_vel)
+        .init(init_age)
+        .init(init_lifetime)
+        .render(ColorOverLifetimeModifier {
+            gradient: color_gradient,
+        })
+        .render(OrientModifier {
+            mode: OrientMode::FaceCameraPosition,
+            rotation: None,
+        })
+        .render(SizeOverLifetimeModifier {
+            gradient: size_gradient,
+            screen_space_size: false,
+        });
+        // .render(OrientModifier::new(OrientMode::AlongVelocity));
 
         commands.entity(entity).insert((
             EffectSpawner::new(&effect).with_active(false),

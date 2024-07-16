@@ -182,6 +182,7 @@ fn on_arena(
                                 model_transform: Transform::from_translation(Vec3::new(
                                     0.0, -1.25, 0.0,
                                 )),
+                                ..Default::default()
                             },
                         ));
                     });

@@ -34,13 +34,13 @@ struct State {
 struct Swiborg(u32);
 
 #[derive(Component)]
+struct SwiborgRing;
+
+#[derive(Component)]
 struct Ready;
 
 #[derive(Component)]
 struct ModelReady;
-
-#[derive(Component)]
-struct SwiborgRing;
 
 impl Plugin for Dimas {
     fn build(&self, app: &mut App) {

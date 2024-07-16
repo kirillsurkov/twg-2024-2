@@ -37,10 +37,10 @@ impl Plugin for ScenesPlugin {
 
         app.insert_state(GameState::Landing);
         app.insert_resource(HeroSelected {
-            id: "dimas".to_string(),
+            id: "rasp".to_string(),
         });
         app.insert_resource(HeroWatch {
-            id: "dimas".to_string(),
+            id: "rasp".to_string(),
         });
     }
 }
