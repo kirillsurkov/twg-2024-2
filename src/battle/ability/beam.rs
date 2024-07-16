@@ -7,17 +7,17 @@ use crate::battle::{
 use super::Ability;
 
 #[derive(Debug)]
-pub struct HealBeam {
+pub struct Beam<const HEAL: bool, const VALUE: u32> {
     beams: Vec<f32>,
 }
 
-impl HasEffect for Ability<HealBeam> {
+impl<const HEAL: bool, const VALUE: u32> HasEffect for Ability<Beam<HEAL, VALUE>> {
     fn effect(&self) -> Box<dyn Effect> {
-        HealBeam { beams: vec![] }.into()
+        Beam::<HEAL, VALUE> { beams: vec![] }.into()
     }
 }
 
-impl Effect for HealBeam {
+impl<const HEAL: bool, const VALUE: u32> Effect for Beam<HEAL, VALUE> {
     fn update(&mut self, delta: f32, myself: &Fighter, enemy: &Fighter) -> Vec<ModifierDesc> {
         let mut modifiers = vec![];
 
@@ -25,8 +25,8 @@ impl Effect for HealBeam {
             *timer += delta;
             if *timer >= 1.0 {
                 modifiers.push(ModifierDesc {
-                    modifier: Modifier::AffectHP(300.0),
-                    target: Target::Myself,
+                    modifier: Modifier::AffectHP(VALUE as f32 * if HEAL { 1.0 } else { -1.0 }),
+                    target: if HEAL { Target::Myself } else { Target::Enemy },
                     value_kind: ValueKind::Units,
                 });
                 false
@@ -39,7 +39,11 @@ impl Effect for HealBeam {
             self.beams.push(0.0);
             modifiers.extend(vec![
                 ModifierDesc {
-                    modifier: Modifier::ShootHealBeam,
+                    modifier: if HEAL {
+                        Modifier::ShootHealBeam
+                    } else {
+                        Modifier::ShootDamageBeam
+                    },
                     target: Target::Myself,
                     value_kind: ValueKind::Units,
                 },

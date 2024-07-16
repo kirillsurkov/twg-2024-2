@@ -3,7 +3,9 @@ use bevy::{
     prelude::*,
 };
 
-use super::LocalSchedule;
+use crate::{battle_bridge::RoundCaptureResource, hero::HeroId, scene::landing::HeroWatch};
+
+use super::{fight_state::FightState, LocalSchedule};
 
 #[derive(Component)]
 pub struct Beam {
@@ -38,7 +40,14 @@ pub struct BeamPlugin;
 
 impl Plugin for BeamPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(LocalSchedule, (setup, update));
+        app.add_systems(
+            LocalSchedule,
+            (
+                setup,
+                update,
+                filter.run_if(resource_exists::<RoundCaptureResource>),
+            ),
+        );
     }
 }
 
@@ -63,6 +72,7 @@ fn setup(
                     ..Default::default()
                 }),
                 transform: beam.transform,
+                visibility: Visibility::Hidden,
                 ..Default::default()
             },
             AudioBundle {
@@ -81,8 +91,6 @@ fn update(
     time: Res<Time>,
 ) {
     for (entity, mut beam, mut transform) in query.iter_mut() {
-        beam.timer += time.delta_seconds();
-
         if beam.timer >= beam.duration {
             beam.timer = beam.duration;
             commands.entity(entity).despawn_recursive();
@@ -90,7 +98,25 @@ fn update(
             beam.timer += time.delta_seconds();
         }
 
-        transform.scale.x = (beam.duration - beam.timer) / beam.duration;
-        transform.scale.z = (beam.duration - beam.timer) / beam.duration;
+        let factor = (beam.duration - beam.timer) / beam.duration;
+
+        transform.scale.x = factor;
+        transform.scale.z = factor;
+    }
+}
+
+fn filter(
+    mut commands: Commands,
+    capture: Res<RoundCaptureResource>,
+    watch: Res<HeroWatch>,
+    query: Query<(Entity, &HeroId), With<Beam>>,
+) {
+    for (entity, id) in query.iter() {
+        let round = capture.by_player(&id.0).unwrap();
+        if round.player1 == watch.id || round.player2 == watch.id {
+            commands.entity(entity).insert(Visibility::Inherited);
+        } else {
+            commands.entity(entity).insert(Visibility::Hidden);
+        }
     }
 }
