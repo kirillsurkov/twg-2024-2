@@ -35,3 +35,6 @@ pub use halve::Halve;
 
 pub mod fire_cube;
 pub use fire_cube::FireCube;
+
+pub mod heal_beam;
+pub use heal_beam::HealBeam;

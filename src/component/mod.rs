@@ -1,4 +1,5 @@
 use arena::ArenaPlugin;
+use beam::BeamPlugin;
 use bevy::{ecs::schedule::ScheduleLabel, prelude::*};
 use complex_anim_player::ComplexAnimPlayerPlugin;
 use fight_state::FightStatePlugin;
@@ -9,6 +10,7 @@ use projectile::ProjectilePlugin;
 use wheel::WheelPlugin;
 
 pub mod arena;
+pub mod beam;
 pub mod complex_anim_player;
 pub mod fight_state;
 pub mod game_timer;
@@ -29,6 +31,7 @@ impl Plugin for ComponentsPlugin {
             GameTimerPlugin,
             FightStatePlugin,
             ComplexAnimPlayerPlugin,
+            BeamPlugin,
             ProjectilePlugin,
             WheelPlugin,
             LandPlugin,

@@ -1,5 +1,5 @@
 use super::{
-    ability::{Ability, Attack, FireCube, Halve, RegenMana, StarWars},
+    ability::{Ability, Attack, FireCube, Halve, HealBeam, RegenMana, StarWars},
     effect::HasEffect,
 };
 
@@ -68,6 +68,7 @@ pub fn dtyan() -> Hero {
         abils: vec![
             Ability::<Attack>::new().into(),
             Ability::<RegenMana>::new().into(),
+            Ability::<HealBeam>::new().into(),
         ],
     }
 }

@@ -7,7 +7,6 @@ use bevy::{gltf::Gltf, prelude::*, utils::HashMap};
 
 use crate::{
     battle::{ability::fire_cube::CUBE_SIDE, modifier::Modifier},
-    battle_bridge::RoundCaptureResource,
     component::{
         arena,
         complex_anim_player::{self, Animations, ComplexAnimPart, ComplexAnimPlayer, Showoff},
@@ -188,16 +187,7 @@ fn on_avatar(mut query: Query<(&mut ComplexAnimPlayer, &mut avatars::HeroState),
 
 fn on_arena(
     mut commands: Commands,
-    mut query: Query<
-        (
-            Entity,
-            &mut Transform,
-            &arena::HeroState,
-            &mut State,
-            &HeroId,
-        ),
-        With<Rasp>,
-    >,
+    mut query: Query<(Entity, &arena::HeroState, &mut State, &HeroId), With<Rasp>>,
     cubes: Query<(Entity, &Parent), With<FireCube>>,
     transforms: Query<&GlobalTransform>,
     root: Query<Entity, With<Root>>,
@@ -214,7 +204,7 @@ fn on_arena(
         ..Default::default()
     };
 
-    for (entity, mut transform, arena_state, mut state, id) in query.iter_mut() {
+    for (entity, arena_state, mut state, id) in query.iter_mut() {
         let (cube, _) = cubes.iter().find(|(_, p)| p.get() == entity).unwrap();
 
         for modifier in &arena_state.modifiers {

@@ -5,7 +5,7 @@ use bevy::{
 
 use crate::{hero::HeroId, scene::landing::HeroSelected};
 
-use super::LocalSchedule;
+use super::{beam::Beam, LocalSchedule};
 
 pub struct LandPlugin;
 
@@ -45,11 +45,6 @@ impl Land {
     }
 }
 
-#[derive(Component)]
-struct Beam {
-    timer: f32,
-}
-
 fn added(
     mut commands: Commands,
     mut query: Query<(Entity, &Children), Added<Land>>,
@@ -77,36 +72,14 @@ fn added(
                 local: Transform::from_translation(Vec3::new(x, 0.0, y)),
                 ..Default::default()
             };
-            commands
-                .entity(child)
-                .insert((
-                    transform,
-                    HeroState,
-                    VisibilityBundle {
-                        visibility: Visibility::Hidden,
-                        ..Default::default()
-                    },
-                ))
-                .with_children(|p| {
-                    p.spawn((
-                        PbrBundle {
-                            mesh: meshes.add(Cylinder {
-                                half_height: 100.0,
-                                radius: 1.0,
-                            }),
-                            material: materials.add(StandardMaterial {
-                                base_color: Color::rgba(0.0, 4.0, 4.0, 0.1),
-                                alpha_mode: AlphaMode::Blend,
-                                unlit: true,
-                                ..Default::default()
-                            }),
-                            ..Default::default()
-                        },
-                        Beam { timer: 0.0 },
-                        NotShadowCaster,
-                        NotShadowReceiver,
-                    ));
-                });
+            commands.entity(child).insert((
+                transform,
+                HeroState,
+                VisibilityBundle {
+                    visibility: Visibility::Hidden,
+                    ..Default::default()
+                },
+            ));
         }
 
         commands
@@ -137,9 +110,6 @@ fn added(
 fn show(
     mut commands: Commands,
     mut query: Query<(&mut Land, &Children)>,
-    mut visibilities: Query<&mut Visibility>,
-    mut beams: Query<(Entity, &mut Beam, &mut Transform, &Parent)>,
-    asset_server: Res<AssetServer>,
     selected: Res<HeroSelected>,
     hero_ids: Query<&HeroId>,
     time: Res<Time>,
@@ -155,41 +125,19 @@ fn show(
 
         if land.timer >= 0.25 {
             if land.index < children.len() {
-                *visibilities.get_mut(children[land.index].0).unwrap() = Visibility::Visible;
+                commands
+                    .entity(children[land.index].0)
+                    .with_children(|p| {
+                        p.spawn(Beam::new(0.5));
+                    })
+                    .insert(Visibility::Inherited);
                 land.timer = 0.0;
                 land.index += 1;
-                commands.spawn(AudioBundle {
-                    source: asset_server.load("embedded://teleport.ogg"),
-                    ..Default::default()
-                });
             } else {
                 land.ready = true;
             }
         } else {
             land.timer += time.delta_seconds();
-        }
-
-        for (i, (child, _)) in children.into_iter().enumerate() {
-            if i >= land.index {
-                continue;
-            }
-
-            *visibilities.get_mut(child).unwrap() = Visibility::Visible;
-
-            let (entity, mut beam, mut transform, _) = beams
-                .iter_mut()
-                .find(|(_, _, _, p)| p.get() == child)
-                .unwrap();
-
-            if beam.timer >= 0.5 {
-                beam.timer = 0.5;
-                *visibilities.get_mut(entity).unwrap() = Visibility::Hidden;
-            } else {
-                beam.timer += time.delta_seconds();
-            }
-
-            transform.scale.x = (0.5 - beam.timer) * 2.0;
-            transform.scale.y = (0.5 - beam.timer) * 2.0;
         }
     }
 }

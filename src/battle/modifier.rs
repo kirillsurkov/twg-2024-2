@@ -11,6 +11,8 @@ pub enum Modifier {
     ShootDuck,
     SpawnFireCube(u32),
     ShootFireCube(u32),
+    ShootHealBeam,
+    ShootDamageBeam,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

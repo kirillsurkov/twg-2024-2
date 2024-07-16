@@ -188,6 +188,8 @@ impl<'a> Fight<'a> {
                     Modifier::ShootDuck => {}
                     Modifier::SpawnFireCube(_) => {}
                     Modifier::ShootFireCube(_) => {}
+                    Modifier::ShootDamageBeam => {}
+                    Modifier::ShootHealBeam => {}
                 }
             }
 
