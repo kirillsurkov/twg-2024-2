@@ -54,6 +54,10 @@ impl Fighter {
     fn prepare(&mut self) {
         self.procs = self.next_procs.clone();
         self.next_procs = Procs::default();
+        let hp_ratio = self.hp / self.max_hp;
+        self.max_hp = self.hero.hp;
+        self.hp = hp_ratio * self.max_hp;
+        self.mana_regen = self.hero.mana_regen;
         self.attack = self.hero.attack;
         self.attack_speed = self.hero.attack_speed;
         self.crit = self.hero.crit;
@@ -214,8 +218,13 @@ impl<'a> Fight<'a> {
                     }
                     Modifier::AffectMaxHP(val) => {
                         let ratio = target.hp / target.max_hp;
+                        println!("maxhp ratio: {ratio}");
+                        println!("maxhp val: {val}");
+                        println!("maxhp before: {}", target.max_hp);
                         target.max_hp += val;
+                        println!("maxhp after: {}", target.max_hp);
                         target.hp = target.max_hp * ratio;
+                        println!("hp after: {}", target.hp);
                     }
                     Modifier::AffectMana(val) => {
                         target.mana = (target.mana + val).max(0.0).min(100.0);
