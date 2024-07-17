@@ -73,7 +73,7 @@ fn init_header(mut commands: Commands, query: Query<Entity, Added<ScreenHeader>>
                 align_items: AlignItems::Center,
                 ..Default::default()
             },
-            background_color: DCOLOR,
+            // background_color: DCOLOR,
             ..Default::default()
         });
     }
