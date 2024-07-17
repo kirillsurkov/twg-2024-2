@@ -210,11 +210,13 @@ fn on_arena(
                     });
                 }
                 Modifier::ShootSwiborg(i) => {
-                    let swiborg = children
+                    let Some(swiborg) = children
                         .unwrap()
                         .iter()
                         .find(|c| swiborgs.get(**c).unwrap().0 == *i)
-                        .unwrap();
+                    else {
+                        continue;
+                    };
                     let offset = transforms.get(*swiborg).unwrap().translation();
                     commands.entity(*swiborg).despawn_recursive();
                     commands.entity(root).with_children(|p| {
