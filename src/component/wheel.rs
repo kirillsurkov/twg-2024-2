@@ -1,6 +1,8 @@
 use std::f32::consts::PI;
 
-use bevy::prelude::*;
+use bevy::{audio::Volume, prelude::*};
+
+use crate::MASTER_VOLUME;
 
 use super::LocalSchedule;
 
@@ -150,12 +152,14 @@ fn added(
 }
 
 fn scroll(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Wheel, &mut Transform, &Children)>,
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Wheel, &mut Transform, &Children)>,
     mut states: Query<&mut HeroState>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    asset_server: Res<AssetServer>,
     time: Res<Time>,
 ) {
-    for (mut wheel, mut transform, children) in query.iter_mut() {
+    for (entity, mut wheel, mut transform, children) in query.iter_mut() {
         wheel.changed = false;
 
         for child in children {
@@ -191,6 +195,16 @@ fn scroll(
                 .unwrap();
             state.changed = true;
             state.active = true;
+
+            commands.entity(entity).with_children(|p| {
+                p.spawn(AudioBundle {
+                    source: asset_server.load("embedded://scroll.ogg"),
+                    settings: PlaybackSettings {
+                        volume: Volume::new(MASTER_VOLUME),
+                        ..Default::default()
+                    },
+                });
+            });
         }
 
         let ang = -2.0 * PI * wheel.current as f32 / wheel.max as f32;

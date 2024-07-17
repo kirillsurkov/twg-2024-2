@@ -14,12 +14,7 @@ use crate::{
     },
     battle_bridge::HeroesResource,
     component::{
-        arena,
-        complex_anim_player::{self, ComplexAnimPlayer, SHOWOFF_IMMEDIATE, SHOWOFF_LAZY},
-        fight_state::FightState,
-        land,
-        projectile::{Projectile, ProjectileConfig},
-        wheel,
+        arena, complex_anim_player::{self, ComplexAnimPlayer, SHOWOFF_IMMEDIATE, SHOWOFF_LAZY}, fight_state::FightState, home, land, projectile::{Projectile, ProjectileConfig}, wheel
     },
     scene::Root,
 };
@@ -44,6 +39,7 @@ impl Plugin for HeroesPlugin {
                 init_heroes,
                 on_wheel,
                 on_land,
+                on_home,
                 (on_arena_animations, on_arena_projectiles).run_if(resource_exists::<FightState>),
             ),
         );
@@ -85,6 +81,12 @@ fn on_wheel(mut query: Query<(&mut ComplexAnimPlayer, &wheel::HeroState), With<H
 fn on_land(mut query: Query<&mut ComplexAnimPlayer, (With<land::HeroState>, With<HeroId>)>) {
     for mut anim_player in query.iter_mut() {
         anim_player.play(false, SHOWOFF_IMMEDIATE);
+    }
+}
+
+fn on_home(mut query: Query<&mut ComplexAnimPlayer, (With<home::HeroState>, With<HeroId>)>) {
+    for mut anim_player in query.iter_mut() {
+        anim_player.play(false, complex_anim_player::State::Idle);
     }
 }
 

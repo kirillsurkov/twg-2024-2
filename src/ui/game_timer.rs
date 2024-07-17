@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::component::game_timer::GameTimer;
 
-use super::{LocalSchedule, UiAssets};
+use super::LocalSchedule;
 
 pub struct GameTimerPlugin;
 
@@ -15,10 +15,7 @@ impl Plugin for GameTimerPlugin {
 #[derive(Component)]
 pub struct GameTimerRoot;
 
-fn init_root(
-    mut commands: Commands,
-    query: Query<Entity, Added<GameTimerRoot>>,
-) {
+fn init_root(mut commands: Commands, query: Query<Entity, Added<GameTimerRoot>>) {
     for entity in query.iter() {
         commands
             .entity(entity)
@@ -28,6 +25,7 @@ fn init_root(
                     flex_direction: FlexDirection::Row,
                     width: Val::Px(100.0),
                     height: Val::Percent(100.0),
+                    margin: UiRect::left(Val::Auto),
                     justify_content: JustifyContent::Center,
                     ..Default::default()
                 },

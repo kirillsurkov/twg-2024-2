@@ -1,12 +1,13 @@
 use std::f32::consts::TAU;
 
-use bevy::prelude::*;
+use bevy::{audio::Volume, prelude::*};
 
 use crate::{
     battle::card::{CardBranch, CardOps},
     battle_bridge::{branch_to_color, BattleResource},
     component::game_timer::GameTimer,
-    scene::landing::HeroSelected,
+    scene::{landing::HeroSelected, Root},
+    BUTTON_VOLUME,
 };
 
 use super::{stats, ClickState, LocalSchedule, UiAssets, DCOLOR};
@@ -138,7 +139,7 @@ fn update_cards_holder(
                                         margin: UiRect::horizontal(Val::Auto),
                                         ..Default::default()
                                     },
-                                    background_color: Color::BLACK.with_a(0.3).into(),
+                                    background_color: Color::BLACK.with_a(0.7).into(),
                                     ..Default::default()
                                 });
                                 p.spawn(NodeBundle {
@@ -183,12 +184,13 @@ fn init_card_holder(mut commands: Commands, query: Query<Entity, Added<CardHolde
                 },
                 ..Default::default()
             },
-            ClickState(false),
+            ClickState::None,
         ));
     }
 }
 
 fn update_card_holder(
+    mut commands: Commands,
     mut battle: ResMut<BattleResource>,
     mut query: Query<(
         &mut BackgroundColor,
@@ -196,12 +198,18 @@ fn update_card_holder(
         &CardHolder,
         &Interaction,
     )>,
+    root: Query<Entity, With<Root>>,
+    asset_server: Res<AssetServer>,
     selected: Res<HeroSelected>,
 ) {
-    let base = Color::BLACK.with_a(0.5);
-    let hover = (Color::WHITE * 0.2).with_a(0.5);
-    let clicked = Color::BLACK.with_a(0.7);
-    let hover_clicked = (Color::WHITE * 0.1).with_a(0.7);
+    let Ok(root) = root.get_single() else {
+        return;
+    };
+
+    let base = Color::BLACK.with_a(0.8);
+    let hover = (Color::WHITE * 0.2).with_a(0.8);
+    let clicked = Color::BLACK.with_a(0.9);
+    let hover_clicked = (Color::WHITE * 0.1).with_a(0.9);
 
     for (mut color, mut click_state, CardHolder(index), act) in query.iter_mut() {
         let player = battle
@@ -215,6 +223,7 @@ fn update_card_holder(
         };
         *color = BackgroundColor(match act {
             Interaction::None => {
+                *click_state = ClickState::None;
                 if *active {
                     base
                 } else {
@@ -222,7 +231,21 @@ fn update_card_holder(
                 }
             }
             Interaction::Hovered => {
-                click_state.0 = false;
+                let just_hovered = *click_state != ClickState::Hovered;
+                *click_state = ClickState::Hovered;
+
+                if just_hovered {
+                    commands.entity(root).with_children(|p| {
+                        p.spawn(AudioBundle {
+                            source: asset_server.load("embedded://button1.ogg"),
+                            settings: PlaybackSettings {
+                                volume: Volume::new(BUTTON_VOLUME),
+                                ..Default::default()
+                            },
+                        });
+                    });
+                }
+
                 if *active {
                     hover
                 } else {
@@ -230,8 +253,21 @@ fn update_card_holder(
                 }
             }
             Interaction::Pressed => {
-                let just_pressed = !click_state.0;
-                click_state.0 = true;
+                let just_pressed = *click_state != ClickState::Pressed;
+                *click_state = ClickState::Pressed;
+
+                if just_pressed {
+                    commands.entity(root).with_children(|p| {
+                        p.spawn(AudioBundle {
+                            source: asset_server.load("embedded://button2.ogg"),
+                            settings: PlaybackSettings {
+                                volume: Volume::new(BUTTON_VOLUME),
+                                ..Default::default()
+                            },
+                        });
+                    });
+                }
+
                 if *active && just_pressed {
                     battle.buy_card(&selected.id, *index);
                 }
@@ -596,7 +632,7 @@ fn init_cards_control(
                     background_color: DCOLOR,
                     ..Default::default()
                 },
-                ClickState(false),
+                ClickState::None,
             ))
             .with_children(|p| {
                 p.spawn(TextBundle::from_section(
@@ -612,6 +648,7 @@ fn init_cards_control(
 }
 
 fn update_cards_control(
+    mut commands: Commands,
     mut battle: ResMut<BattleResource>,
     mut game_timer: ResMut<GameTimer>,
     mut query: Query<(
@@ -620,8 +657,14 @@ fn update_cards_control(
         &mut ClickState,
         &mut BackgroundColor,
     )>,
+    root: Query<Entity, With<Root>>,
+    asset_server: Res<AssetServer>,
     selected: Res<HeroSelected>,
 ) {
+    let Ok(root) = root.get_single() else {
+        return;
+    };
+
     let base = Color::BLACK.with_a(0.5);
     let hover = (Color::WHITE * 0.2).with_a(0.5);
     let clicked = Color::BLACK.with_a(0.7);
@@ -630,6 +673,7 @@ fn update_cards_control(
     for (kind, act, mut click_state, mut color) in query.iter_mut() {
         match act {
             Interaction::None => {
+                *click_state = ClickState::None;
                 *color = match kind {
                     CardsControlKind::Lock => {
                         if battle.is_cards_locked() {
@@ -649,7 +693,20 @@ fn update_cards_control(
                 }
             }
             Interaction::Hovered => {
-                click_state.0 = false;
+                let just_hovered = *click_state != ClickState::Hovered;
+                *click_state = ClickState::Hovered;
+
+                if just_hovered {
+                    commands.entity(root).with_children(|p| {
+                        p.spawn(AudioBundle {
+                            source: asset_server.load("embedded://button1.ogg"),
+                            settings: PlaybackSettings {
+                                volume: Volume::new(BUTTON_VOLUME),
+                                ..Default::default()
+                            },
+                        });
+                    });
+                }
 
                 *color = match kind {
                     CardsControlKind::Lock => {
@@ -672,12 +729,22 @@ fn update_cards_control(
             Interaction::Pressed => {
                 *color = clicked.into();
 
-                let just_pressed = !click_state.0;
-                click_state.0 = true;
+                let just_pressed = *click_state != ClickState::Pressed;
+                *click_state = ClickState::Pressed;
 
                 if !just_pressed {
                     return;
                 }
+
+                commands.entity(root).with_children(|p| {
+                    p.spawn(AudioBundle {
+                        source: asset_server.load("embedded://button2.ogg"),
+                        settings: PlaybackSettings {
+                            volume: Volume::new(BUTTON_VOLUME),
+                            ..Default::default()
+                        },
+                    });
+                });
 
                 let player = battle
                     .players

@@ -38,6 +38,7 @@ fn init(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(Entity, &mut Arena, &Children), Added<Arena>>,
+    asset_server: Res<AssetServer>,
     capture: Res<RoundCaptureResource>,
     hero_ids: Query<&HeroId>,
     with_parent: Query<&Parent>,
@@ -123,14 +124,7 @@ fn init(
                 VisibilityBundle::default(),
             ))
             .with_children(|p| {
-                p.spawn(PbrBundle {
-                    mesh: meshes.add(Plane3d {
-                        normal: Direction3d::Y,
-                    }),
-                    material: materials.add(StandardMaterial::default()),
-                    transform: Transform::from_scale(Vec3::splat(10000.0)),
-                    ..Default::default()
-                });
+                p.spawn(asset_server.load::<Scene>("embedded://arena.glb#Scene0"));
             });
     }
 }

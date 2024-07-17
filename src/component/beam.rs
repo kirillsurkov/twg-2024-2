@@ -1,11 +1,12 @@
 use bevy::{
+    audio::{PlaybackMode, Volume},
     pbr::{NotShadowCaster, NotShadowReceiver},
     prelude::*,
 };
 
 use crate::{
     battle::RoundCapture, battle_bridge::RoundCaptureResource, hero::HeroId,
-    scene::landing::HeroWatch,
+    scene::landing::HeroWatch, MASTER_VOLUME,
 };
 
 use super::{fight_state::FightState, LocalSchedule};
@@ -48,7 +49,7 @@ impl Plugin for BeamPlugin {
             (
                 setup,
                 update,
-                filter.run_if(resource_exists::<RoundCaptureResource>),
+                filter.run_if(resource_exists::<HeroWatch>),
             ),
         );
     }
@@ -80,7 +81,11 @@ fn setup(
             },
             AudioBundle {
                 source: asset_server.load("embedded://teleport.ogg"),
-                ..Default::default()
+                settings: PlaybackSettings {
+                    // mode: PlaybackMode::Despawn,
+                    volume: Volume::new(MASTER_VOLUME),
+                    ..Default::default()
+                },
             },
             NotShadowCaster,
             NotShadowReceiver,
@@ -110,17 +115,19 @@ fn update(
 
 fn filter(
     mut commands: Commands,
-    capture: Res<RoundCaptureResource>,
+    capture: Option<Res<RoundCaptureResource>>,
     watch: Res<HeroWatch>,
     query: Query<(Entity, &HeroId), With<Beam>>,
 ) {
     for (entity, id) in query.iter() {
-        let round = capture.by_player(&id.0).unwrap();
-        let show = match round {
-            RoundCapture::Fight {
-                player1, player2, ..
-            } => *player1 == watch.id || *player2 == watch.id,
-            RoundCapture::Skip(player) => *player == watch.id,
+        let show = match capture {
+            Some(ref capture) => match capture.by_player(&id.0).unwrap() {
+                RoundCapture::Fight {
+                    player1, player2, ..
+                } => *player1 == watch.id || *player2 == watch.id,
+                RoundCapture::Skip(player) => *player == watch.id,
+            },
+            None => true,
         };
         if show {
             commands.entity(entity).insert(Visibility::Inherited);

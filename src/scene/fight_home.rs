@@ -54,11 +54,11 @@ fn init(
             directional_light: DirectionalLight {
                 color: Color::rgb(0.98, 0.95, 0.82),
                 shadows_enabled: true,
-                illuminance: 1000.0,
+                illuminance: 2000.0,
                 ..Default::default()
             },
             transform: Transform::from_xyz(0.0, 0.0, 0.0)
-                .looking_at(Vec3::new(0.15, -0.15, -0.25), Vec3::Y),
+                .looking_at(Vec3::new(0.05, -0.15, -0.25), Vec3::Y),
             ..Default::default()
         });
 
@@ -74,7 +74,7 @@ fn init(
 
     commands.insert_resource(State {});
 
-    game_timer.restart(10.0, false);
+    game_timer.restart(60.0, false);
 
     Ok(())
 }
@@ -86,17 +86,23 @@ fn update(
     mut game_timer: ResMut<GameTimer>,
     selected: Res<HeroSelected>,
 ) {
-    if game_timer.fired {
-        if game_timer.red {
-            game_timer.restart(99999.0, false);
+    let mut players = battle.players.clone();
+    players.retain(|p| p.hp > 0);
+    if players.len() == 1 {
+        next_state.set(GameState::GameEnded)
+    } else {
+        if game_timer.fired {
+            if game_timer.red {
+                game_timer.restart(99999.0, false);
 
-            commands.insert_resource(RoundCaptureResource(battle.round()));
-            commands.insert_resource(HeroWatch {
-                id: selected.id.clone(),
-            });
-            next_state.set(GameState::FightArena);
-        } else {
-            game_timer.restart(3.0, true);
+                commands.insert_resource(RoundCaptureResource(battle.round()));
+                commands.insert_resource(HeroWatch {
+                    id: selected.id.clone(),
+                });
+                next_state.set(GameState::FightArena);
+            } else {
+                game_timer.restart(3.0, true);
+            }
         }
     }
 }

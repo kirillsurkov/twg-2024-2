@@ -3,7 +3,11 @@ use std::{
     time::Duration,
 };
 
-use bevy::{gltf::Gltf, prelude::*};
+use bevy::{
+    audio::{PlaybackMode, Volume},
+    gltf::Gltf,
+    prelude::*,
+};
 
 use crate::{
     battle::modifier::Modifier,
@@ -18,6 +22,7 @@ use crate::{
         avatars::{self, AvatarLocation},
         Root,
     },
+    MASTER_VOLUME,
 };
 
 use super::{HeroId, LocalSchedule};
@@ -155,7 +160,17 @@ fn on_avatar(mut query: Query<(&mut ComplexAnimPlayer, &mut avatars::HeroState),
 
 fn on_arena(
     mut commands: Commands,
-    query: Query<(Entity, &arena::HeroState, &State, &HeroId), With<Duck>>,
+    asset_server: Res<AssetServer>,
+    query: Query<
+        (
+            Entity,
+            &arena::HeroState,
+            &State,
+            &HeroId,
+            &InheritedVisibility,
+        ),
+        With<Duck>,
+    >,
     transforms: Query<&GlobalTransform>,
     root: Query<Entity, With<Root>>,
 ) {
@@ -163,10 +178,36 @@ fn on_arena(
         return;
     };
 
-    for (entity, arena_state, state, id) in query.iter() {
+    for (entity, arena_state, state, id, visibility) in query.iter() {
         for modifier in &arena_state.modifiers {
             match modifier {
+                Modifier::NormalAttack => {
+                    if visibility.get() {
+                        commands.entity(entity).with_children(|p| {
+                            p.spawn(AudioBundle {
+                                source: asset_server.load("embedded://shoot3.ogg"),
+                                settings: PlaybackSettings {
+                                    // mode: PlaybackMode::Despawn,
+                                    volume: Volume::new(MASTER_VOLUME),
+                                    ..Default::default()
+                                },
+                            });
+                        });
+                    }
+                }
                 Modifier::ShootDuck => {
+                    if visibility.get() {
+                        commands.entity(entity).with_children(|p| {
+                            p.spawn(AudioBundle {
+                                source: asset_server.load("embedded://duck.ogg"),
+                                settings: PlaybackSettings {
+                                    // mode: PlaybackMode::Despawn,
+                                    volume: Volume::new(MASTER_VOLUME),
+                                    ..Default::default()
+                                },
+                            });
+                        });
+                    }
                     let offset = transforms.get(entity).unwrap().translation();
                     commands.entity(root).with_children(|p| {
                         p.spawn((

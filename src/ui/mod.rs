@@ -52,11 +52,15 @@ struct UiAssets {
     font_comic: Handle<Font>,
 }
 
-#[derive(Component)]
-struct ClickState(pub bool);
+#[derive(Component, PartialEq)]
+enum ClickState {
+    None,
+    Hovered,
+    Pressed,
+}
 
 fn init(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(UiAssets {
-        font_comic: asset_server.load("comic.ttf"),
+        font_comic: asset_server.load("embedded://comic.ttf"),
     });
 }

@@ -29,8 +29,12 @@ impl Plugin for AvatarsPlugin {
                 init,
                 move_to_layer,
                 update_thumbnails,
-                update_home.run_if(not(resource_exists::<RoundCaptureResource>)),
-                update_fight.run_if(resource_exists::<RoundCaptureResource>),
+                update_home
+                    .run_if(resource_exists::<HeroWatch>)
+                    .run_if(not(resource_exists::<RoundCaptureResource>)),
+                update_fight
+                    .run_if(resource_exists::<HeroWatch>)
+                    .run_if(resource_exists::<RoundCaptureResource>),
             ),
         );
     }

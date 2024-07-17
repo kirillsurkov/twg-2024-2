@@ -23,7 +23,7 @@ pub fn nulch() -> Hero {
     Hero {
         id: "nulch",
         name: "Нульч",
-        desc: "Организатор конкурса",
+        desc: "Организатор конкурса.\nУникальная способность - лазерные удары с двух далёких космических спутников.",
         branches: vec![CardBranch::Regen, CardBranch::Mana],
         hp: 1100.0,
         mana_regen: 10.0,
@@ -44,7 +44,7 @@ pub fn rasp() -> Hero {
     Hero {
         id: "rasp",
         name: "Расп",
-        desc: "Это твоя мамка, анон",
+        desc: "Это твоя мамка, анон.\nУникальная способность - огненный куб.",
         branches: vec![CardBranch::Attack, CardBranch::Mana],
         hp: 1200.0,
         mana_regen: 10.0,
@@ -64,7 +64,7 @@ pub fn dtyan() -> Hero {
     Hero {
         id: "dtyan",
         name: "Деревотян",
-        desc: "Вырасти дерево, если сможешь!",
+        desc: "Вырасти дерево, если сможешь!\nУникальная способность - лечащий луч.",
         branches: vec![CardBranch::Regen, CardBranch::Evasion],
         hp: 1400.0,
         mana_regen: 10.0,
@@ -84,7 +84,7 @@ pub fn dimas() -> Hero {
     Hero {
         id: "dimas",
         name: "Димасик",
-        desc: "Организатор предыдущего конкурса",
+        desc: "Организатор предыдущего конкурса.\nУникальная способность - STAR WARS.",
         branches: vec![CardBranch::Attack, CardBranch::Crit],
         hp: 1350.0,
         mana_regen: 11.0,
@@ -104,7 +104,7 @@ pub fn duck() -> Hero {
     Hero {
         id: "duck",
         name: "Утка",
-        desc: "Умеет делиться пополам",
+        desc: "Умеет делиться пополам.\nУникальная способность - HALVE.",
         branches: vec![CardBranch::Hp, CardBranch::Regen],
         hp: 1200.0,
         mana_regen: 10.0,
@@ -124,7 +124,7 @@ pub fn kisanya() -> Hero {
     Hero {
         id: "kisanya",
         name: "Кисаня",
-        desc: "Обязательно пройдёт твою игру на стриме",
+        desc: "Обязательно пройдёт твою игру на стриме.\nУникальная способность - небесный лазер.",
         branches: vec![CardBranch::Crit, CardBranch::Evasion],
         hp: 1100.0,
         mana_regen: 9.0,

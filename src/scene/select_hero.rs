@@ -78,112 +78,94 @@ fn init(
 
     let font: Handle<Font> = asset_server.load("embedded://comic.ttf");
 
-    // commands
-    //     .spawn((
-    //         UiRoot,
-    //         NodeBundle {
-    //             style: Style {
-    //                 width: Val::Vw(100.0),
-    //                 height: Val::Vh(100.0),
-    //                 display: Display::Flex,
-    //                 align_items: AlignItems::FlexStart,
-    //                 ..Default::default()
-    //             },
-    //             ..Default::default()
-    //         },
-    //     ))
-    //     .with_children(|p| {
-    //         p.spawn(MaterialNodeBundle {
-    //             material: ui_materials.add(SuperellipseUiMaterial {
-    //                 background_color: Color::BLACK,
-    //                 border_radius: Vec4::splat(25.0),
-    //                 border_color: Color::WHITE,
-    //                 border_thickness: 2.0,
-    //                 ..Default::default()
-    //             }),
-    //             style: Style {
-    //                 margin: UiRect::all(Val::Percent(5.0)),
-    //                 padding: UiRect::all(Val::Px(25.0)),
-    //                 width: Val::Percent(20.0),
-    //                 align_self: AlignSelf::Center,
-    //                 ..Default::default()
-    //             },
-    //             ..Default::default()
-    //         })
-    //         .with_children(|p| {
-    //             p.spawn((
-    //                 DescNode,
-    //                 TextBundle::from_section(
-    //                     "",
-    //                     TextStyle {
-    //                         font: font.clone(),
-    //                         font_size: 25.0,
-    //                         ..Default::default()
-    //                     },
-    //                 ),
-    //             ));
-    //         });
-    //         p.spawn(MaterialNodeBundle {
-    //             material: ui_materials.add(SuperellipseUiMaterial {
-    //                 background_color: Color::BLACK,
-    //                 border_radius: Vec4::splat(25.0),
-    //                 border_color: Color::WHITE,
-    //                 border_thickness: 2.0,
-    //                 ..Default::default()
-    //             }),
-    //             style: Style {
-    //                 margin: UiRect::axes(Val::Percent(10.0), Val::Px(50.0)),
-    //                 padding: UiRect::all(Val::Px(25.0)),
-    //                 width: Val::Percent(30.0),
-    //                 justify_content: JustifyContent::Center,
-    //                 ..Default::default()
-    //             },
-    //             ..Default::default()
-    //         })
-    //         .with_children(|p| {
-    //             p.spawn((
-    //                 NameNode,
-    //                 TextBundle::from_section(
-    //                     "",
-    //                     TextStyle {
-    //                         font: font.clone(),
-    //                         font_size: 50.0,
-    //                         ..Default::default()
-    //                     },
-    //                 ),
-    //             ));
-    //         });
-    //         p.spawn(MaterialNodeBundle {
-    //             material: ui_materials.add(SuperellipseUiMaterial {
-    //                 background_color: Color::BLACK,
-    //                 border_radius: Vec4::splat(25.0),
-    //                 border_color: Color::WHITE,
-    //                 border_thickness: 2.0,
-    //                 ..Default::default()
-    //             }),
-    //             style: Style {
-    //                 margin: UiRect::all(Val::Percent(5.0)),
-    //                 padding: UiRect::all(Val::Px(25.0)),
-    //                 width: Val::Percent(20.0),
-    //                 align_self: AlignSelf::Center,
-    //                 ..Default::default()
-    //             },
-    //             ..Default::default()
-    //         })
-    //         .with_children(|p| {
-    //             p.spawn((
-    //                 StatsNode,
-    //                 TextBundle::from_section(
-    //                     "",
-    //                     TextStyle {
-    //                         font: font.clone(),
-    //                         font_size: 25.0,
-    //                         ..Default::default()
-    //                     },
-    //                 ),
-    //             ));
-    //         });
-    //     });
+    commands
+        .spawn((
+            UiRoot,
+            NodeBundle {
+                style: Style {
+                    width: Val::Vw(100.0),
+                    height: Val::Vh(100.0),
+                    display: Display::Flex,
+                    align_items: AlignItems::FlexStart,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+        ))
+        .with_children(|p| {
+            p.spawn(NodeBundle {
+                style: Style {
+                    margin: UiRect::all(Val::Percent(5.0)),
+                    padding: UiRect::all(Val::Px(25.0)),
+                    width: Val::Percent(20.0),
+                    align_self: AlignSelf::Center,
+                    ..Default::default()
+                },
+                background_color: Color::BLACK.into(),
+                ..Default::default()
+            })
+            .with_children(|p| {
+                p.spawn((
+                    DescNode,
+                    TextBundle::from_section(
+                        "",
+                        TextStyle {
+                            font: font.clone(),
+                            font_size: 25.0,
+                            ..Default::default()
+                        },
+                    ),
+                ));
+            });
+            p.spawn(NodeBundle {
+                style: Style {
+                    margin: UiRect::axes(Val::Percent(10.0), Val::Px(50.0)),
+                    padding: UiRect::all(Val::Px(25.0)),
+                    width: Val::Percent(30.0),
+                    justify_content: JustifyContent::Center,
+                    ..Default::default()
+                },
+                background_color: Color::BLACK.into(),
+                ..Default::default()
+            })
+            .with_children(|p| {
+                p.spawn((
+                    NameNode,
+                    TextBundle::from_section(
+                        "",
+                        TextStyle {
+                            font: font.clone(),
+                            font_size: 50.0,
+                            ..Default::default()
+                        },
+                    ),
+                ));
+            });
+            p.spawn(NodeBundle {
+                style: Style {
+                    margin: UiRect::all(Val::Percent(5.0)),
+                    padding: UiRect::all(Val::Px(25.0)),
+                    width: Val::Percent(20.0),
+                    align_self: AlignSelf::Center,
+                    ..Default::default()
+                },
+                background_color: Color::BLACK.into(),
+                ..Default::default()
+            })
+            .with_children(|p| {
+                p.spawn((
+                    StatsNode,
+                    TextBundle::from_section(
+                        "",
+                        TextStyle {
+                            font: font.clone(),
+                            font_size: 25.0,
+                            ..Default::default()
+                        },
+                    ),
+                ));
+            });
+        });
     Ok(())
 }
 

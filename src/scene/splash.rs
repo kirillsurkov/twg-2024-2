@@ -82,6 +82,7 @@ fn init(
 fn update(mut next_state: ResMut<NextState<GameState>>, mut state: ResMut<State>, time: Res<Time>) {
     state.timer += time.delta_seconds();
     if state.timer >= 2.0 {
+        state.timer = 0.0;
         next_state.set(GameState::SelectHero);
     }
 }

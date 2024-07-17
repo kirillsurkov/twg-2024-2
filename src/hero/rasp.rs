@@ -3,7 +3,12 @@ use std::{
     time::Duration,
 };
 
-use bevy::{gltf::Gltf, prelude::*, utils::HashMap};
+use bevy::{
+    audio::{PlaybackMode, Volume},
+    gltf::Gltf,
+    prelude::*,
+    utils::HashMap,
+};
 
 use crate::{
     battle::{ability::fire_cube::CUBE_SIDE, modifier::Modifier},
@@ -18,6 +23,7 @@ use crate::{
         avatars::{self, AvatarLocation},
         Root,
     },
+    MASTER_VOLUME,
 };
 
 use super::{HeroId, LocalSchedule};
@@ -187,7 +193,17 @@ fn on_avatar(mut query: Query<(&mut ComplexAnimPlayer, &mut avatars::HeroState),
 
 fn on_arena(
     mut commands: Commands,
-    mut query: Query<(Entity, &arena::HeroState, &mut State, &HeroId), With<Rasp>>,
+    mut query: Query<
+        (
+            Entity,
+            &arena::HeroState,
+            &mut State,
+            &HeroId,
+            &InheritedVisibility,
+        ),
+        With<Rasp>,
+    >,
+    asset_server: Res<AssetServer>,
     cubes: Query<(Entity, &Parent), With<FireCube>>,
     transforms: Query<&GlobalTransform>,
     root: Query<Entity, With<Root>>,
@@ -204,11 +220,25 @@ fn on_arena(
         ..Default::default()
     };
 
-    for (entity, arena_state, mut state, id) in query.iter_mut() {
+    for (entity, arena_state, mut state, id, visibility) in query.iter_mut() {
         let (cube, _) = cubes.iter().find(|(_, p)| p.get() == entity).unwrap();
 
         for modifier in &arena_state.modifiers {
             match modifier {
+                Modifier::NormalAttack => {
+                    if visibility.get() {
+                        commands.entity(entity).with_children(|p| {
+                            p.spawn(AudioBundle {
+                                source: asset_server.load("embedded://shoot6.ogg"),
+                                settings: PlaybackSettings {
+                                    // mode: PlaybackMode::Despawn,
+                                    volume: Volume::new(MASTER_VOLUME),
+                                    ..Default::default()
+                                },
+                            });
+                        });
+                    }
+                }
                 Modifier::SpawnFireCube(i) => {
                     commands.entity(cube).with_children(|p| {
                         let id = p
@@ -232,6 +262,19 @@ fn on_arena(
                     });
                 }
                 Modifier::ShootFireCube(i) => {
+                    if visibility.get() {
+                        commands.entity(entity).with_children(|p| {
+                            p.spawn(AudioBundle {
+                                source: asset_server.load("embedded://ulti1.ogg"),
+                                settings: PlaybackSettings {
+                                    // mode: PlaybackMode::Despawn,
+                                    volume: Volume::new(MASTER_VOLUME),
+                                    ..Default::default()
+                                },
+                            });
+                        });
+                    }
+
                     let Some(fire) = state.fires.remove(i) else {
                         continue;
                     };

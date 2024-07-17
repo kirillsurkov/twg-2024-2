@@ -107,6 +107,7 @@ pub struct Battle {
     next_players: Vec<Player>,
     cards_pool: CardsPool,
     cards_locked: bool,
+    pub round: u32,
 }
 
 #[derive(Debug)]
@@ -162,6 +163,7 @@ impl Battle {
             next_players: vec![],
             cards_pool,
             cards_locked: false,
+            round: 1,
         }
     }
 
@@ -216,6 +218,7 @@ impl Battle {
             })
             .collect();
         self.next_players.clear();
+        self.round += 1;
     }
 
     fn reroll_free(cards_pool: &mut CardsPool, player: &mut Player) {

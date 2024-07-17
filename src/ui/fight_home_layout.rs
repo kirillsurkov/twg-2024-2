@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{hero::HeroId, scene::landing::HeroSelected};
+use crate::{battle_bridge::BattleResource, hero::HeroId, scene::landing::HeroSelected};
 
 use super::{
     avatar::AvatarRoot,
@@ -20,7 +20,20 @@ pub struct FightHomeLayout;
 
 impl Plugin for FightHomeLayout {
     fn build(&self, app: &mut App) {
-        app.add_systems(LocalSchedule, init);
+        app.add_systems(LocalSchedule, init.run_if(resource_exists::<HeroSelected>));
+        app.add_systems(
+            LocalSchedule,
+            update_rounds.run_if(resource_exists::<BattleResource>),
+        );
+    }
+}
+
+#[derive(Component)]
+pub struct RoundsCount;
+
+fn update_rounds(mut query: Query<&mut Text, With<RoundsCount>>, battle: Res<BattleResource>) {
+    for mut text in query.iter_mut() {
+        text.sections[0].value = format!("Round {}", battle.round);
     }
 }
 
@@ -39,6 +52,30 @@ fn init(
                         p.spawn((NodeBundle::default(), ScreenHeader))
                             .with_children(|p| {
                                 p.spawn((NodeBundle::default(), GameTimerRoot));
+                                p.spawn(NodeBundle {
+                                    style: Style {
+                                        display: Display::Flex,
+                                        height: Val::Percent(100.0),
+                                        margin: UiRect::right(Val::Auto),
+                                        align_items: AlignItems::Center,
+                                        ..Default::default()
+                                    },
+                                    background_color: Color::BLACK.with_a(0.5).into(),
+                                    ..Default::default()
+                                })
+                                .with_children(|p| {
+                                    p.spawn((
+                                        TextBundle::from_section(
+                                            "",
+                                            TextStyle {
+                                                font_size: 50.0,
+                                                color: Color::YELLOW,
+                                                ..Default::default()
+                                            },
+                                        ),
+                                        RoundsCount,
+                                    ));
+                                });
                             });
                         p.spawn((NodeBundle::default(), ScreenBodyRoot))
                             .with_children(|p| {

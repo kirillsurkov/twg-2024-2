@@ -18,9 +18,10 @@ impl Plugin for HpManaBarsPlugin {
                     init_root,
                     init_bars_holder,
                     init_bar_holder,
+                    init_bar_caption_holder,
+                    update_bar_caption.after(init_bar_caption_holder),
                     init_bar,
                     update_bar.after(init_bar),
-                    init_bar_caption_holder,
                 )
                     .run_if(resource_exists::<FightState>),
             ),
@@ -162,12 +163,15 @@ fn init_bar_caption_holder(
                 ..Default::default()
             })
             .with_children(|p| {
-                p.spawn(TextBundle::from_section(
-                    "",
-                    TextStyle {
-                        font_size: 16.0,
-                        ..Default::default()
-                    },
+                p.spawn((
+                    BarCaption(caption.0, caption.1),
+                    TextBundle::from_section(
+                        "",
+                        TextStyle {
+                            font_size: 16.0,
+                            ..Default::default()
+                        },
+                    ),
                 ));
             });
     }
@@ -177,14 +181,14 @@ fn init_bar_caption_holder(
 struct BarCaption(Owner, BarKind);
 
 fn update_bar_caption(mut query: Query<(&mut Text, &BarCaption)>, fight_state: Res<FightState>) {
-    for (text, BarCaption(owner, kind)) in query.iter_mut() {
+    for (mut text, BarCaption(owner, kind)) in query.iter_mut() {
         let fighter = match owner {
             Owner::Fighter1 => &fight_state.fighter1,
             Owner::Fighter2 => &fight_state.fighter2,
         };
-        let text = match kind {
-            BarKind::Hp => format!("{} / {}", fighter.hp, fighter.max_hp),
-            BarKind::Mana => format!("{} / {}", fighter.mana, 100),
+        text.sections[0].value = match kind {
+            BarKind::Hp => format!("{:.0} / {:.0}", fighter.hp, fighter.max_hp),
+            BarKind::Mana => format!("{:.0} / {:.0}", fighter.mana, 100),
         };
     }
 }

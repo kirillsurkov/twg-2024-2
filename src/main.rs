@@ -1,4 +1,9 @@
-use bevy::{app::MainScheduleOrder, prelude::*, window::{WindowMode, WindowResolution}};
+use bevy::{
+    app::MainScheduleOrder,
+    audio::{PlaybackMode, Volume},
+    prelude::*,
+    window::{WindowMode, WindowResolution},
+};
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use bevy_hanabi::prelude::*;
 use component::ComponentsPlugin;
@@ -13,6 +18,9 @@ mod component;
 mod hero;
 mod scene;
 mod ui;
+
+pub const MASTER_VOLUME: f32 = 0.1;
+pub const BUTTON_VOLUME: f32 = 0.05;
 
 fn main() {
     let mut app = App::new();
@@ -59,7 +67,7 @@ fn main() {
     .run();
 }
 
-fn init(mut commands: Commands) {
+fn init(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         PerfUiRoot {
             display_labels: false,
@@ -68,4 +76,12 @@ fn init(mut commands: Commands) {
         },
         PerfUiEntryFPS::default(),
     ));
+    commands.spawn(AudioBundle {
+        source: asset_server.load("embedded://main_theme.ogg"),
+        settings: PlaybackSettings {
+            mode: PlaybackMode::Loop,
+            volume: Volume::new(MASTER_VOLUME * 0.8),
+            ..Default::default()
+        },
+    });
 }

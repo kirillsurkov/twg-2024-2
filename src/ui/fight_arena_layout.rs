@@ -4,6 +4,7 @@ use crate::{hero::HeroId, scene::landing::HeroSelected};
 
 use super::{
     avatar::AvatarRoot,
+    fight_home_layout::RoundsCount,
     game_timer::GameTimerRoot,
     hp_mana_bars::HpManaBarsRoot,
     players::PlayersRoot,
@@ -20,7 +21,7 @@ pub struct FightArenaLayout;
 
 impl Plugin for FightArenaLayout {
     fn build(&self, app: &mut App) {
-        app.add_systems(LocalSchedule, init);
+        app.add_systems(LocalSchedule, init.run_if(resource_exists::<HeroSelected>));
     }
 }
 
@@ -39,6 +40,30 @@ fn init(
                         p.spawn((NodeBundle::default(), ScreenHeader))
                             .with_children(|p| {
                                 p.spawn((NodeBundle::default(), GameTimerRoot));
+                                p.spawn(NodeBundle {
+                                    style: Style {
+                                        display: Display::Flex,
+                                        height: Val::Percent(100.0),
+                                        margin: UiRect::right(Val::Auto),
+                                        align_items: AlignItems::Center,
+                                        ..Default::default()
+                                    },
+                                    background_color: Color::BLACK.with_a(0.5).into(),
+                                    ..Default::default()
+                                })
+                                .with_children(|p| {
+                                    p.spawn((
+                                        TextBundle::from_section(
+                                            "",
+                                            TextStyle {
+                                                font_size: 50.0,
+                                                color: Color::YELLOW,
+                                                ..Default::default()
+                                            },
+                                        ),
+                                        RoundsCount,
+                                    ));
+                                });
                             });
                         p.spawn((NodeBundle::default(), ScreenBodyRoot))
                             .with_children(|p| {

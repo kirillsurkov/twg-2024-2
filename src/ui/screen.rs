@@ -145,7 +145,7 @@ fn init_footer(mut commands: Commands, query: Query<Entity, Added<ScreenFooter>>
                 align_items: AlignItems::Center,
                 ..Default::default()
             },
-            background_color: DCOLOR,
+            // background_color: DCOLOR,
             ..Default::default()
         });
     }
@@ -161,8 +161,8 @@ fn init_bottom(mut commands: Commands, query: Query<Entity, Added<ScreenBottom>>
                 display: Display::Flex,
                 flex_direction: FlexDirection::Row,
                 width: Val::Percent(100.0),
-                height: Val::Px(200.0),
-                margin: UiRect::top(Val::Px(-200.0)),
+                height: Val::Vw(15.0),
+                margin: UiRect::top(Val::Vw(-15.0)),
                 ..Default::default()
             },
             // background_color: DCOLOR,

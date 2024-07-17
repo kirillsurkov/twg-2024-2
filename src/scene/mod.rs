@@ -2,6 +2,7 @@ use avatars::AvatarsPlugin;
 use bevy::{ecs::schedule::ScheduleLabel, prelude::*};
 use fight_arena::FightArena;
 use fight_home::FightHome;
+use game_ended::GameEnded;
 use landing::{HeroSelected, HeroWatch, Landing};
 use select_hero::SelectHero;
 use splash::Splash;
@@ -17,6 +18,7 @@ pub enum GameState {
     Landing,
     FightHome,
     FightArena,
+    GameEnded,
 }
 
 pub struct ScenesPlugin;
@@ -31,17 +33,18 @@ impl Plugin for ScenesPlugin {
             Landing,
             FightHome,
             FightArena,
+            GameEnded,
         ));
         app.add_systems(Update, cleanup.run_if(state_changed::<GameState>));
         app.add_systems(Update, invalidate_tree);
 
-        app.insert_state(GameState::Landing);
-        app.insert_resource(HeroSelected {
-            id: "rasp".to_string(),
-        });
-        app.insert_resource(HeroWatch {
-            id: "rasp".to_string(),
-        });
+        // app.insert_state(GameState::GameEnded);
+        // app.insert_resource(HeroSelected {
+        //     id: "rasp".to_string(),
+        // });
+        // app.insert_resource(HeroWatch {
+        //     id: "rasp".to_string(),
+        // });
     }
 }
 
@@ -92,6 +95,7 @@ fn invalidate_tree(
 pub mod avatars;
 pub mod fight_arena;
 pub mod fight_home;
+pub mod game_ended;
 pub mod landing;
 pub mod select_hero;
 pub mod splash;

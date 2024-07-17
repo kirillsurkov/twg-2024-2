@@ -31,6 +31,7 @@ fn init(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(Entity, &mut Home, &Children), Added<Home>>,
+    asset_server: Res<AssetServer>,
 ) {
     for (entity, mut home, children) in query.iter_mut() {
         for hero in children.iter() {
@@ -65,14 +66,7 @@ fn init(
                 VisibilityBundle::default(),
             ))
             .with_children(|p| {
-                p.spawn(PbrBundle {
-                    mesh: meshes.add(Plane3d {
-                        normal: Direction3d::Y,
-                    }),
-                    material: materials.add(StandardMaterial::default()),
-                    transform: Transform::from_scale(Vec3::splat(10000.0)),
-                    ..Default::default()
-                });
+                p.spawn(asset_server.load::<Scene>("embedded://hall.glb#Scene0"));
             });
     }
 }

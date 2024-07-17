@@ -3,7 +3,7 @@ use std::{
     time::Duration,
 };
 
-use bevy::{gltf::Gltf, prelude::*};
+use bevy::{audio::{PlaybackMode, Volume}, gltf::Gltf, prelude::*, render::view::visibility};
 
 use crate::{
     battle::modifier::Modifier,
@@ -17,7 +17,7 @@ use crate::{
     scene::{
         avatars::{self, AvatarLocation},
         Root,
-    },
+    }, MASTER_VOLUME,
 };
 
 use super::{HeroId, LocalSchedule};
@@ -167,7 +167,18 @@ fn on_avatar(mut query: Query<(&mut ComplexAnimPlayer, &mut avatars::HeroState),
 
 fn on_arena(
     mut commands: Commands,
-    mut query: Query<(Entity, &mut Transform, &arena::HeroState, &State, &HeroId), With<Dimas>>,
+    mut query: Query<
+        (
+            Entity,
+            &mut Transform,
+            &arena::HeroState,
+            &State,
+            &HeroId,
+            &InheritedVisibility,
+        ),
+        With<Dimas>,
+    >,
+    asset_server: Res<AssetServer>,
     rings: Query<(Entity, &Parent, Option<&Children>), With<SwiborgRing>>,
     swiborgs: Query<&Swiborg>,
     transforms: Query<&GlobalTransform>,
@@ -177,13 +188,27 @@ fn on_arena(
         return;
     };
 
-    for (entity, mut transform, arena_state, state, id) in query.iter_mut() {
+    for (entity, mut transform, arena_state, state, id, visibility) in query.iter_mut() {
         transform.rotation = Quat::from_rotation_y(-FRAC_PI_2);
 
         let (ring, _, children) = rings.iter().find(|(_, p, _)| p.get() == entity).unwrap();
 
         for modifier in &arena_state.modifiers {
             match modifier {
+                Modifier::NormalAttack => {
+                    if visibility.get() {
+                        commands.entity(entity).with_children(|p| {
+                            p.spawn(AudioBundle {
+                                source: asset_server.load("embedded://shoot1.ogg"),
+                                settings: PlaybackSettings {
+                                    // mode: PlaybackMode::Despawn,
+                                    volume: Volume::new(MASTER_VOLUME),
+                                    ..Default::default()
+                                },
+                            });
+                        });
+                    }
+                }
                 Modifier::SpawnSwiborg(i) => {
                     commands.entity(ring).with_children(|p| {
                         p.spawn((
@@ -210,6 +235,19 @@ fn on_arena(
                     });
                 }
                 Modifier::ShootSwiborg(i) => {
+                    if visibility.get() {
+                        commands.entity(entity).with_children(|p| {
+                            p.spawn(AudioBundle {
+                                source: asset_server.load("embedded://ulti2.ogg"),
+                                settings: PlaybackSettings {
+                                    // mode: PlaybackMode::Despawn,
+                                    volume: Volume::new(MASTER_VOLUME),
+                                    ..Default::default()
+                                },
+                            });
+                        });
+                    }
+
                     let Some(swiborg) = children
                         .unwrap()
                         .iter()

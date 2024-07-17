@@ -80,9 +80,9 @@ fn update(
     time: Res<Time>,
     land: Query<&Land>,
 ) {
-    if true || land.single().ready() {
+    if land.single().ready() {
         state.timer += time.delta_seconds();
-        if state.timer >= 0.0 {
+        if state.timer >= 3.0 {
             commands.insert_resource(BattleResource(Battle::new(
                 heroes.iter().map(|(h, _)| Player::new(h.clone())).collect(),
             )));

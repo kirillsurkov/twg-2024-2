@@ -9,7 +9,7 @@ use super::{LocalSchedule, DCOLOR};
 
 pub struct AvatarPlugin;
 
-const SIZE: f32 = 200.0;
+const SIZE: f32 = 320.0;
 
 impl Plugin for AvatarPlugin {
     fn build(&self, app: &mut App) {
@@ -43,14 +43,21 @@ fn init_avatar_root(
                         AvatarRoot::Left => Val::ZERO,
                         AvatarRoot::Right => Val::Auto,
                     }),
-                    width: Val::Px(SIZE),
+                    width: Val::Vw(15.0),
+                    height: Val::Vw(15.0),
+                    padding: UiRect::all(Val::Vw(1.0)),
                     ..Default::default()
                 },
-                background_color: DCOLOR,
+                background_color: Color::BLACK.into(),
                 ..Default::default()
             })
             .with_children(|p| {
                 p.spawn(ImageBundle {
+                    style: Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+                        ..Default::default()
+                    },
                     image: UiImage {
                         texture: match avatar {
                             AvatarRoot::Left => avatars.left.clone(),

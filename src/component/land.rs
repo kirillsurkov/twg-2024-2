@@ -1,7 +1,4 @@
-use bevy::{
-    pbr::{NotShadowCaster, NotShadowReceiver},
-    prelude::*,
-};
+use bevy::prelude::*;
 
 use crate::{hero::HeroId, scene::landing::HeroSelected};
 
@@ -125,10 +122,11 @@ fn show(
 
         if land.timer >= 0.25 {
             if land.index < children.len() {
+                println!("SPAWN BEAMS");
                 commands
                     .entity(children[land.index].0)
                     .with_children(|p| {
-                        p.spawn(Beam::new(0.5));
+                        p.spawn((Beam::new(0.5), children[land.index].1.clone()));
                     })
                     .insert(Visibility::Inherited);
                 land.timer = 0.0;
