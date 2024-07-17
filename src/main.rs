@@ -1,4 +1,4 @@
-use bevy::{app::MainScheduleOrder, prelude::*, window::WindowResolution};
+use bevy::{app::MainScheduleOrder, prelude::*, window::{WindowMode, WindowResolution}};
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use bevy_hanabi::prelude::*;
 use component::ComponentsPlugin;
@@ -44,7 +44,8 @@ fn main() {
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
             title: "TWG: UNITED (ВСЕ В СБОРЕ)".to_string(),
-            resolution: WindowResolution::new(1600.0, 900.0),
+            // resolution: WindowResolution::new(1600.0, 900.0),
+            mode: WindowMode::BorderlessFullscreen,
             ..Default::default()
         }),
         ..Default::default()

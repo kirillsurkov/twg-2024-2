@@ -36,7 +36,6 @@ fn init(
     root: Query<Entity, Added<Root>>,
 ) -> Result<(), Box<dyn Error>> {
     let root = root.get_single()?;
-    println!("FIGHT HOME");
     commands.entity(root).with_children(|p| {
         p.spawn((
             Camera3dBundle {
@@ -84,14 +83,20 @@ fn update(
     mut commands: Commands,
     mut next_state: ResMut<NextState<GameState>>,
     mut battle: ResMut<BattleResource>,
+    mut game_timer: ResMut<GameTimer>,
     selected: Res<HeroSelected>,
-    game_timer: Res<GameTimer>,
 ) {
     if game_timer.fired {
-        commands.insert_resource(RoundCaptureResource(battle.round()));
-        commands.insert_resource(HeroWatch {
-            id: selected.id.clone(),
-        });
-        next_state.set(GameState::FightArena);
+        if game_timer.red {
+            game_timer.restart(99999.0, false);
+
+            commands.insert_resource(RoundCaptureResource(battle.round()));
+            commands.insert_resource(HeroWatch {
+                id: selected.id.clone(),
+            });
+            next_state.set(GameState::FightArena);
+        } else {
+            game_timer.restart(3.0, true);
+        }
     }
 }

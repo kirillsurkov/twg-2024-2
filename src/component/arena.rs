@@ -137,12 +137,23 @@ fn init(
 
 fn update(
     mut commands: Commands,
+    mut game_timer: ResMut<GameTimer>,
     round: Res<RoundCaptureResource>,
     watch: Res<HeroWatch>,
-    game_timer: Res<GameTimer>,
     time: Res<Time>,
     query: Query<(Entity, &HeroId), With<HeroState>>,
 ) {
+    if round.0.iter().fold(true, |acc, c| {
+        acc && match c {
+            RoundCapture::Fight { fight_capture, .. } => {
+                game_timer.value >= fight_capture.duration()
+            }
+            RoundCapture::Skip(_) => true,
+        }
+    }) {
+        game_timer.fired = true;
+    }
+
     for (entity, id) in query.iter() {
         let round = round.by_player(&id.0).unwrap();
 

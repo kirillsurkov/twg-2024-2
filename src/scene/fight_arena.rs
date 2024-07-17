@@ -89,12 +89,22 @@ fn update(
 ) {
     if game_timer.fired {
         if game_timer.red {
-            game_timer.fired = false;
+            game_timer.restart(99999.0, false);
+
             commands.insert_resource(HeroWatch {
                 id: selected.id.clone(),
             });
             commands.remove_resource::<RoundCaptureResource>();
             battle.apply();
+            for player in battle
+                .players
+                .iter()
+                .map(|p| p.hero.id)
+                .filter(|id| *id != selected.id)
+                .collect::<Vec<_>>()
+            {
+                battle.ai(player);
+            }
             next_state.set(GameState::FightHome);
         } else {
             game_timer.restart(3.0, true);

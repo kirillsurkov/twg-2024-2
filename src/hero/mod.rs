@@ -64,7 +64,6 @@ fn init_heroes(
     heroes: Res<HeroesResource>,
 ) {
     for root in root.iter() {
-        println!("HEROES INIT");
         commands.entity(root).with_children(|p| {
             heroes.iter().for_each(|(hero, spawn)| {
                 spawn(p).insert(HeroId(hero.id.to_string()));

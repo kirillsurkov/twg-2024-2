@@ -173,7 +173,6 @@ fn setup(mut commands: Commands, mut images: ResMut<Assets<Image>>, heroes: Res<
 
 fn init(mut commands: Commands, mut query: Query<(Entity, &Children, &Avatar), Added<Avatar>>) {
     for (entity, children, avatar) in query.iter_mut() {
-        println!("INIT AVATARS");
         for hero in children.iter() {
             commands.entity(*hero).insert((
                 HeroState {

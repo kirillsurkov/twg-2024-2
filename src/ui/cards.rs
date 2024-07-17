@@ -117,7 +117,6 @@ fn update_cards_holder(
             .map(|(_, c)| c)
             .eq(player.cards_reserved.iter().map(|(_, c)| c))
         {
-            println!("CARDS");
             holder.0 = player.cards_reserved.clone();
             commands
                 .entity(entity)
@@ -308,7 +307,6 @@ fn init_card_levels(
                 ..Default::default()
             })
             .with_children(|p| {
-                println!("{lvl_cur} / {lvl_max}");
                 for _ in 0..*lvl_cur {
                     p.spawn((NodeBundle::default(), CardLevelActive));
                 }

@@ -56,7 +56,6 @@ fn cleanup(
     query: Query<Entity, With<Root>>,
     query_ui: Query<Entity, With<UiRoot>>,
 ) {
-    println!("CLEANUP");
     if let Ok(root) = query.get_single() {
         commands.entity(root).despawn_recursive();
     }

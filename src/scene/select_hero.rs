@@ -41,7 +41,6 @@ fn init(
     root: Query<Entity, Added<Root>>,
 ) -> Result<(), Box<dyn Error>> {
     let root = root.get_single()?;
-    println!("SELECT HERO INIT");
     commands.insert_resource(State::default());
     commands.entity(root).with_children(|p| {
         p.spawn((

@@ -4,6 +4,8 @@ use crate::{battle::fight::Owner, component::fight_state::FightState};
 
 use super::LocalSchedule;
 
+const BAR_HEIGHT: f32 = 30.0;
+
 pub struct HpManaBarsPlugin;
 
 impl Plugin for HpManaBarsPlugin {
@@ -18,6 +20,7 @@ impl Plugin for HpManaBarsPlugin {
                     init_bar_holder,
                     init_bar,
                     update_bar.after(init_bar),
+                    init_bar_caption_holder,
                 )
                     .run_if(resource_exists::<FightState>),
             ),
@@ -69,8 +72,8 @@ fn init_root(mut commands: Commands, query: Query<Entity, Added<HpManaBarsRoot>>
                         display: Display::Flex,
                         flex_direction: FlexDirection::Row,
                         width: Val::Percent(35.0),
-                        height: Val::Percent(10.0),
-                        column_gap: Val::Percent(10.0),
+                        height: Val::Px(BAR_HEIGHT * 2.0 + 10.0),
+                        column_gap: Val::Px(10.0),
                         ..Default::default()
                     },
                     ..Default::default()
@@ -120,8 +123,11 @@ fn init_bar_holder(mut commands: Commands, query: Query<(Entity, &BarHolder), Ad
             .entity(entity)
             .insert(NodeBundle {
                 style: Style {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Column,
                     width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
+                    height: Val::Px(BAR_HEIGHT),
+                    padding: UiRect::all(Val::Px(3.0)),
                     ..Default::default()
                 },
                 background_color: Color::BLACK.into(),
@@ -129,7 +135,57 @@ fn init_bar_holder(mut commands: Commands, query: Query<(Entity, &BarHolder), Ad
             })
             .with_children(|p| {
                 p.spawn((NodeBundle::default(), Bar(holder.0, holder.1)));
+                p.spawn((NodeBundle::default(), BarCaptionHolder(holder.0, holder.1)));
             });
+    }
+}
+
+#[derive(Component)]
+struct BarCaptionHolder(Owner, BarKind);
+
+fn init_bar_caption_holder(
+    mut commands: Commands,
+    query: Query<(Entity, &BarCaptionHolder), Added<BarCaptionHolder>>,
+) {
+    for (entity, caption) in query.iter() {
+        commands
+            .entity(entity)
+            .insert(NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Px(BAR_HEIGHT - 6.0),
+                    margin: UiRect::top(Val::Px(-BAR_HEIGHT + 6.0)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
+            .with_children(|p| {
+                p.spawn(TextBundle::from_section(
+                    "",
+                    TextStyle {
+                        font_size: 16.0,
+                        ..Default::default()
+                    },
+                ));
+            });
+    }
+}
+
+#[derive(Component)]
+struct BarCaption(Owner, BarKind);
+
+fn update_bar_caption(mut query: Query<(&mut Text, &BarCaption)>, fight_state: Res<FightState>) {
+    for (text, BarCaption(owner, kind)) in query.iter_mut() {
+        let fighter = match owner {
+            Owner::Fighter1 => &fight_state.fighter1,
+            Owner::Fighter2 => &fight_state.fighter2,
+        };
+        let text = match kind {
+            BarKind::Hp => format!("{} / {}", fighter.hp, fighter.max_hp),
+            BarKind::Mana => format!("{} / {}", fighter.mana, 100),
+        };
     }
 }
 
@@ -140,6 +196,8 @@ fn init_bar(mut commands: Commands, query: Query<(Entity, &Bar), Added<Bar>>) {
     for (entity, bar) in query.iter() {
         commands.entity(entity).insert(NodeBundle {
             style: Style {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Row,
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 ..Default::default()

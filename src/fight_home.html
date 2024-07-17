@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style type="text/css">
+        html {
+            height: 100%;
+            --dcolor: rgba(0.0, 255.0, 255.0, 0.2);
+            --dcolor1: rgba(255.0, 0.0, 0.0, 0.2);
+            --dcolor2: rgba(0.0, 255.0, 0.0, 0.2);
+            --dcolor3: rgba(0.0, 0.0, 255.0, 0.2);
+        }
+
+        body {
+            background-color: black;
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+        }
+
+        .screen-main {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        .screen-side {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: column;
+            width: 25%;
+            margin-left: -25%;
+        }
+
+        .screen-header {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: row;
+            height: 10%;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .screen-body {
+            display: flex;
+            flex-direction: column;
+            height: 85%;
+        }
+
+        .screen-footer {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: row;
+            height: 5%;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .players {
+            background-color: red;
+            display: flex;
+            flex-direction: column;
+            margin-right: auto;
+            margin-bottom: auto;
+        }
+
+        .player {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: row;
+            width: 200px;
+            height: 50px;
+            margin-top: 1%;
+        }
+
+        .player-header {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: row;
+            width: 50px;
+            height: 50px;
+        }
+
+        .player-body {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: column;
+            width: 100px;
+            height: 100%;
+        }
+
+        .player-name {
+            background-color: var(--dcolor2);
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 100%;
+        }
+
+        .player-stats {
+            background-color: var(--dcolor1);
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 100%;
+        }
+
+        .player-money {
+            background-color: var(--dcolor3);
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+        }
+
+        .player-attack {
+            background-color: var(--dcolor1);
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+        }
+
+        .player-footer {
+            background-color: var(--dcolor2);
+            display: flex;
+            flex-direction: row;
+            flex-grow: 1;
+            height: 100%;
+        }
+
+        .cards {
+            display: flex;
+            flex-direction: row;
+            margin-top: auto;
+            height: 40%;
+        }
+
+        .cards-holder {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            align-items: center;
+            width: 65%;
+            height: 100%;
+        }
+
+        .card-holder {
+            display: flex;
+            flex-direction: column;
+            width: 15%;
+            height: 100%;
+            margin-right: 2%;
+        }
+
+        .card-header {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 20%;
+        }
+
+        .card-levels {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            width: 100%;
+            height: 10%;
+        }
+
+        .card-level-active {
+            background-color: var(--dcolor);
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-level-inactive {
+            background-color: var(--dcolor);
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-desc {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 50%;
+        }
+
+        .card-footer {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 20%;
+            margin-top: 5%;
+            margin-bottom: 5%;
+        }
+
+        .cards-controls {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 10%;
+            height: 100%;
+        }
+
+        .cards-control {
+            background-color: var(--dcolor);
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 20%;
+            margin-top: auto;
+            margin-bottom: auto;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="screen-main">
+        <div class="screen-header">
+            <div class="timer">
+                30
+            </div>
+        </div>
+        <div class="screen-body">
+            <div class="players">
+                <div class="player">
+                    <div class="player-header"></div>
+                    <div class="player-body">
+                        <div class="player-name">player1</div>
+                        <div class="player-stats">
+                            <div class="player-money">
+                                300$
+                            </div>
+                            <div class="player-attack">
+                                3
+                            </div>
+                        </div>
+                    </div>
+                    <div class="player-footer">
+                        50
+                    </div>
+                </div>
+                <div class="player">
+                    <div class="player-header"></div>
+                    <div class="player-body">
+                        <div class="player-name">player2</div>
+                        <div class="player-stats">
+                            <div class="player-money">
+                                300$
+                            </div>
+                            <div class="player-attack">
+                                3
+                            </div>
+                        </div>
+                    </div>
+                    <div class="player-footer">
+                        50
+                    </div>
+                </div>
+                <div class="player">
+                    <div class="player-header"></div>
+                    <div class="player-body">
+                        <div class="player-name">player3</div>
+                        <div class="player-stats">
+                            <div class="player-money">
+                                300$
+                            </div>
+                            <div class="player-attack">
+                                3
+                            </div>
+                        </div>
+                    </div>
+                    <div class="player-footer">
+                        50
+                    </div>
+                </div>
+                <div class="player">
+                    <div class="player-header"></div>
+                    <div class="player-body">
+                        <div class="player-name">player4</div>
+                        <div class="player-stats">
+                            <div class="player-money">
+                                300$
+                            </div>
+                            <div class="player-attack">
+                                3
+                            </div>
+                        </div>
+                    </div>
+                    <div class="player-footer">
+                        50
+                    </div>
+                </div>
+                <div class="player">
+                    <div class="player-header"></div>
+                    <div class="player-body">
+                        <div class="player-name">player5</div>
+                        <div class="player-stats">
+                            <div class="player-money">
+                                300$
+                            </div>
+                            <div class="player-attack">
+                                3
+                            </div>
+                        </div>
+                    </div>
+                    <div class="player-footer">
+                        50
+                    </div>
+                </div>
+                <div class="player">
+                    <div class="player-header"></div>
+                    <div class="player-body">
+                        <div class="player-name">player6</div>
+                        <div class="player-stats">
+                            <div class="player-money">
+                                300$
+                            </div>
+                            <div class="player-attack">
+                                3
+                            </div>
+                        </div>
+                    </div>
+                    <div class="player-footer">
+                        50
+                    </div>
+                </div>
+            </div>
+            <div class="cards">
+                <div class="cards-holder">
+                    <div class="card-holder">
+                        <div class="card-header"></div>
+                        <div class="card-levels">
+                            <div class="card-level-active"></div>
+                            <div class="card-level-inactive"></div>
+                            <div class="card-level-inactive"></div>
+                            <div class="card-level-inactive"></div>
+                            <div class="card-level-inactive"></div>
+                        </div>
+                        <div class="card-desc">card 1</div>
+                        <div class="card-footer">100$</div>
+                    </div>
+                    <div class="card-holder">
+                        <div class="card-header"></div>
+                        <div class="card-levels"></div>
+                        <div class="card-desc">card 2</div>
+                        <div class="card-footer">100$</div>
+                    </div>
+                    <div class="card-holder">
+                        <div class="card-header"></div>
+                        <div class="card-levels"></div>
+                        <div class="card-desc">card 3</div>
+                        <div class="card-footer">100$</div>
+                    </div>
+                </div>
+                <div class="cards-controls">
+                    <div class="cards-control">
+                        1
+                    </div>
+                    <div class="cards-control">
+                        2
+                    </div>
+                    <div class="cards-control">
+                        3
+                    </div>
+                    <div class="cards-control">
+                        4
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="screen-footer">
+            <div class="balance">
+                300$
+            </div>
+        </div>
+    </div>
+    <div class="screen-side">
+        info
+    </div>
+</body>
+
+</html>

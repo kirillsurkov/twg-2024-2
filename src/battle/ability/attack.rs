@@ -31,9 +31,7 @@ impl Effect for Attack {
             *timer += delta;
             if *timer >= 0.5 {
                 let crit = random::<f32>() <= myself.crit;
-                let evasion = random::<f32>() <= enemy.evasion;
                 let damage = myself.attack * if crit { 2.5 } else { 1.0 };
-                let damage = damage * if evasion { 0.0 } else { 1.0 };
                 modifiers.push(ModifierDesc {
                     modifier: Modifier::AffectHP(-damage),
                     target: Target::Enemy,

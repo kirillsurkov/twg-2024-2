@@ -1,10 +1,12 @@
 use std::cmp::Ordering;
 
+use rand::random;
+
 use crate::battle::modifier::{Modifier, ModifierDesc, Target};
 
-use super::{effect::Effect, hero::Hero, modifier::ValueKind, player::Player};
+use super::{card::CardBranch, effect::Effect, hero::Hero, modifier::ValueKind, player::Player};
 
-pub const DURATION: f32 = 11.0;
+pub const DURATION: f32 = 60.0;
 
 #[derive(Debug, Clone, Default)]
 pub struct Procs {
@@ -16,10 +18,34 @@ pub struct Procs {
 }
 
 #[derive(Debug, Clone)]
+pub struct Branches {
+    attack: f32,
+    regen: f32,
+    hp: f32,
+    mana: f32,
+    crit: f32,
+    evasion: f32,
+}
+
+impl Branches {
+    fn new(player: &Player) -> Self {
+        Self {
+            attack: player.branch_value(&CardBranch::Attack) as f32,
+            regen: player.branch_value(&CardBranch::Regen) as f32 * 0.5,
+            hp: player.branch_value(&CardBranch::Hp) as f32 * 50.0,
+            mana: player.branch_value(&CardBranch::Mana) as f32 * 0.1,
+            crit: player.branch_value(&CardBranch::Crit) as f32 / 300.0,
+            evasion: player.branch_value(&CardBranch::Evasion) as f32 / 300.0,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Fighter {
     pub hero: Hero,
     pub procs: Procs,
     next_procs: Procs,
+    branches: Branches,
     pub hp: f32,
     pub max_hp: f32,
     pub hp_lost: f32,
@@ -33,20 +59,21 @@ pub struct Fighter {
 }
 
 impl Fighter {
-    pub fn new(hero: &Hero) -> Self {
+    pub fn new(player: &Player) -> Self {
         Self {
-            hero: hero.clone(),
+            hero: player.hero.clone(),
             procs: Procs::default(),
             next_procs: Procs::default(),
-            hp: hero.hp,
-            max_hp: hero.hp,
+            branches: Branches::new(player),
+            hp: player.hero.hp,
+            max_hp: player.hero.hp,
             hp_lost: 0.0,
             mana: 0.0,
-            mana_regen: hero.mana_regen,
-            attack: hero.attack,
-            attack_speed: hero.attack_speed,
-            crit: hero.crit,
-            evasion: hero.evasion,
+            mana_regen: player.hero.mana_regen,
+            attack: player.hero.attack,
+            attack_speed: player.hero.attack_speed,
+            crit: player.hero.crit,
+            evasion: player.hero.evasion,
             ulti_amp: 1.0,
         }
     }
@@ -55,14 +82,14 @@ impl Fighter {
         self.procs = self.next_procs.clone();
         self.next_procs = Procs::default();
         let hp_ratio = self.hp / self.max_hp;
-        self.max_hp = self.hero.hp;
+        self.max_hp = self.hero.hp + self.branches.hp;
         self.hp = hp_ratio * self.max_hp;
-        self.mana_regen = self.hero.mana_regen;
-        self.attack = self.hero.attack;
-        self.attack_speed = self.hero.attack_speed;
-        self.crit = self.hero.crit;
-        self.evasion = self.hero.evasion;
-        self.ulti_amp = 1.0;
+        self.mana_regen = self.hero.mana_regen + self.branches.mana;
+        self.attack = self.hero.attack + self.branches.attack;
+        self.attack_speed = self.hero.attack_speed + self.branches.attack * 0.1;
+        self.crit = self.hero.crit + self.branches.crit;
+        self.evasion = self.hero.evasion + self.branches.evasion;
+        self.ulti_amp = 1.0 + self.branches.mana * 0.2;
     }
 }
 
@@ -150,8 +177,8 @@ impl<'a> Fight<'a> {
         let fps = 100.0;
         let delta = 1.0 / fps as f32;
 
-        let mut fighter1 = Fighter::new(&self.player1.hero);
-        let mut fighter2 = Fighter::new(&self.player2.hero);
+        let mut fighter1 = Fighter::new(self.player1);
+        let mut fighter2 = Fighter::new(self.player2);
 
         let mut capture = FightCapture {
             states: vec![(
@@ -211,20 +238,22 @@ impl<'a> Fight<'a> {
                             ValueKind::Ulti => ulti_amp * val,
                             _ => val,
                         };
-                        target.hp = (target.hp + val).max(0.0).min(target.max_hp);
+                        let new_hp = (target.hp + val).max(0.0).min(target.max_hp);
                         if val < 0.0 {
-                            myself.hp_lost -= val;
+                            if random::<f32>() <= target.evasion {
+                                target.next_procs.evasion = true;
+                            } else {
+                                target.hp = new_hp;
+                                target.hp_lost -= val;
+                            }
+                        } else {
+                            target.hp = new_hp;
                         }
                     }
                     Modifier::AffectMaxHP(val) => {
                         let ratio = target.hp / target.max_hp;
-                        println!("maxhp ratio: {ratio}");
-                        println!("maxhp val: {val}");
-                        println!("maxhp before: {}", target.max_hp);
                         target.max_hp += val;
-                        println!("maxhp after: {}", target.max_hp);
                         target.hp = target.max_hp * ratio;
-                        println!("hp after: {}", target.hp);
                     }
                     Modifier::AffectMana(val) => {
                         target.mana = (target.mana + val).max(0.0).min(100.0);

@@ -33,7 +33,7 @@ impl Player {
         };
         if *active && self.money >= card.cost() {
             *active = false;
-            // self.money -= card.cost();
+            self.money -= card.cost();
             if let Some(card) = self.cards.iter_mut().find(|c| c.id() == card.id()) {
                 card.set_level(card.level() + 1);
             } else {

@@ -6,6 +6,8 @@ pub mod hero;
 pub mod modifier;
 pub mod player;
 
+use std::cmp::Reverse;
+
 use card::agility_capsule::AgilityCapsule;
 use card::agility_web::AgilityWeb;
 use card::capture_maneuver::CaptureManeuver;
@@ -38,7 +40,7 @@ use effect::{Effect, HasEffect};
 use fight::{Fight, FightCapture, Owner};
 use player::Player;
 use rand::prelude::SliceRandom;
-use rand::thread_rng;
+use rand::{random, thread_rng};
 
 struct CardsPool {
     players: usize,
@@ -164,17 +166,22 @@ impl Battle {
     }
 
     pub fn round(&mut self) -> Vec<RoundCapture> {
-        self.next_players = self.players.clone();
-
-        let mut players_alive = self
-            .next_players
+        self.next_players = self
+            .players
             .iter()
             .filter(|p| p.hp > 0)
             .map(|p| p.clone())
             .collect::<Vec<_>>();
-        players_alive.shuffle(&mut thread_rng());
+        self.next_players.shuffle(&mut thread_rng());
 
-        let rounds = players_alive
+        let alive = self.next_players.len();
+
+        self.next_players
+            .extend(self.players.iter().filter(|p| p.hp <= 0).map(|p| p.clone()));
+
+        let (alive, dead) = self.next_players.split_at_mut(alive);
+
+        let rounds = alive
             .chunks_mut(2)
             .into_iter()
             .map(|pair| {
@@ -190,12 +197,7 @@ impl Battle {
                     RoundCapture::Skip(pair[0].hero.id)
                 }
             })
-            .chain(
-                self.next_players
-                    .iter()
-                    .filter(|p| p.hp <= 0)
-                    .map(|p| RoundCapture::Skip(p.hero.id)),
-            )
+            .chain(dead.into_iter().map(|p| RoundCapture::Skip(p.hero.id)))
             .collect::<Vec<_>>();
 
         rounds
@@ -235,7 +237,7 @@ impl Battle {
             .find(|player| player.hero.id == id)
             .unwrap();
         if player.money >= 20 {
-            // player.money -= 20;
+            player.money -= 20;
             Self::reroll_free(&mut self.cards_pool, player);
         }
     }
@@ -282,6 +284,64 @@ impl Battle {
             }
         }
         total / self.players.len() as u32
+    }
+
+    pub fn player_by_id(&mut self, id: &str) -> &mut Player {
+        self.players
+            .iter_mut()
+            .find(|player| player.hero.id == id)
+            .unwrap()
+    }
+
+    // TODO: Super ugly, need to rewrite
+    pub fn ai(&mut self, id: &str) {
+        loop {
+            if self.player_by_id(id).cards_reserved.is_empty() {
+                break;
+            }
+
+            let mut candidates = vec![];
+            for (index, (active, card)) in self
+                .player_by_id(id)
+                .cards_reserved
+                .clone()
+                .iter()
+                .enumerate()
+            {
+                if !active {
+                    continue;
+                }
+
+                let mut score = 0;
+                for b1 in &card.branches() {
+                    for b2 in &self.player_by_id(id).hero.branches {
+                        if b1 == b2 {
+                            score += 1u32;
+                        }
+                    }
+                }
+
+                candidates.push((index, score));
+            }
+
+            candidates.sort_by_key(|(_, score)| Reverse(*score));
+
+            for (index, score) in candidates {
+                let score = match score {
+                    0 => 0.1,
+                    _ => 1.0,
+                };
+                if self.player_by_id(id).money > 1100 && random::<f32>() < score {
+                    self.buy_card(id, index);
+                }
+            }
+
+            if self.player_by_id(id).money >= 1120 {
+                self.reroll(id);
+            } else {
+                break;
+            }
+        }
     }
 }
 

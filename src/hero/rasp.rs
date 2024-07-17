@@ -232,7 +232,10 @@ fn on_arena(
                     });
                 }
                 Modifier::ShootFireCube(i) => {
-                    let fire = state.fires.remove(i).unwrap();
+                    let Some(fire) = state.fires.remove(i) else {
+                        continue;
+                    };
+
                     let offset = transforms.get(fire).unwrap().translation();
                     commands.entity(fire).despawn_recursive();
                     commands.entity(root).with_children(|p| {

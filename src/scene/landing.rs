@@ -80,9 +80,7 @@ fn update(
     time: Res<Time>,
     land: Query<&Land>,
 ) {
-    let land = land.single();
-
-    if true || land.ready() {
+    if true || land.single().ready() {
         state.timer += time.delta_seconds();
         if state.timer >= 0.0 {
             commands.insert_resource(BattleResource(Battle::new(

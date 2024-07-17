@@ -29,7 +29,6 @@ fn init(
     asset_server: Res<AssetServer>,
 ) -> Result<(), Box<dyn Error>> {
     let root = root.get_single()?;
-    println!("SPLASH INIT");
     commands.insert_resource(State { timer: 0.0 });
 
     commands.entity(root).with_children(|p| {
