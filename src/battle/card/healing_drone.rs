@@ -59,6 +59,7 @@ impl Effect for HealingDrone {
     fn update(&mut self, delta: f32, myself: &Fighter, enemy: &Fighter) -> Vec<ModifierDesc> {
         self.timer += delta;
         if self.timer >= 1.0 {
+            self.timer = 0.0;
             let regen = myself.hp_lost * self.rate;
             vec![
                 ModifierDesc {
