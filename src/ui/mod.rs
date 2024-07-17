@@ -52,6 +52,9 @@ struct UiAssets {
     font_comic: Handle<Font>,
 }
 
+#[derive(Component)]
+struct ClickState(pub bool);
+
 fn init(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(UiAssets {
         font_comic: asset_server.load("comic.ttf"),

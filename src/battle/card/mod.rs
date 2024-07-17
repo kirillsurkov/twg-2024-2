@@ -39,6 +39,7 @@ pub trait CardInfo {
 
 pub trait CardOps: HasEffect + DynClone {
     fn id(&self) -> &'static str;
+    fn branches(&self) -> Vec<CardBranch>;
     fn level(&self) -> u8;
     fn max_level(&self) -> u8;
     fn set_level(&mut self, level: u8);
@@ -55,6 +56,10 @@ where
 {
     fn id(&self) -> &'static str {
         self.id
+    }
+
+    fn branches(&self) -> Vec<CardBranch> {
+        self.branches.clone()
     }
 
     fn level(&self) -> u8 {
@@ -126,3 +131,31 @@ impl<T: Effect> Card<T> {
         }
     }
 }
+
+pub mod agility_capsule;
+pub mod agility_web;
+pub mod capture_maneuver;
+pub mod combat_medkit;
+pub mod energy_drain;
+pub mod energy_source;
+pub mod exhaustion;
+pub mod healing_drone;
+pub mod healing_flow;
+pub mod hero_might;
+pub mod illness;
+pub mod life_essence;
+pub mod life_symbiosis;
+pub mod lucky_bullet;
+pub mod magic_generator;
+pub mod mana_crystal;
+pub mod plasma_charge;
+pub mod plasma_strike;
+pub mod power_drainer;
+pub mod precision_hit;
+pub mod shadow_bastion;
+pub mod shadow_caster;
+pub mod shadow_dance;
+pub mod shock_wave;
+pub mod shooter_luck;
+pub mod sign_of_misfortune;
+pub mod symbol_of_luck;

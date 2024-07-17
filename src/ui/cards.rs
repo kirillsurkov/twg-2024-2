@@ -2,13 +2,18 @@ use std::f32::consts::TAU;
 
 use bevy::prelude::*;
 
-use crate::{battle::card::CardOps, battle_bridge::BattleResource, scene::landing::HeroSelected};
+use crate::{
+    battle::card::{CardBranch, CardOps},
+    battle_bridge::BattleResource,
+    component::game_timer::GameTimer,
+    scene::landing::HeroSelected,
+};
 
-use super::{stats, LocalSchedule, UiAssets, DCOLOR};
+use super::{stats, ClickState, LocalSchedule, UiAssets, DCOLOR};
 
 const HEIGHT: f32 = 300.0;
 const CONTROLS_WIDTH: f32 = 200.0;
-const CARD_WIDTH: f32 = 200.0;
+const CARD_WIDTH: f32 = 250.0;
 const NAME_HEIGHT: f32 = 30.0;
 const FOOTER_HEIGHT: f32 = 30.0;
 
@@ -21,23 +26,25 @@ impl Plugin for CardsPlugin {
             (
                 init_root,
                 init_cards_holder,
-                update_cards_holder,
-                init_card_holder,
-                update_card_holder,
+                update_cards_holder.after(init_cards_holder),
+                init_card_holder.before(init_cards_holder),
+                update_card_holder.after(init_card_holder),
                 (
                     init_card_header,
                     init_card_levels,
                     init_card_level_active,
                     init_card_level_inactive,
                     init_card_level_blink,
-                    update_card_level_blink,
+                    update_card_level_blink.after(init_card_level_blink),
                     init_card_name,
                     init_card_desc,
                     init_card_footer,
+                    init_cards_controls,
+                    init_cards_control,
+                    update_cards_control.after(init_cards_control),
                 )
-                    .before(update_card_holder),
-                init_cards_controls,
-                init_cards_control,
+                    .before(update_card_holder)
+                    .before(update_cards_holder),
             )
                 .run_if(resource_exists::<BattleResource>),
         );
@@ -59,12 +66,12 @@ fn init_root(mut commands: Commands, query: Query<Entity, Added<CardsRoot>>) {
                     column_gap: Val::Px(5.0),
                     ..Default::default()
                 },
-                background_color: DCOLOR,
+                // background_color: DCOLOR,
                 ..Default::default()
             })
             .with_children(|p| {
                 p.spawn((NodeBundle::default(), CardsHolder(vec![])));
-                p.spawn((NodeBundle::default(), CardsControls));
+                // p.spawn((NodeBundle::default(), CardsControls));
             });
     }
 }
@@ -78,10 +85,11 @@ fn init_cards_holder(mut commands: Commands, query: Query<Entity, Added<CardsHol
             style: Style {
                 display: Display::Flex,
                 flex_direction: FlexDirection::Row,
-                justify_content: JustifyContent::FlexEnd,
+                justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 width: Val::Percent(100.0),
                 column_gap: Val::Px(5.0),
+                margin: UiRect::left(Val::Px(stats::WIDTH + CONTROLS_WIDTH)),
                 ..Default::default()
             },
             // background_color: DCOLOR,
@@ -96,12 +104,13 @@ fn update_cards_holder(
     battle: Res<BattleResource>,
     selected: Res<HeroSelected>,
 ) {
+    let player = battle
+        .players
+        .iter()
+        .find(|player| player.hero.id == selected.id)
+        .unwrap();
+
     for (entity, mut holder) in query.iter_mut() {
-        let player = battle
-            .players
-            .iter()
-            .find(|player| player.hero.id == selected.id)
-            .unwrap();
         if !holder
             .0
             .iter()
@@ -117,16 +126,42 @@ fn update_cards_holder(
                     for (i, (_, card)) in holder.0.iter().enumerate() {
                         p.spawn((NodeBundle::default(), CardHolder(i)))
                             .with_children(|p| {
-                                p.spawn((NodeBundle::default(), CardHeader));
+                                p.spawn((NodeBundle::default(), CardHeader(card.branches())));
                                 p.spawn((
                                     NodeBundle::default(),
                                     CardLevels(i, card.level(), card.max_level()),
                                 ));
                                 p.spawn((NodeBundle::default(), CardName(card.name())));
+                                p.spawn(NodeBundle {
+                                    style: Style {
+                                        width: Val::Percent(80.0),
+                                        height: Val::Px(3.0),
+                                        margin: UiRect::horizontal(Val::Auto),
+                                        ..Default::default()
+                                    },
+                                    background_color: Color::BLACK.with_a(0.3).into(),
+                                    ..Default::default()
+                                });
+                                p.spawn(NodeBundle {
+                                    style: Style {
+                                        height: Val::Px(5.0),
+                                        ..Default::default()
+                                    },
+                                    ..Default::default()
+                                });
                                 p.spawn((NodeBundle::default(), CardDesc(card.desc())));
                                 p.spawn((NodeBundle::default(), CardFooter(card.cost())));
                             });
                     }
+                    p.spawn(NodeBundle {
+                        style: Style {
+                            width: Val::Px(10.0),
+                            height: Val::ZERO,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    });
+                    p.spawn((NodeBundle::default(), CardsControls));
                 });
         }
     }
@@ -137,65 +172,121 @@ struct CardHolder(usize);
 
 fn init_card_holder(mut commands: Commands, query: Query<Entity, Added<CardHolder>>) {
     for entity in query.iter() {
-        commands.entity(entity).insert(ButtonBundle {
-            style: Style {
-                display: Display::Flex,
-                flex_direction: FlexDirection::Column,
-                width: Val::Px(CARD_WIDTH),
-                height: Val::Px(HEIGHT),
-                row_gap: Val::Px(5.0),
+        commands.entity(entity).insert((
+            ButtonBundle {
+                style: Style {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Column,
+                    width: Val::Px(CARD_WIDTH),
+                    height: Val::Px(HEIGHT),
+                    row_gap: Val::Px(5.0),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
-            ..Default::default()
-        });
+            ClickState(false),
+        ));
     }
 }
 
 fn update_card_holder(
     mut battle: ResMut<BattleResource>,
-    mut query: Query<(&mut BackgroundColor, &CardHolder, &Interaction)>,
+    mut query: Query<(
+        &mut BackgroundColor,
+        &mut ClickState,
+        &CardHolder,
+        &Interaction,
+    )>,
     selected: Res<HeroSelected>,
 ) {
-    for (mut color, CardHolder(index), act) in query.iter_mut() {
+    let base = Color::BLACK.with_a(0.5);
+    let hover = (Color::WHITE * 0.2).with_a(0.5);
+    let clicked = Color::BLACK.with_a(0.7);
+    let hover_clicked = (Color::WHITE * 0.1).with_a(0.7);
+
+    for (mut color, mut click_state, CardHolder(index), act) in query.iter_mut() {
         let player = battle
             .players
             .iter()
             .find(|player| player.hero.id == selected.id)
             .unwrap();
+
         let Some((active, _)) = player.cards_reserved.get(*index) else {
             continue;
         };
-        if *active {
-            *color = BackgroundColor(match act {
-                Interaction::None => Color::NONE,
-                Interaction::Hovered => Color::rgba(1.0, 1.0, 1.0, 0.1),
-                Interaction::Pressed => {
-                    battle.buy_card(&selected.id, *index);
-                    Color::rgba(0.0, 0.0, 0.0, 0.1)
+        *color = BackgroundColor(match act {
+            Interaction::None => {
+                if *active {
+                    base
+                } else {
+                    clicked
                 }
-            });
-        } else {
-            *color = Color::GRAY.with_a(0.5).into();
-        }
+            }
+            Interaction::Hovered => {
+                click_state.0 = false;
+                if *active {
+                    hover
+                } else {
+                    hover_clicked
+                }
+            }
+            Interaction::Pressed => {
+                let just_pressed = !click_state.0;
+                click_state.0 = true;
+                if *active && just_pressed {
+                    battle.buy_card(&selected.id, *index);
+                }
+                clicked
+            }
+        });
     }
 }
 
 #[derive(Component)]
-struct CardHeader;
+struct CardHeader(Vec<CardBranch>);
 
-fn init_card_header(mut commands: Commands, query: Query<Entity, Added<CardHeader>>) {
-    for entity in query.iter() {
-        commands.entity(entity).insert(NodeBundle {
-            style: Style {
-                display: Display::Flex,
-                flex_direction: FlexDirection::Row,
-                width: Val::Percent(100.0),
-                height: Val::Percent(20.0),
+fn init_card_header(
+    mut commands: Commands,
+    query: Query<(Entity, &CardHeader), Added<CardHeader>>,
+) {
+    for (entity, CardHeader(branches)) in query.iter() {
+        commands
+            .entity(entity)
+            .insert(NodeBundle {
+                style: Style {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(5.0),
+                    padding: UiRect::all(Val::Px(2.0)),
+                    column_gap: Val::Px(2.0),
+                    ..Default::default()
+                },
+                background_color: Color::BLACK.with_a(0.2).into(),
                 ..Default::default()
-            },
-            // background_color: DCOLOR,
-            ..Default::default()
-        });
+            })
+            .with_children(|p| {
+                for branch in branches {
+                    p.spawn(NodeBundle {
+                        style: Style {
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(100.0),
+                            ..Default::default()
+                        },
+                        background_color: match branch {
+                            CardBranch::Attack => Color::CRIMSON,
+                            CardBranch::Regen => Color::YELLOW_GREEN,
+                            CardBranch::Hp => Color::YELLOW,
+                            CardBranch::Mana => Color::CYAN,
+                            CardBranch::Crit => Color::ORANGE,
+                            CardBranch::Evasion => Color::PURPLE,
+                        }
+                        .with_a(0.2)
+                        .into(),
+                        ..Default::default()
+                    });
+                }
+            });
     }
 }
 
@@ -222,7 +313,7 @@ fn init_card_levels(
                     height: Val::Px(level_height),
                     ..Default::default()
                 },
-                // background_color: DCOLOR,
+                background_color: Color::BLACK.with_a(0.2).into(),
                 ..Default::default()
             })
             .with_children(|p| {
@@ -301,12 +392,13 @@ fn update_card_level_blink(
     let color1 = Color::BLACK.rgba_to_vec4();
     let color2 = Color::GOLD.with_a(0.1).rgba_to_vec4();
 
+    let player = battle
+        .players
+        .iter()
+        .find(|player| player.hero.id == selected.id)
+        .unwrap();
+
     for (mut blink, mut color) in query.iter_mut() {
-        let player = battle
-            .players
-            .iter()
-            .find(|player| player.hero.id == selected.id)
-            .unwrap();
         let Some((active, _)) = player.cards_reserved.get(blink.0) else {
             continue;
         };
@@ -376,21 +468,25 @@ fn init_card_desc(
                     flex_direction: FlexDirection::Column,
                     width: Val::Percent(100.0),
                     flex_grow: 1.0,
-                    padding: UiRect::horizontal(Val::Px(5.0)),
+                    padding: UiRect::horizontal(Val::Px(15.0)),
+                    align_items: AlignItems::Center,
                     ..Default::default()
                 },
                 // background_color: DCOLOR,
                 ..Default::default()
             })
             .with_children(|p| {
-                p.spawn(TextBundle::from_section(
-                    desc.0,
-                    TextStyle {
-                        font: assets.font_comic.clone_weak(),
-                        font_size: 18.0,
-                        ..Default::default()
-                    },
-                ));
+                p.spawn(
+                    TextBundle::from_section(
+                        desc.0,
+                        TextStyle {
+                            font: assets.font_comic.clone_weak(),
+                            font_size: 18.0,
+                            ..Default::default()
+                        },
+                    )
+                    .with_text_justify(JustifyText::Center),
+                );
             });
     }
 }
@@ -416,14 +512,15 @@ fn init_card_footer(
                     height: Val::Px(FOOTER_HEIGHT),
                     ..Default::default()
                 },
-                background_color: DCOLOR,
+                background_color: Color::BLACK.with_a(0.2).into(),
                 ..Default::default()
             })
             .with_children(|p| {
                 p.spawn(TextBundle::from_section(
-                    format!("{}", footer.0),
+                    format!("{}$", footer.0),
                     TextStyle {
                         font: assets.font_comic.clone_weak(),
+                        font_size: 18.0,
                         ..Default::default()
                     },
                 ));
@@ -433,6 +530,14 @@ fn init_card_footer(
 
 #[derive(Component)]
 struct CardsControls;
+
+#[derive(Component)]
+enum CardsControlKind {
+    Reroll,
+    // Random,
+    Lock,
+    Ready,
+}
 
 fn init_cards_controls(mut commands: Commands, query: Query<Entity, Added<CardsControls>>) {
     for entity in query.iter() {
@@ -452,10 +557,26 @@ fn init_cards_controls(mut commands: Commands, query: Query<Entity, Added<CardsC
                 ..Default::default()
             })
             .with_children(|p| {
-                p.spawn((NodeBundle::default(), CardsControl("control 1".to_string())));
-                p.spawn((NodeBundle::default(), CardsControl("control 2".to_string())));
-                p.spawn((NodeBundle::default(), CardsControl("control 3".to_string())));
-                p.spawn((NodeBundle::default(), CardsControl("control 4".to_string())));
+                p.spawn((
+                    NodeBundle::default(),
+                    CardsControl("Reroll (20$)".to_string()),
+                    CardsControlKind::Reroll,
+                ));
+                // p.spawn((
+                //     NodeBundle::default(),
+                //     CardsControl("Random 100$".to_string()),
+                //     CardsControlKind::Random,
+                // ));
+                p.spawn((
+                    NodeBundle::default(),
+                    CardsControl("Lock".to_string()),
+                    CardsControlKind::Lock,
+                ));
+                p.spawn((
+                    NodeBundle::default(),
+                    CardsControl("Ready".to_string()),
+                    CardsControlKind::Ready,
+                ));
             });
     }
 }
@@ -471,20 +592,23 @@ fn init_cards_control(
     for (entity, cards_control) in query.iter() {
         commands
             .entity(entity)
-            .insert(NodeBundle {
-                style: Style {
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Row,
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(20.0),
-                    margin: UiRect::vertical(Val::Auto),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
+            .insert((
+                ButtonBundle {
+                    style: Style {
+                        display: Display::Flex,
+                        flex_direction: FlexDirection::Row,
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(20.0),
+                        margin: UiRect::vertical(Val::Auto),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..Default::default()
+                    },
+                    background_color: DCOLOR,
                     ..Default::default()
                 },
-                background_color: DCOLOR,
-                ..Default::default()
-            })
+                ClickState(false),
+            ))
             .with_children(|p| {
                 p.spawn(TextBundle::from_section(
                     &cards_control.0,
@@ -495,5 +619,100 @@ fn init_cards_control(
                     },
                 ));
             });
+    }
+}
+
+fn update_cards_control(
+    mut battle: ResMut<BattleResource>,
+    mut game_timer: ResMut<GameTimer>,
+    mut query: Query<(
+        &CardsControlKind,
+        &Interaction,
+        &mut ClickState,
+        &mut BackgroundColor,
+    )>,
+    selected: Res<HeroSelected>,
+) {
+    let base = Color::BLACK.with_a(0.5);
+    let hover = (Color::WHITE * 0.2).with_a(0.5);
+    let clicked = Color::BLACK.with_a(0.7);
+    let hover_clicked = (Color::WHITE * 0.1).with_a(0.7);
+
+    for (kind, act, mut click_state, mut color) in query.iter_mut() {
+        match act {
+            Interaction::None => {
+                *color = match kind {
+                    CardsControlKind::Lock => {
+                        if battle.is_cards_locked() {
+                            clicked.into()
+                        } else {
+                            base.into()
+                        }
+                    }
+                    CardsControlKind::Ready => {
+                        if game_timer.red {
+                            clicked.into()
+                        } else {
+                            base.into()
+                        }
+                    }
+                    _ => base.into(),
+                }
+            }
+            Interaction::Hovered => {
+                click_state.0 = false;
+
+                *color = match kind {
+                    CardsControlKind::Lock => {
+                        if battle.is_cards_locked() {
+                            hover_clicked.into()
+                        } else {
+                            hover.into()
+                        }
+                    }
+                    CardsControlKind::Ready => {
+                        if game_timer.red {
+                            hover_clicked.into()
+                        } else {
+                            hover.into()
+                        }
+                    }
+                    _ => hover.into(),
+                }
+            }
+            Interaction::Pressed => {
+                *color = clicked.into();
+
+                let just_pressed = !click_state.0;
+                click_state.0 = true;
+
+                if !just_pressed {
+                    return;
+                }
+
+                let player = battle
+                    .players
+                    .iter()
+                    .find(|player| player.hero.id == selected.id)
+                    .unwrap();
+
+                match kind {
+                    CardsControlKind::Reroll => {
+                        let id = player.hero.id;
+                        battle.reroll(id);
+                    }
+                    // CardsControlKind::Random => {}
+                    CardsControlKind::Lock => {
+                        let locked = battle.is_cards_locked();
+                        battle.set_cards_locked(!locked);
+                    }
+                    CardsControlKind::Ready => {
+                        if !game_timer.red {
+                            game_timer.restart(3.0, true);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
