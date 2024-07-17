@@ -31,7 +31,7 @@ impl<const HEAL: bool, const VALUE: u32, const REDUCE_MANA: bool> Effect
                 modifiers.push(ModifierDesc {
                     modifier: Modifier::AffectHP(VALUE as f32 * if HEAL { 1.0 } else { -1.0 }),
                     target: if HEAL { Target::Myself } else { Target::Enemy },
-                    value_kind: ValueKind::Units,
+                    value_kind: ValueKind::Ulti,
                 });
                 false
             } else {
@@ -47,6 +47,11 @@ impl<const HEAL: bool, const VALUE: u32, const REDUCE_MANA: bool> Effect
                 } else {
                     Modifier::ShootDamageBeam
                 },
+                target: Target::Myself,
+                value_kind: ValueKind::Units,
+            });
+            modifiers.push(ModifierDesc {
+                modifier: Modifier::Ulti,
                 target: Target::Myself,
                 value_kind: ValueKind::Units,
             });

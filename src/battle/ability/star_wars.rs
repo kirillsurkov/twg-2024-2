@@ -36,7 +36,7 @@ impl Effect for StarWars {
                 modifiers.push(ModifierDesc {
                     modifier: Modifier::AffectHP(-60.0),
                     target: Target::Enemy,
-                    value_kind: ValueKind::Units,
+                    value_kind: ValueKind::Ulti,
                 });
                 false
             } else {
@@ -71,11 +71,18 @@ impl Effect for StarWars {
 
         if myself.mana >= 100.0 {
             self.swiborgs_ready.append(&mut self.swiborgs_charging);
-            modifiers.push(ModifierDesc {
-                modifier: Modifier::AffectMana(-100.0),
-                target: Target::Myself,
-                value_kind: ValueKind::Units,
-            });
+            modifiers.extend(vec![
+                ModifierDesc {
+                    modifier: Modifier::AffectMana(-100.0),
+                    target: Target::Myself,
+                    value_kind: ValueKind::Units,
+                },
+                ModifierDesc {
+                    modifier: Modifier::Ulti,
+                    target: Target::Myself,
+                    value_kind: ValueKind::Units,
+                },
+            ]);
         }
 
         modifiers

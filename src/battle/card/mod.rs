@@ -6,9 +6,20 @@ use crate::battle::effect::Effect;
 
 use super::effect::HasEffect;
 
+#[derive(Debug, Clone)]
+pub enum CardBranch {
+    Attack,
+    Regen,
+    Hp,
+    Mana,
+    Crit,
+    Evasion,
+}
+
 #[derive(Debug)]
 pub struct Card<T: Effect> {
     pub id: &'static str,
+    pub branches: Vec<CardBranch>,
     pub level: u8,
     pub max_level: u8,
     pub name: &'static str,
@@ -19,6 +30,7 @@ pub struct Card<T: Effect> {
 
 pub trait CardInfo {
     fn id() -> &'static str;
+    fn branches() -> Vec<CardBranch>;
     fn max_level() -> u8;
     fn name() -> &'static str;
     fn desc() -> &'static str;
@@ -82,6 +94,7 @@ impl<T: Effect> Clone for Card<T> {
     fn clone(&self) -> Self {
         Self {
             id: self.id,
+            branches: self.branches.clone(),
             level: self.level,
             max_level: self.max_level,
             name: self.name,
@@ -95,15 +108,17 @@ impl<T: Effect> Clone for Card<T> {
 impl<T: Effect> Card<T> {
     pub fn new(
         id: &'static str,
+        branches: Vec<CardBranch>,
         max_level: u8,
         name: &'static str,
         desc: &'static str,
         cost: u32,
     ) -> Self {
         Self {
+            id,
+            branches,
             level: 1,
             max_level,
-            id,
             name,
             desc,
             cost,
@@ -111,7 +126,3 @@ impl<T: Effect> Card<T> {
         }
     }
 }
-
-pub mod decrease_attack;
-pub mod increase_attack;
-pub mod increase_attack_speed;

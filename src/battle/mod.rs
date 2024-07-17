@@ -6,9 +6,6 @@ pub mod hero;
 pub mod modifier;
 pub mod player;
 
-use card::decrease_attack::DecreaseAttack;
-use card::increase_attack::IncreaseAttack;
-use card::increase_attack_speed::IncreaseAttackSpeed;
 use card::{Card, CardInfo, CardOps};
 use effect::{Effect, HasEffect};
 use fight::{Fight, FightCapture, Owner};
@@ -38,6 +35,7 @@ impl CardsPool {
             for _ in 0..C::max_level() {
                 self.cards.push(Box::new(Card::<C>::new(
                     C::id(),
+                    C::branches(),
                     C::max_level(),
                     C::name(),
                     C::desc(),
@@ -92,9 +90,6 @@ pub struct RoundCapture {
 impl Battle {
     pub fn new(players: Vec<Player>) -> Self {
         let mut cards_pool = CardsPool::new(players.len());
-        cards_pool.add_card::<IncreaseAttack>();
-        cards_pool.add_card::<DecreaseAttack>();
-        cards_pool.add_card::<IncreaseAttackSpeed>();
 
         Self {
             players: players

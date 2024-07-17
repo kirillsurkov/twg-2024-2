@@ -39,7 +39,7 @@ impl Effect for FireCube {
                 modifiers.push(ModifierDesc {
                     modifier: Modifier::AffectHP(-300.0 / CUBE_FIRES as f32),
                     target: Target::Enemy,
-                    value_kind: ValueKind::Units,
+                    value_kind: ValueKind::Ulti,
                 });
                 false
             } else {
@@ -74,11 +74,18 @@ impl Effect for FireCube {
 
         if myself.mana >= 100.0 {
             self.fires_ready.append(&mut self.fires_charging);
-            modifiers.push(ModifierDesc {
-                modifier: Modifier::AffectMana(-100.0),
-                target: Target::Myself,
-                value_kind: ValueKind::Units,
-            });
+            modifiers.extend(vec![
+                ModifierDesc {
+                    modifier: Modifier::AffectMana(-100.0),
+                    target: Target::Myself,
+                    value_kind: ValueKind::Units,
+                },
+                ModifierDesc {
+                    modifier: Modifier::Ulti,
+                    target: Target::Myself,
+                    value_kind: ValueKind::Units,
+                },
+            ]);
         }
 
         modifiers

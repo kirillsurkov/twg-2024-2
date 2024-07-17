@@ -38,7 +38,7 @@ impl Effect for Halve {
                     ModifierDesc {
                         modifier: Modifier::AffectHP(-myself.hp * 0.5),
                         target: Target::Enemy,
-                        value_kind: ValueKind::Units,
+                        value_kind: ValueKind::Ulti,
                     },
                 ]);
                 false
@@ -58,6 +58,11 @@ impl Effect for Halve {
                 ModifierDesc {
                     modifier: Modifier::ShootDuck,
                     target: Target::Enemy,
+                    value_kind: ValueKind::Units,
+                },
+                ModifierDesc {
+                    modifier: Modifier::Ulti,
+                    target: Target::Myself,
                     value_kind: ValueKind::Units,
                 },
             ]);

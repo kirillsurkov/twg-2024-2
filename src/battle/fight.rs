@@ -2,37 +2,63 @@ use std::cmp::Ordering;
 
 use crate::battle::modifier::{Modifier, ModifierDesc, Target};
 
-use super::{effect::Effect, hero::Hero, player::Player};
+use super::{effect::Effect, hero::Hero, modifier::ValueKind, player::Player};
 
 pub const DURATION: f32 = 11.0;
+
+#[derive(Debug, Clone, Default)]
+pub struct Procs {
+    pub attack: bool,
+    pub ulti: bool,
+    pub regen: Vec<f32>,
+    pub crit: bool,
+    pub evasion: bool,
+}
 
 #[derive(Debug, Clone)]
 pub struct Fighter {
     pub hero: Hero,
+    pub procs: Procs,
+    next_procs: Procs,
     pub hp: f32,
     pub max_hp: f32,
+    pub hp_lost: f32,
     pub mana: f32,
     pub mana_regen: f32,
     pub attack: f32,
     pub attack_speed: f32,
+    pub crit: f32,
+    pub evasion: f32,
+    pub ulti_amp: f32,
 }
 
 impl Fighter {
     pub fn new(hero: &Hero) -> Self {
         Self {
             hero: hero.clone(),
+            procs: Procs::default(),
+            next_procs: Procs::default(),
             hp: hero.hp,
             max_hp: hero.hp,
+            hp_lost: 0.0,
             mana: 0.0,
             mana_regen: hero.mana_regen,
             attack: hero.attack,
             attack_speed: hero.attack_speed,
+            crit: hero.crit,
+            evasion: hero.evasion,
+            ulti_amp: 1.0,
         }
     }
 
     fn prepare(&mut self) {
+        self.procs = self.next_procs.clone();
+        self.next_procs = Procs::default();
         self.attack = self.hero.attack;
         self.attack_speed = self.hero.attack_speed;
+        self.crit = self.hero.crit;
+        self.evasion = self.hero.evasion;
+        self.ulti_amp = 1.0;
     }
 }
 
@@ -164,6 +190,7 @@ impl<'a> Fight<'a> {
                     Owner::Fighter1 => (&mut fighter1, &mut fighter2),
                     Owner::Fighter2 => (&mut fighter2, &mut fighter1),
                 };
+                let ulti_amp = myself.ulti_amp;
                 let target = match m.target {
                     Target::Myself => &mut myself,
                     Target::Enemy => &mut enemy,
@@ -176,13 +203,48 @@ impl<'a> Fight<'a> {
                         target.attack_speed = (target.attack_speed + val).max(0.0);
                     }
                     Modifier::AffectHP(val) => {
+                        let val = match m.value_kind {
+                            ValueKind::Ulti => ulti_amp * val,
+                            _ => val,
+                        };
                         target.hp = (target.hp + val).max(0.0).min(target.max_hp);
+                        if val < 0.0 {
+                            myself.hp_lost -= val;
+                        }
+                    }
+                    Modifier::AffectMaxHP(val) => {
+                        let ratio = target.hp / target.max_hp;
+                        target.max_hp += val;
+                        target.hp = target.max_hp * ratio;
                     }
                     Modifier::AffectMana(val) => {
                         target.mana = (target.mana + val).max(0.0).min(100.0);
                     }
+                    Modifier::AffectUltiAmp(val) => {
+                        target.ulti_amp += val;
+                    }
+                    Modifier::AffectCrit(val) => {
+                        target.crit += val;
+                    }
+                    Modifier::AffectEvasion(val) => {
+                        target.evasion += val;
+                    }
                     // markers
-                    Modifier::NormalAttack => {}
+                    Modifier::NormalAttack => {
+                        myself.next_procs.attack = true;
+                    }
+                    Modifier::Ulti => {
+                        myself.next_procs.ulti = true;
+                    }
+                    Modifier::Regen(val) => {
+                        myself.next_procs.regen.push(val);
+                    }
+                    Modifier::Crit => {
+                        myself.next_procs.crit = true;
+                    }
+                    Modifier::Evasion => {
+                        myself.next_procs.evasion = true;
+                    }
                     Modifier::SpawnSwiborg(_) => {}
                     Modifier::ShootSwiborg(_) => {}
                     Modifier::ShootDuck => {}

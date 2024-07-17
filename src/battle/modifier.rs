@@ -3,9 +3,17 @@ pub enum Modifier {
     AffectAttack(f32),
     AffectAttackSpeed(f32),
     AffectHP(f32),
+    AffectMaxHP(f32),
     AffectMana(f32),
+    AffectUltiAmp(f32),
+    AffectCrit(f32),
+    AffectEvasion(f32),
     // markers
     NormalAttack,
+    Ulti,
+    Regen(f32),
+    Crit,
+    Evasion,
     SpawnSwiborg(u32),
     ShootSwiborg(u32),
     ShootDuck,
@@ -25,6 +33,7 @@ pub enum Target {
 pub enum ValueKind {
     Units,
     Percents,
+    Ulti,
 }
 
 #[derive(Debug, Clone)]

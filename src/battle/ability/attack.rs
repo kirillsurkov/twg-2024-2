@@ -1,3 +1,5 @@
+use rand::random;
+
 use crate::battle::{
     effect::{Effect, HasEffect},
     fight::Fighter,
@@ -28,11 +30,22 @@ impl Effect for Attack {
         self.projectiles.retain_mut(|timer| {
             *timer += delta;
             if *timer >= 0.5 {
+                let crit = random::<f32>() <= myself.crit;
+                let evasion = random::<f32>() <= enemy.evasion;
+                let damage = myself.attack * if crit { 2.5 } else { 1.0 };
+                let damage = damage * if evasion { 0.0 } else { 1.0 };
                 modifiers.push(ModifierDesc {
-                    modifier: Modifier::AffectHP(-myself.attack),
+                    modifier: Modifier::AffectHP(-damage),
                     target: Target::Enemy,
                     value_kind: ValueKind::Units,
                 });
+                if crit {
+                    modifiers.push(ModifierDesc {
+                        modifier: Modifier::Crit,
+                        target: Target::Enemy,
+                        value_kind: ValueKind::Units,
+                    });
+                }
                 false
             } else {
                 true
