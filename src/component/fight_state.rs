@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use crate::{battle::fight, battle_bridge::RoundCaptureResource, scene::landing::HeroWatch};
+use crate::{
+    battle::{fight, RoundCapture},
+    battle_bridge::RoundCaptureResource,
+    scene::landing::HeroWatch,
+};
 
 use super::{game_timer::GameTimer, LocalSchedule};
 
@@ -26,12 +30,18 @@ fn update(
     time: Res<Time>,
 ) {
     let capture = capture.by_player(&watch.id).unwrap();
-    let fight = &capture.fight_capture;
-    if game_timer.red || game_timer.value >= fight.duration() {
-        commands.insert_resource(FightState(fight.last()));
-    } else if let Some(fight_state) =
-        fight.state(game_timer.value, game_timer.value + time.delta_seconds())
-    {
-        commands.insert_resource(FightState(fight_state));
+    match capture {
+        RoundCapture::Fight { fight_capture, .. } => {
+            if game_timer.red || game_timer.value >= fight_capture.duration() {
+                commands.insert_resource(FightState(fight_capture.last()));
+            } else if let Some(fight_state) =
+                fight_capture.state(game_timer.value, game_timer.value + time.delta_seconds())
+            {
+                commands.insert_resource(FightState(fight_state));
+            }
+        }
+        RoundCapture::Skip(_) => {
+            commands.remove_resource::<FightState>();
+        }
     }
 }

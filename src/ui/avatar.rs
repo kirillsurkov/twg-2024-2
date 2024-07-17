@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::{battle_bridge::BattleResource, scene::avatars::AvatarsResource};
+use crate::{
+    battle_bridge::BattleResource, component::fight_state::FightState,
+    scene::avatars::AvatarsResource,
+};
 
 use super::{LocalSchedule, DCOLOR};
 
@@ -12,7 +15,8 @@ impl Plugin for AvatarPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             LocalSchedule,
-            (init_avatar_root,).run_if(resource_exists::<BattleResource>),
+            (init_avatar_root, update_avatar_root.after(init_avatar_root))
+                .run_if(resource_exists::<BattleResource>),
         );
     }
 }
@@ -61,5 +65,24 @@ fn init_avatar_root(
                     ..Default::default()
                 });
             });
+    }
+}
+
+fn update_avatar_root(
+    mut commands: Commands,
+    fight: Option<Res<FightState>>,
+    query: Query<(Entity, &AvatarRoot)>,
+) {
+    for (entity, avatar) in query.iter() {
+        match avatar {
+            AvatarRoot::Left => {}
+            AvatarRoot::Right => {
+                if fight.is_some() {
+                    commands.entity(entity).insert(Visibility::Inherited);
+                } else {
+                    commands.entity(entity).insert(Visibility::Hidden);
+                }
+            }
+        }
     }
 }

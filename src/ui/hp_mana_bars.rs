@@ -11,13 +11,16 @@ impl Plugin for HpManaBarsPlugin {
         app.add_systems(
             LocalSchedule,
             (
-                init_root,
-                init_bars_holder,
-                init_bar_holder,
-                init_bar,
-                update_bar,
-            )
-                .run_if(resource_exists::<FightState>),
+                show_hide.after(init_root),
+                (
+                    init_root,
+                    init_bars_holder,
+                    init_bar_holder,
+                    init_bar,
+                    update_bar.after(init_bar),
+                )
+                    .run_if(resource_exists::<FightState>),
+            ),
         );
     }
 }
@@ -26,6 +29,20 @@ impl Plugin for HpManaBarsPlugin {
 enum BarKind {
     Hp,
     Mana,
+}
+
+fn show_hide(
+    mut commands: Commands,
+    fight: Option<Res<FightState>>,
+    query: Query<Entity, With<HpManaBarsRoot>>,
+) {
+    for entity in query.iter() {
+        if fight.is_some() {
+            commands.entity(entity).insert(Visibility::Inherited);
+        } else {
+            commands.entity(entity).insert(Visibility::Hidden);
+        }
+    }
 }
 
 #[derive(Component)]

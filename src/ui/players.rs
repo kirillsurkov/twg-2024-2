@@ -32,14 +32,13 @@ impl Plugin for PlayersPlugin {
                 init_player_name,
                 init_player_stats,
                 init_player_money,
-                update_player_money,
+                update_player_money.after(init_player_money),
                 init_player_attack,
-                update_player_attack,
+                update_player_attack.after(init_player_attack),
                 init_player_hp,
-                update_player_footer,
+                update_player_hp.after(init_player_hp),
                 init_player_info_root,
-                update_player_info_root,
-                update_player_info,
+                (update_player_info_root, update_player_info).after(init_player_info_root),
             )
                 .run_if(resource_exists::<BattleResource>),
         );
@@ -119,10 +118,18 @@ fn init_players_list(
 
                 let last = players.len() - 1;
                 for (i, player) in players.iter().enumerate() {
+                    let gap = if let Some(round) = &round {
+                        match round.by_player(player.hero.id).unwrap() {
+                            RoundCapture::Fight { .. } => i != last && i % 2 == 1,
+                            RoundCapture::Skip(_) => player.hp > 0,
+                        }
+                    } else {
+                        false
+                    };
                     p.spawn((
                         NodeBundle::default(),
                         HeroId(player.hero.id.to_string()),
-                        PlayerRoot(round.is_some() && i != last && i % 2 == 1),
+                        PlayerRoot(gap),
                     ));
                 }
             });
@@ -170,15 +177,21 @@ struct PlayerListSelected(String);
 fn update_player_root(
     mut commands: Commands,
     mut query: Query<(Entity, &HeroId, &Interaction, &mut BackgroundColor), With<PlayerRoot>>,
+    battle: Res<BattleResource>,
     selected: Res<HeroSelected>,
 ) {
     for (entity, id, act, mut color) in query.iter_mut() {
-        let base = if selected.id == id.0 {
+        let player = battle.players.iter().find(|p| p.hero.id == id.0).unwrap();
+
+        let base = if player.hp <= 0 {
+            Color::CRIMSON * 0.5
+        } else if selected.id == id.0 {
             Color::MIDNIGHT_BLUE
         } else {
             Color::BLACK
         }
         .with_a(0.5);
+
         match act {
             Interaction::Hovered => {
                 commands
@@ -439,7 +452,7 @@ fn init_player_hp(
     }
 }
 
-fn update_player_footer(
+fn update_player_hp(
     mut query: Query<(&HeroId, &mut Text), With<PlayerHp>>,
     battle: Res<BattleResource>,
 ) {

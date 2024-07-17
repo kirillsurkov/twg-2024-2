@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use bevy_hanabi::prelude::*;
 
-use crate::{battle_bridge::RoundCaptureResource, hero::HeroId, scene::landing::HeroWatch};
+use crate::{
+    battle::RoundCapture, battle_bridge::RoundCaptureResource, hero::HeroId,
+    scene::landing::HeroWatch,
+};
 
 use super::LocalSchedule;
 
@@ -183,6 +186,19 @@ fn update(
     {
         let round = capture.by_player(&id.0).unwrap();
 
+        let show = match round {
+            RoundCapture::Fight {
+                player1, player2, ..
+            } => *player1 == watch.id || *player2 == watch.id,
+            RoundCapture::Skip(player) => *player == watch.id,
+        };
+
+        if show {
+            commands.entity(entity).insert(Visibility::Inherited);
+        } else {
+            commands.entity(entity).insert(Visibility::Hidden);
+        }
+
         spawner.set_active(projectile.timer < projectile.eta);
         if let Some(children) = children {
             commands.entity(children[0]).insert(if spawner.is_active() {
@@ -195,12 +211,6 @@ fn update(
         if projectile.timer >= projectile.eta + 0.2 {
             commands.entity(entity).despawn_recursive();
             continue;
-        }
-
-        if round.player1 == watch.id || round.player2 == watch.id {
-            commands.entity(entity).insert(Visibility::Inherited);
-        } else {
-            commands.entity(entity).insert(Visibility::Hidden);
         }
 
         let Some(target) = projectile.target else {

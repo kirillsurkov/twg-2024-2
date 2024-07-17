@@ -3,7 +3,7 @@ use std::f32::consts::FRAC_PI_2;
 use bevy::prelude::*;
 
 use crate::{
-    battle::{fight::Owner, modifier::Modifier},
+    battle::{fight::Owner, modifier::Modifier, RoundCapture},
     battle_bridge::RoundCaptureResource,
     hero::HeroId,
     scene::landing::HeroWatch,
@@ -46,34 +46,51 @@ fn init(
         for capture in &capture.0 {
             for hero in children.iter() {
                 let id = &hero_ids.get(*hero).unwrap().0;
-                let fighter = if id == capture.player1 {
-                    Owner::Fighter1
-                } else if id == capture.player2 {
-                    Owner::Fighter2
-                } else {
-                    continue;
-                };
 
-                let x = match fighter {
-                    Owner::Fighter1 => -4.0,
-                    Owner::Fighter2 => 4.0,
-                };
+                let transform = match capture {
+                    RoundCapture::Fight {
+                        player1, player2, ..
+                    } => {
+                        let fighter = if id == player1 {
+                            Owner::Fighter1
+                        } else if id == player2 {
+                            Owner::Fighter2
+                        } else {
+                            continue;
+                        };
 
-                let rotation = match fighter {
-                    Owner::Fighter1 => Quat::from_rotation_y(FRAC_PI_2),
-                    Owner::Fighter2 => Quat::from_rotation_y(-FRAC_PI_2),
-                };
+                        let x = match fighter {
+                            Owner::Fighter1 => -4.0,
+                            Owner::Fighter2 => 4.0,
+                        };
 
-                let transform = TransformBundle {
-                    local: Transform::from_translation(Vec3::new(x, 0.0, 0.0))
-                        .with_rotation(rotation),
-                    ..Default::default()
+                        let rotation = match fighter {
+                            Owner::Fighter1 => Quat::from_rotation_y(FRAC_PI_2),
+                            Owner::Fighter2 => Quat::from_rotation_y(-FRAC_PI_2),
+                        };
+
+                        Transform::from_translation(Vec3::new(x, 0.0, 0.0)).with_rotation(rotation)
+                    }
+                    RoundCapture::Skip(player) => {
+                        if id != player {
+                            continue;
+                        }
+                        Transform::default()
+                    }
                 };
 
                 let mut parent = commands.entity(with_parent.get(*hero).unwrap().get());
                 let mut hero_node = Entity::PLACEHOLDER;
                 parent.with_children(|p| {
-                    hero_node = p.spawn((transform, VisibilityBundle::default())).id();
+                    hero_node = p
+                        .spawn((
+                            TransformBundle {
+                                local: transform,
+                                ..Default::default()
+                            },
+                            VisibilityBundle::default(),
+                        ))
+                        .id();
                 });
 
                 commands
@@ -129,28 +146,45 @@ fn update(
     for (entity, id) in query.iter() {
         let round = round.by_player(&id.0).unwrap();
 
-        if round.player1 == watch.id || round.player2 == watch.id {
+        let show = match round {
+            RoundCapture::Fight {
+                player1, player2, ..
+            } => *player1 == watch.id || *player2 == watch.id,
+            RoundCapture::Skip(player) => *player == watch.id,
+        };
+
+        if show {
             commands.entity(entity).insert(Visibility::Inherited);
         } else {
             commands.entity(entity).insert(Visibility::Hidden);
         }
 
+        let RoundCapture::Fight {
+            player1,
+            player2,
+            fight_capture,
+            ..
+        } = round
+        else {
+            continue;
+        };
+
         if game_timer.red {
             continue;
         }
 
-        let owner = if round.player1 == id.0 {
+        let owner = if *player1 == id.0 {
             Owner::Fighter1
         } else {
             Owner::Fighter2
         };
 
         let enemy_id = match owner {
-            Owner::Fighter1 => round.player2,
-            Owner::Fighter2 => round.player1,
+            Owner::Fighter1 => *player2,
+            Owner::Fighter2 => *player1,
         };
 
-        let fight = &round.fight_capture;
+        let fight = fight_capture;
         let modifiers = if let Some(state) =
             fight.state(game_timer.value, game_timer.value + time.delta_seconds())
         {

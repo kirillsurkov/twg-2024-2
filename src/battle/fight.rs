@@ -323,7 +323,7 @@ impl<'a> Fight<'a> {
         w.money += 50;
         l.money += w.attack * 15;
 
-        l.hp = (l.hp - w.attack).max(0);
+        l.hp = (l.hp - w.attack as i32).max(0);
 
         l.attack = 3;
         w.attack = (w.attack + 1).min(10);

@@ -18,7 +18,12 @@ pub struct RoundCaptureResource(pub Vec<RoundCapture>);
 
 impl RoundCaptureResource {
     pub fn by_player(&self, id: &str) -> Option<&RoundCapture> {
-        self.0.iter().find(|c| c.player1 == id || c.player2 == id)
+        self.0.iter().find(|c| match c {
+            RoundCapture::Fight {
+                player1, player2, ..
+            } => *player1 == id || *player2 == id,
+            RoundCapture::Skip(player) => *player == id,
+        })
     }
 }
 

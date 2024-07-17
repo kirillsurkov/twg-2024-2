@@ -108,11 +108,14 @@ pub struct Battle {
 }
 
 #[derive(Debug)]
-pub struct RoundCapture {
-    pub player1: &'static str,
-    pub player2: &'static str,
-    pub winner: Owner,
-    pub fight_capture: FightCapture,
+pub enum RoundCapture {
+    Fight {
+        player1: &'static str,
+        player2: &'static str,
+        winner: Owner,
+        fight_capture: FightCapture,
+    },
+    Skip(&'static str),
 }
 
 impl Battle {
@@ -163,25 +166,36 @@ impl Battle {
     pub fn round(&mut self) -> Vec<RoundCapture> {
         self.next_players = self.players.clone();
 
-        let mut players = self.next_players.iter_mut().collect::<Vec<_>>();
-        players.shuffle(&mut thread_rng());
+        let mut players_alive = self
+            .next_players
+            .iter()
+            .filter(|p| p.hp > 0)
+            .map(|p| p.clone())
+            .collect::<Vec<_>>();
+        players_alive.shuffle(&mut thread_rng());
 
-        let rounds = players
+        let rounds = players_alive
             .chunks_mut(2)
             .into_iter()
             .map(|pair| {
                 if let [p1, p2] = pair {
                     let (winner, fight_capture) = Fight::new(p1, p2).run();
-                    RoundCapture {
+                    RoundCapture::Fight {
                         player1: p1.hero.id,
                         player2: p2.hero.id,
                         winner,
                         fight_capture,
                     }
                 } else {
-                    todo!("skipping");
+                    RoundCapture::Skip(pair[0].hero.id)
                 }
             })
+            .chain(
+                self.next_players
+                    .iter()
+                    .filter(|p| p.hp <= 0)
+                    .map(|p| RoundCapture::Skip(p.hero.id)),
+            )
             .collect::<Vec<_>>();
 
         rounds

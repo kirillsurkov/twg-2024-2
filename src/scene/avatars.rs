@@ -11,6 +11,7 @@ use bevy::{
 };
 
 use crate::{
+    battle::RoundCapture,
     battle_bridge::{HeroesResource, RoundCaptureResource},
     hero::{HeroId, HeroesRoot},
 };
@@ -252,7 +253,7 @@ fn update_thumbnails(
 
 fn update_home(
     mut commands: Commands,
-    mut camera: Query<&mut Transform, With<PortraitRightCamera>>,
+    mut camera: Query<&mut Transform, With<PortraitLeftCamera>>,
     query: Query<(&Avatar, &Children)>,
     hero: Query<(&HeroId, &HeroState)>,
     watch: Res<HeroWatch>,
@@ -261,7 +262,7 @@ fn update_home(
 
     for (avatar, children) in query.iter() {
         match avatar {
-            Avatar::Right => {}
+            Avatar::Left => {}
             _ => continue,
         }
         for child in children {
@@ -288,7 +289,7 @@ fn update_fight(
         &mut Transform,
         (With<PortraitRightCamera>, Without<PortraitLeftCamera>),
     >,
-    query: Query<(&Avatar, &Children)>,
+    query: Query<(Entity, &Avatar, &Children)>,
     hero: Query<(&HeroId, &HeroState)>,
     watch: Res<HeroWatch>,
     round: Res<RoundCaptureResource>,
@@ -296,21 +297,35 @@ fn update_fight(
     let mut camera_left = camera_left.single_mut();
     let mut camera_right = camera_right.single_mut();
 
-    for (avatar, children) in query.iter() {
+    for (entity, avatar, children) in query.iter() {
         match avatar {
             Avatar::Thumbnail => continue,
             _ => {}
         }
+
         let round = round.by_player(&watch.id).unwrap();
+
+        let current_id = match round {
+            RoundCapture::Fight {
+                player1, player2, ..
+            } => match avatar {
+                Avatar::Left => *player1,
+                Avatar::Right => *player2,
+                _ => unreachable!(),
+            },
+            RoundCapture::Skip(player) => {
+                match avatar {
+                    Avatar::Left => commands.entity(entity).insert(Visibility::Inherited),
+                    Avatar::Right => commands.entity(entity).insert(Visibility::Hidden),
+                    _ => unreachable!(),
+                };
+                *player
+            }
+        };
+
         for child in children {
             let Ok((id, state)) = hero.get(*child) else {
                 continue;
-            };
-
-            let current_id = match avatar {
-                Avatar::Left => round.player1,
-                Avatar::Right => round.player2,
-                _ => unreachable!(),
             };
 
             commands.entity(*child).insert(if id.0 == current_id {
