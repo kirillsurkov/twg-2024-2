@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     battle::card::{CardBranch, CardOps},
-    battle_bridge::BattleResource,
+    battle_bridge::{branch_to_color, BattleResource},
     component::game_timer::GameTimer,
     scene::landing::HeroSelected,
 };
@@ -273,16 +273,7 @@ fn init_card_header(
                             height: Val::Percent(100.0),
                             ..Default::default()
                         },
-                        background_color: match branch {
-                            CardBranch::Attack => Color::CRIMSON,
-                            CardBranch::Regen => Color::YELLOW_GREEN,
-                            CardBranch::Hp => Color::YELLOW,
-                            CardBranch::Mana => Color::CYAN,
-                            CardBranch::Crit => Color::ORANGE,
-                            CardBranch::Evasion => Color::PURPLE,
-                        }
-                        .with_a(0.2)
-                        .into(),
+                        background_color: branch_to_color(branch).with_a(0.2).into(),
                         ..Default::default()
                     });
                 }

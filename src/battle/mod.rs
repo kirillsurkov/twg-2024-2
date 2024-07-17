@@ -33,7 +33,7 @@ use card::shock_wave::ShockWave;
 use card::shooter_luck::ShooterLuck;
 use card::sign_of_misfortune::SignOfMisfortune;
 use card::symbol_of_luck::SymbolOfLuck;
-use card::{Card, CardInfo, CardOps};
+use card::{Card, CardBranch, CardInfo, CardOps};
 use effect::{Effect, HasEffect};
 use fight::{Fight, FightCapture, Owner};
 use player::Player;
@@ -244,12 +244,30 @@ impl Battle {
         }
     }
 
-    pub fn is_cards_locked(&mut self) -> bool {
+    pub fn is_cards_locked(&self) -> bool {
         self.cards_locked
     }
 
     pub fn set_cards_locked(&mut self, locked: bool) {
         self.cards_locked = locked
+    }
+
+    pub fn branch_max(&self, branch: &CardBranch) -> u32 {
+        let mut total = 0;
+        for player in &self.players {
+            total += player.branch_value(branch);
+            for (active, card) in &player.cards_reserved {
+                if *active && card.branches().contains(branch) {
+                    total += 1;
+                }
+            }
+        }
+        for card in &self.cards_pool.cards {
+            if card.branches().contains(branch) {
+                total += 1;
+            }
+        }
+        total / self.players.len() as u32
     }
 }
 

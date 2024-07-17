@@ -6,7 +6,7 @@ use crate::battle::effect::Effect;
 
 use super::effect::HasEffect;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CardBranch {
     Attack,
     Regen,

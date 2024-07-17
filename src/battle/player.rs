@@ -1,4 +1,7 @@
-use super::{card::CardOps, hero::Hero};
+use super::{
+    card::{CardBranch, CardOps},
+    hero::Hero,
+};
 
 #[derive(Debug, Clone)]
 pub struct Player {
@@ -51,5 +54,15 @@ impl Player {
                 (true, card)
             })
             .collect();
+    }
+
+    pub fn branch_value(&self, branch: &CardBranch) -> u32 {
+        let mut total = 0;
+        for card in &self.cards {
+            if card.branches().contains(branch) {
+                total += card.level() as u32
+            }
+        }
+        total
     }
 }
