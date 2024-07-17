@@ -6,6 +6,33 @@ pub mod hero;
 pub mod modifier;
 pub mod player;
 
+use card::agility_capsule::AgilityCapsule;
+use card::agility_web::AgilityWeb;
+use card::capture_maneuver::CaptureManeuver;
+use card::combat_medkit::CombatMedkit;
+use card::energy_drain::EnergyDrain;
+use card::energy_source::EnergySource;
+use card::exhaustion::Exhaustion;
+use card::healing_drone::HealingDrone;
+use card::healing_flow::HealingFlow;
+use card::hero_might::HeroMight;
+use card::illness::Illness;
+use card::life_essence::LifeEssence;
+use card::life_symbiosis::LifeSymbiosis;
+use card::lucky_bullet::LuckyBullet;
+use card::magic_generator::MagicGenerator;
+use card::mana_crystal::ManaCrystal;
+use card::plasma_charge::PlasmaCharge;
+use card::plasma_strike::PlasmaStrike;
+use card::power_drainer::PowerDrainer;
+use card::precision_hit::PrecisionHit;
+use card::shadow_bastion::ShadowBastion;
+use card::shadow_caster::ShadowCaster;
+use card::shadow_dance::ShadowDance;
+use card::shock_wave::ShockWave;
+use card::shooter_luck::ShooterLuck;
+use card::sign_of_misfortune::SignOfMisfortune;
+use card::symbol_of_luck::SymbolOfLuck;
 use card::{Card, CardInfo, CardOps};
 use effect::{Effect, HasEffect};
 use fight::{Fight, FightCapture, Owner};
@@ -77,6 +104,7 @@ pub struct Battle {
     pub players: Vec<Player>,
     next_players: Vec<Player>,
     cards_pool: CardsPool,
+    cards_locked: bool,
 }
 
 #[derive(Debug)]
@@ -90,6 +118,33 @@ pub struct RoundCapture {
 impl Battle {
     pub fn new(players: Vec<Player>) -> Self {
         let mut cards_pool = CardsPool::new(players.len());
+        cards_pool.add_card::<ShockWave>();
+        cards_pool.add_card::<PowerDrainer>();
+        cards_pool.add_card::<EnergySource>();
+        cards_pool.add_card::<CombatMedkit>();
+        cards_pool.add_card::<PlasmaStrike>();
+        cards_pool.add_card::<PrecisionHit>();
+        cards_pool.add_card::<CaptureManeuver>();
+        cards_pool.add_card::<HealingFlow>();
+        cards_pool.add_card::<Exhaustion>();
+        cards_pool.add_card::<HealingDrone>();
+        cards_pool.add_card::<MagicGenerator>();
+        cards_pool.add_card::<LuckyBullet>();
+        cards_pool.add_card::<AgilityCapsule>();
+        cards_pool.add_card::<LifeEssence>();
+        cards_pool.add_card::<Illness>();
+        cards_pool.add_card::<LifeSymbiosis>();
+        cards_pool.add_card::<HeroMight>();
+        cards_pool.add_card::<ShadowBastion>();
+        cards_pool.add_card::<ManaCrystal>();
+        cards_pool.add_card::<EnergyDrain>();
+        cards_pool.add_card::<PlasmaCharge>();
+        cards_pool.add_card::<ShadowCaster>();
+        cards_pool.add_card::<SymbolOfLuck>();
+        cards_pool.add_card::<SignOfMisfortune>();
+        cards_pool.add_card::<ShooterLuck>();
+        cards_pool.add_card::<ShadowDance>();
+        cards_pool.add_card::<AgilityWeb>();
 
         Self {
             players: players
@@ -101,6 +156,7 @@ impl Battle {
                 .collect(),
             next_players: vec![],
             cards_pool,
+            cards_locked: false,
         }
     }
 
@@ -137,7 +193,9 @@ impl Battle {
             .iter()
             .map(|player| {
                 let mut player = player.clone();
-                Self::reroll_free(&mut self.cards_pool, &mut player);
+                if !self.cards_locked {
+                    Self::reroll_free(&mut self.cards_pool, &mut player);
+                }
                 player
             })
             .collect();
@@ -184,6 +242,14 @@ impl Battle {
         {
             Self::reroll_free(&mut self.cards_pool, player);
         }
+    }
+
+    pub fn is_cards_locked(&mut self) -> bool {
+        self.cards_locked
+    }
+
+    pub fn set_cards_locked(&mut self, locked: bool) {
+        self.cards_locked = locked
     }
 }
 
