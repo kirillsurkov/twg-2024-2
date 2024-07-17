@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{battle::card::CardOps, battle_bridge::BattleResource, scene::landing::HeroSelected};
 
-use super::{stats, LocalSchedule, DCOLOR};
+use super::{stats, LocalSchedule, UiAssets, DCOLOR};
 
 const HEIGHT: f32 = 300.0;
 const CONTROLS_WIDTH: f32 = 200.0;
@@ -325,7 +325,11 @@ fn update_card_level_blink(
 #[derive(Component)]
 struct CardName(&'static str);
 
-fn init_card_name(mut commands: Commands, query: Query<(Entity, &CardName), Added<CardName>>) {
+fn init_card_name(
+    mut commands: Commands,
+    assets: Res<UiAssets>,
+    query: Query<(Entity, &CardName), Added<CardName>>,
+) {
     for (entity, name) in query.iter() {
         commands
             .entity(entity)
@@ -346,7 +350,8 @@ fn init_card_name(mut commands: Commands, query: Query<(Entity, &CardName), Adde
                 p.spawn(TextBundle::from_section(
                     name.0,
                     TextStyle {
-                        font_size: 20.0,
+                        font_size: 25.0,
+                        font: assets.font_comic.clone_weak(),
                         ..Default::default()
                     },
                 ));
@@ -357,7 +362,11 @@ fn init_card_name(mut commands: Commands, query: Query<(Entity, &CardName), Adde
 #[derive(Component)]
 struct CardDesc(&'static str);
 
-fn init_card_desc(mut commands: Commands, query: Query<(Entity, &CardDesc), Added<CardDesc>>) {
+fn init_card_desc(
+    mut commands: Commands,
+    assets: Res<UiAssets>,
+    query: Query<(Entity, &CardDesc), Added<CardDesc>>,
+) {
     for (entity, desc) in query.iter() {
         commands
             .entity(entity)
@@ -374,7 +383,14 @@ fn init_card_desc(mut commands: Commands, query: Query<(Entity, &CardDesc), Adde
                 ..Default::default()
             })
             .with_children(|p| {
-                p.spawn(TextBundle::from_section(desc.0, TextStyle::default()));
+                p.spawn(TextBundle::from_section(
+                    desc.0,
+                    TextStyle {
+                        font: assets.font_comic.clone_weak(),
+                        font_size: 18.0,
+                        ..Default::default()
+                    },
+                ));
             });
     }
 }
@@ -384,6 +400,7 @@ struct CardFooter(u32);
 
 fn init_card_footer(
     mut commands: Commands,
+    assets: Res<UiAssets>,
     query: Query<(Entity, &CardFooter), Added<CardFooter>>,
 ) {
     for (entity, footer) in query.iter() {
@@ -405,7 +422,10 @@ fn init_card_footer(
             .with_children(|p| {
                 p.spawn(TextBundle::from_section(
                     format!("{}", footer.0),
-                    TextStyle::default(),
+                    TextStyle {
+                        font: assets.font_comic.clone_weak(),
+                        ..Default::default()
+                    },
                 ));
             });
     }
@@ -445,6 +465,7 @@ struct CardsControl(String);
 
 fn init_cards_control(
     mut commands: Commands,
+    assets: Res<UiAssets>,
     query: Query<(Entity, &CardsControl), Added<CardsControl>>,
 ) {
     for (entity, cards_control) in query.iter() {
@@ -469,6 +490,7 @@ fn init_cards_control(
                     &cards_control.0,
                     TextStyle {
                         font_size: 25.0,
+                        font: assets.font_comic.clone_weak(),
                         ..Default::default()
                     },
                 ));
