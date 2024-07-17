@@ -3,6 +3,7 @@ use std::cmp::Reverse;
 use bevy::prelude::*;
 
 use crate::{
+    battle::RoundCapture,
     battle_bridge::{BattleResource, HeroesResource, RoundCaptureResource},
     hero::HeroId,
     scene::{
@@ -11,7 +12,7 @@ use crate::{
     },
 };
 
-use super::{LocalSchedule, UiAssets, DCOLOR};
+use super::{stats::StatsRoot, LocalSchedule, UiAssets};
 
 const HEIGHT: f32 = 50.0;
 
@@ -38,7 +39,6 @@ impl Plugin for PlayersPlugin {
                 update_player_footer,
                 init_player_info_root,
                 update_player_info_root,
-                init_player_info,
                 update_player_info,
             )
                 .run_if(resource_exists::<BattleResource>),
@@ -97,7 +97,12 @@ fn init_players_list(
                     round
                         .0
                         .iter()
-                        .flat_map(|r| vec![r.player1, r.player2])
+                        .flat_map(|r| match r {
+                            RoundCapture::Fight {
+                                player1, player2, ..
+                            } => vec![*player1, *player2],
+                            RoundCapture::Skip(player) => vec![*player],
+                        })
                         .map(|p| {
                             battle
                                 .players
@@ -461,11 +466,11 @@ fn init_player_info_root(mut commands: Commands, query: Query<Entity, Added<Play
                     ..Default::default()
                 },
                 visibility: Visibility::Hidden,
-                background_color: DCOLOR,
+                // background_color: DCOLOR,
                 ..Default::default()
             })
             .with_children(|p| {
-                p.spawn((NodeBundle::default(), PlayerInfo));
+                p.spawn((NodeBundle::default(), PlayerInfo, StatsRoot));
             });
     }
 }
@@ -486,32 +491,16 @@ fn update_player_info_root(
 #[derive(Component)]
 struct PlayerInfo;
 
-fn init_player_info(
-    mut commands: Commands,
-    assets: Res<UiAssets>,
-    query: Query<Entity, Added<PlayerInfo>>,
-) {
-    for entity in query.iter() {
-        commands.entity(entity).insert(TextBundle::from_section(
-            "",
-            TextStyle {
-                font: assets.font_comic.clone_weak(),
-                font_size: 50.0,
-                ..Default::default()
-            },
-        ));
-    }
-}
-
 fn update_player_info(
-    mut query: Query<&mut Text, With<PlayerInfo>>,
+    mut commands: Commands,
+    query: Query<Entity, With<PlayerInfo>>,
     selected: Query<&PlayerListSelected>,
 ) {
     let Ok(selected) = selected.get_single() else {
         return;
     };
 
-    for mut text in query.iter_mut() {
-        text.sections[0].value = format!("id: {}", selected.0);
+    for entity in query.iter() {
+        commands.entity(entity).insert(HeroId(selected.0.clone()));
     }
 }

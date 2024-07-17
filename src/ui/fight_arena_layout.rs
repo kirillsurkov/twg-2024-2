@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::{hero::HeroId, scene::landing::HeroSelected};
+
 use super::{
     avatar::AvatarRoot,
     game_timer::GameTimerRoot,
@@ -22,7 +24,11 @@ impl Plugin for FightArenaLayout {
     }
 }
 
-fn init(mut commands: Commands, query: Query<Entity, Added<FightArenaLayout>>) {
+fn init(
+    mut commands: Commands,
+    selected: Res<HeroSelected>,
+    query: Query<Entity, Added<FightArenaLayout>>,
+) {
     for entity in query.iter() {
         commands
             .entity(entity)
@@ -39,7 +45,11 @@ fn init(mut commands: Commands, query: Query<Entity, Added<FightArenaLayout>>) {
                                 p.spawn((NodeBundle::default(), ScreenBodyTop))
                                     .with_children(|p| {
                                         p.spawn((NodeBundle::default(), PlayersRoot));
-                                        p.spawn((NodeBundle::default(), StatsRoot));
+                                        p.spawn((
+                                            NodeBundle::default(),
+                                            StatsRoot,
+                                            HeroId(selected.id.clone()),
+                                        ));
                                     });
                                 p.spawn((NodeBundle::default(), ScreenBodyBot))
                                     .with_children(|p| {

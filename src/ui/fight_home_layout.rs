@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::{hero::HeroId, scene::landing::HeroSelected};
+
 use super::{
     avatar::AvatarRoot,
     cards::CardsRoot,
@@ -22,7 +24,11 @@ impl Plugin for FightHomeLayout {
     }
 }
 
-fn init(mut commands: Commands, query: Query<Entity, Added<FightHomeLayout>>) {
+fn init(
+    mut commands: Commands,
+    selected: Res<HeroSelected>,
+    query: Query<Entity, Added<FightHomeLayout>>,
+) {
     for entity in query.iter() {
         commands
             .entity(entity)
@@ -39,7 +45,11 @@ fn init(mut commands: Commands, query: Query<Entity, Added<FightHomeLayout>>) {
                                 p.spawn((NodeBundle::default(), ScreenBodyTop))
                                     .with_children(|p| {
                                         p.spawn((NodeBundle::default(), PlayersRoot));
-                                        p.spawn((NodeBundle::default(), StatsRoot));
+                                        p.spawn((
+                                            NodeBundle::default(),
+                                            StatsRoot,
+                                            HeroId(selected.id.clone()),
+                                        ));
                                     });
                                 p.spawn((NodeBundle::default(), ScreenBodyBot))
                                     .with_children(|p| {
@@ -49,7 +59,7 @@ fn init(mut commands: Commands, query: Query<Entity, Added<FightHomeLayout>>) {
                         p.spawn((NodeBundle::default(), ScreenFooter));
                         p.spawn((NodeBundle::default(), ScreenBottom))
                             .with_children(|p| {
-                                p.spawn((NodeBundle::default(), AvatarRoot::Right));
+                                p.spawn((NodeBundle::default(), AvatarRoot::Left));
                             });
                     });
             });

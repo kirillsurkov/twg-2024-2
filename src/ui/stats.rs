@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     battle::card::CardBranch,
     battle_bridge::{branch_to_color, BattleResource},
-    scene::landing::HeroSelected,
+    hero::HeroId,
 };
 
 use super::LocalSchedule;
@@ -47,6 +47,7 @@ fn init_stats_root(mut commands: Commands, query: Query<Entity, Added<StatsRoot>
                 background_color: Color::BLACK.with_a(0.5).into(),
                 ..Default::default()
             })
+            .despawn_descendants()
             .with_children(|p| {
                 let separator = NodeBundle {
                     style: Style {
@@ -58,26 +59,29 @@ fn init_stats_root(mut commands: Commands, query: Query<Entity, Added<StatsRoot>
                     background_color: Color::BLACK.with_a(0.3).into(),
                     ..Default::default()
                 };
-                p.spawn((NodeBundle::default(), StatRoot(CardBranch::Attack)));
+                p.spawn((NodeBundle::default(), StatHolder(CardBranch::Attack)));
                 p.spawn(separator.clone());
-                p.spawn((NodeBundle::default(), StatRoot(CardBranch::Regen)));
+                p.spawn((NodeBundle::default(), StatHolder(CardBranch::Regen)));
                 p.spawn(separator.clone());
-                p.spawn((NodeBundle::default(), StatRoot(CardBranch::Hp)));
+                p.spawn((NodeBundle::default(), StatHolder(CardBranch::Hp)));
                 p.spawn(separator.clone());
-                p.spawn((NodeBundle::default(), StatRoot(CardBranch::Mana)));
+                p.spawn((NodeBundle::default(), StatHolder(CardBranch::Mana)));
                 p.spawn(separator.clone());
-                p.spawn((NodeBundle::default(), StatRoot(CardBranch::Crit)));
+                p.spawn((NodeBundle::default(), StatHolder(CardBranch::Crit)));
                 p.spawn(separator.clone());
-                p.spawn((NodeBundle::default(), StatRoot(CardBranch::Evasion)));
+                p.spawn((NodeBundle::default(), StatHolder(CardBranch::Evasion)));
             });
     }
 }
 
 #[derive(Component)]
-pub struct StatRoot(CardBranch);
+pub struct StatHolder(CardBranch);
 
-fn init_stat_root(mut commands: Commands, query: Query<(Entity, &StatRoot), Added<StatRoot>>) {
-    for (entity, stat) in query.iter() {
+fn init_stat_root(
+    mut commands: Commands,
+    query: Query<(Entity, &StatHolder, &Parent), Added<StatHolder>>,
+) {
+    for (entity, stat, parent) in query.iter() {
         commands
             .entity(entity)
             .insert(NodeBundle {
@@ -169,7 +173,7 @@ fn init_stat_root(mut commands: Commands, query: Query<(Entity, &StatRoot), Adde
                                     ..Default::default()
                                 },
                             ),
-                            StatCount(stat.0.clone(), BranchInfo::Current),
+                            StatCount(parent.get(), stat.0.clone(), BranchInfo::Current),
                         ));
                     });
                     p.spawn(TextBundle::from_section(
@@ -200,7 +204,7 @@ fn init_stat_root(mut commands: Commands, query: Query<(Entity, &StatRoot), Adde
                                     ..Default::default()
                                 },
                             ),
-                            StatCount(stat.0.clone(), BranchInfo::Max),
+                            StatCount(parent.get(), stat.0.clone(), BranchInfo::Max),
                         ));
                     });
                 });
@@ -214,20 +218,24 @@ enum BranchInfo {
 }
 
 #[derive(Component)]
-pub struct StatCount(CardBranch, BranchInfo);
+pub struct StatCount(Entity, CardBranch, BranchInfo);
 
 fn update_stat_count(
     mut query: Query<(&StatCount, &mut Text)>,
     battle: Res<BattleResource>,
-    selected: Res<HeroSelected>,
+    hero_ids: Query<&HeroId>,
 ) {
-    let player = battle
-        .players
-        .iter()
-        .find(|player| player.hero.id == selected.id)
-        .unwrap();
+    for (StatCount(root, branch, info), mut text) in query.iter_mut() {
+        let Ok(hero_id) = hero_ids.get(*root) else {
+            continue;
+        };
 
-    for (StatCount(branch, info), mut text) in query.iter_mut() {
+        let player = battle
+            .players
+            .iter()
+            .find(|player| player.hero.id == hero_id.0)
+            .unwrap();
+
         let value = match info {
             BranchInfo::Current => player.branch_value(branch),
             BranchInfo::Max => battle.branch_max(branch),
